@@ -312,7 +312,16 @@ class Payment(models.Model):
     def save(self, *args, **kwargs):
         if not self.transaction_id:
             self.transaction_id = str(uuid.uuid4()).replace('-', '').upper()[:12]
+
         super().save(*args, **kwargs)
+
+        # 🔥 Auto update appointment status when payment is paid
+        if self.appointment and self.payment_status == "Paid":
+            if self.appointment.status == "Pending Payment":
+                self.appointment.status = "Scheduled"
+                self.appointment.save()
+
+
 
     def __str__(self):
         return f"{self.patient.full_name} - ₹{self.amount} ({self.payment_status})"

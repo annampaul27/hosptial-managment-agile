@@ -20,3 +20,8 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+from core.models import Appointment
+
+appointment = Appointment.objects.get(id=1)  # replace 1 with your ID
+appointment.status
