@@ -1,7 +1,25 @@
-{% extends "core/base.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
 <div class="medical-dashboard">
     <!-- Sidebar -->
     <aside class="medical-sidebar">
@@ -79,6 +97,20 @@
                 <h1 class="page-title">Appointments</h1>
                 <p class="page-subtitle">Manage your patient appointments</p>
             </div>
+            <div class="header-actions">
+                <button class="header-icon-btn" aria-label="Notifications">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    {% if unread_notifications %}
+                        <span class="notification-badge" aria-live="polite">{{ unread_notifications }}</span>
+                    {% endif %}
+                </button>
+                <button class="header-icon-btn" aria-label="Messages">
+                    <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                </button>
+                <button class="header-icon-btn" aria-label="Profile">
+                    <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Content -->
@@ -92,6 +124,10 @@
                     <div class="stat-info">
                         <p class="stat-label">Total Appointments</p>
                         <h3 class="stat-value">{{ appointments|length }}</h3>
+                        <p class="stat-change" style="color: var(--text-medium);">
+                            <i class="fa-solid fa-calendar"></i>
+                            <span>All time</span>
+                        </p>
                     </div>
                 </div>
 
@@ -101,7 +137,11 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Confirmed</p>
-                        <h3 class="stat-value">{{ stats.confirmed }}</h3>
+                        <h3 class="stat-value">{{ stats.confirmed|default:"0" }}</h3>
+                        <p class="stat-change positive">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Ready to go</span>
+                        </p>
                     </div>
                 </div>
 
@@ -111,7 +151,11 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Completed</p>
-                        <h3 class="stat-value">{{ stats.completed }}</h3>
+                        <h3 class="stat-value">{{ stats.completed|default:"0" }}</h3>
+                        <p class="stat-change" style="color: var(--text-medium);">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span>Finished</span>
+                        </p>
                     </div>
                 </div>
 
@@ -121,7 +165,11 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Pending</p>
-                        <h3 class="stat-value">{{ stats.pending_payment }}</h3>
+                        <h3 class="stat-value">{{ stats.pending_payment|default:"0" }}</h3>
+                        <p class="stat-change" style="color: {% if stats.pending_payment > 0 %}#f59e0b{% else %}var(--text-medium){% endif %};">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>{% if stats.pending_payment > 0 %}Awaiting payment{% else %}None{% endif %}</span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -133,6 +181,14 @@
                         <i class="fa-solid fa-calendar-check" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
                         All Appointments
                     </h3>
+                    <div style="display: flex; gap: var(--space-3);">
+                        <button class="btn-small btn-primary" style="background: var(--gray-100); color: var(--text-dark);">
+                            <i class="fa-solid fa-filter"></i> Filter
+                        </button>
+                        <button class="btn-small btn-primary" style="background: var(--gray-100); color: var(--text-dark);">
+                            <i class="fa-solid fa-download"></i> Export
+                        </button>
+                    </div>
                 </div>
 
                 {% if appointments %}
@@ -150,13 +206,26 @@
                             </thead>
                             <tbody>
                                 {% for appointment in appointments %}
-                                <tr style="border-bottom: 1px solid var(--gray-200); hover-background: var(--gray-50);">
-                                    <td style="padding: var(--space-3); color: var(--gray-800);">{{ appointment.patient.full_name }}</td>
-                                    <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.appointment_date|date:"d M Y" }}</td>
-                                    <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.appointment_time|time:"g:i A" }}</td>
+                                <tr style="border-bottom: 1px solid var(--gray-200);">
+                                    <td style="padding: var(--space-3); color: var(--gray-800); font-weight: 500;">
+                                        <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #22d3ee, #a78bfa); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.85rem;">
+                                                {{ appointment.patient.full_name|slice:":1"|upper }}
+                                            </div>
+                                            {{ appointment.patient.full_name }}
+                                        </div>
+                                    </td>
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">
+                                        <i class="fa-solid fa-calendar" style="margin-right: 6px; color: var(--text-light);"></i>
+                                        {{ appointment.appointment_date|date:"d M Y" }}
+                                    </td>
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">
+                                        <i class="fa-solid fa-clock" style="margin-right: 6px; color: var(--text-light);"></i>
+                                        {{ appointment.appointment_time|time:"g:i A" }}
+                                    </td>
                                     <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.reason|truncatechars:30 }}</td>
                                     <td style="padding: var(--space-3);">
-                                        <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+                                        <span style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
                                             {% if appointment.status == 'Confirmed' %}
                                                 background: rgba(16, 185, 129, 0.1); color: #10b981;
                                             {% elif appointment.status == 'Completed' %}
@@ -165,19 +234,23 @@
                                                 background: rgba(245, 158, 11, 0.1); color: #f59e0b;
                                             {% elif appointment.status == 'Cancelled' %}
                                                 background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                                            {% else %}
+                                                background: rgba(100, 116, 139, 0.1); color: #64748b;
                                             {% endif %}">
                                             {{ appointment.status }}
                                         </span>
                                     </td>
                                     <td style="padding: var(--space-3); text-align: center;">
-                                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" style="display: inline-block; padding: 6px 12px; background: var(--medical-cyan); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem; margin-right: 6px;">
-                                            <i class="fa-solid fa-eye"></i> View
-                                        </a>
-                                        {% if appointment.status == 'Scheduled' %}
-                                        <a href="{% url 'doctor_confirm_appointment' appointment.id %}" style="display: inline-block; padding: 6px 12px; background: var(--medical-green); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
-                                            <i class="fa-solid fa-check"></i> Confirm
-                                        </a>
-                                        {% endif %}
+                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <a href="{% url 'doctor_appointment_detail' appointment.id %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--medical-cyan); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem; transition: var(--transition-fast);">
+                                                <i class="fa-solid fa-eye"></i> View
+                                            </a>
+                                            {% if appointment.status == 'Scheduled' %}
+                                            <a href="{% url 'doctor_confirm_appointment' appointment.id %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--medical-green); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem; transition: var(--transition-fast);">
+                                                <i class="fa-solid fa-check"></i> Confirm
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -186,12 +259,17 @@
                     </div>
                 {% else %}
                     <div style="text-align: center; padding: var(--space-10);">
-                        <i class="fa-solid fa-calendar-xmark" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-4);"></i>
-                        <p style="color: var(--gray-500);">No appointments found</p>
+                        <i class="fa-solid fa-calendar-xmark" style="font-size: 3.5rem; color: var(--gray-300); margin-bottom: var(--space-4);"></i>
+                        <p style="color: var(--gray-500); font-size: 1.1rem; margin-bottom: var(--space-4);">No appointments found</p>
+                        <a href="{% url 'doctor_dashboard' %}" class="btn btn-primary" style="text-decoration: none;">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                        </a>
                     </div>
                 {% endif %}
             </div>
         </div>
     </main>
 </div>
-{% endblock %}
+
+</body>
+</html>

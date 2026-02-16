@@ -256,4 +256,6 @@ urlpatterns = [
     path('frontdesk/payments/<int:payment_id>/', views.frontdesk_payment_detail, name='frontdesk_payment_detail'),
     path('frontdesk/reports/', views.frontdesk_reports, name='frontdesk_reports'),
     path('frontdesk/settings/', views.frontdesk_settings, name='frontdesk_settings'),
+    
+    path('doctor/appointment/<int:appointment_id>/reschedule/', views.doctor_reschedule_appointment, name='doctor_reschedule_appointment'),
 ]

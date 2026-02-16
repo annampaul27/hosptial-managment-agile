@@ -2524,13 +2524,7 @@ def patient_cancel_appointment(request, appointment_id):
     
     return redirect('patient_appointments')
 
-
-@login_required
 def patient_appointment_detail(request, appointment_id):
-    """
-    View detailed information about a specific appointment
-    ✅ FIXED: Properly retrieve PatientProfile before filtering
-    """
     try:
         patient_profile = PatientProfile.objects.get(user=request.user)
     except PatientProfile.DoesNotExist:
@@ -2541,13 +2535,17 @@ def patient_appointment_detail(request, appointment_id):
         appointment = Appointment.objects.select_related(
             'doctor', 'doctor__user'
         ).get(id=appointment_id, patient=patient_profile)
-        
+
+        # Get payment (if exists)
+        payment = getattr(appointment, 'payment', None)
+
         context = {
             'appointment': appointment,
+            'payment': payment,
         }
-        
+
         return render(request, 'core/dashboard/patient_appointment_detail.html', context)
-        
+
     except Appointment.DoesNotExist:
         messages.error(request, 'Appointment not found!')
         return redirect('patient_appointments')
@@ -2771,6 +2769,10 @@ def doctor_appointment_detail(request, appointment_id):
     
     allergies = Allergy.objects.filter(patient=appointment.patient)
     
+    payment = appointment.payments.filter(payment_status="Paid").order_by('-payment_date').first()
+    
+    
+    
     context = {
         'appointment': appointment,
         'patient_history': patient_history,
@@ -2778,6 +2780,7 @@ def doctor_appointment_detail(request, appointment_id):
         'current_medications': current_medications,
         'allergies': allergies,
         'doctor_profile': doctor_profile,
+        'payment': payment,
     }
     
     return render(request, 'core/dashboard/doctor_appointment_detail.html', context)
@@ -6374,3 +6377,53 @@ def frontdesk_patients_edit(request, patient_id):
     
     return render(request, 'core/dashboard/frontdesk_patients_edit.html', context)
 
+@login_required
+def doctor_reschedule_appointment(request, appointment_id):
+    """Reschedule an appointment"""
+
+    # ✅ Get DoctorProfile from logged in user
+    doctor_profile = request.user.doctorprofile
+
+    # ✅ Now filter correctly
+    appointment = get_object_or_404(
+        Appointment,
+        id=appointment_id,
+        doctor=doctor_profile
+    )
+
+    if request.method == 'POST':
+        new_date = request.POST.get('appointment_date')
+        new_time = request.POST.get('appointment_time')
+        reschedule_reason = request.POST.get('reschedule_reason', '')
+        notify_patient = request.POST.get('notify_patient') == 'on'
+
+        # Update appointment
+        appointment.appointment_date = new_date
+        appointment.appointment_time = new_time
+
+        # Store reschedule reason
+        if reschedule_reason:
+            if appointment.notes:
+                appointment.notes += f"\n\nRescheduled: {reschedule_reason}"
+            else:
+                appointment.notes = f"Rescheduled: {reschedule_reason}"
+
+        appointment.save()
+
+        if notify_patient:
+            # Add email logic later
+            pass
+
+        messages.success(
+            request,
+            f'Appointment rescheduled successfully to {new_date} at {new_time}'
+        )
+
+        return redirect('doctor_appointment_detail', appointment_id=appointment.id)
+
+    context = {
+        'appointment': appointment,
+        'today': timezone.now().date(),
+    }
+
+    return render(request, 'core/dashboard/doctor_appointment_reschedule.html', context)
