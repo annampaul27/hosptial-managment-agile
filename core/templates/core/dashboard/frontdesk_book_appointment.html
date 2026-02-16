@@ -1,0 +1,762 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Front Desk | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <style>
+        .booking-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e5e7eb;
+            z-index: -1;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6b7280;
+            z-index: 1;
+        }
+        .step.active .step-number {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            border-color: #06b6d4;
+            color: white;
+        }
+        .step.completed .step-number {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        .step.active .step-label {
+            color: #06b6d4;
+        }
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .patient-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .patient-card {
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .patient-card:hover {
+            border-color: #06b6d4;
+            background: #f0f9ff;
+        }
+        .patient-card.selected {
+            border-color: #06b6d4;
+            background: linear-gradient(135deg, #f0f9ff, #e0f7ff);
+        }
+        .patient-radio {
+            display: none;
+        }
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .slot-btn {
+            padding: 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        .slot-btn:hover:not(:disabled) {
+            border-color: #06b6d4;
+            background: #f0f9ff;
+        }
+        .slot-btn.selected {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+            border-color: #06b6d4;
+        }
+        .slot-btn:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+            border-color: #e5e7eb;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #f0f9ff, #e0f7ff);
+            border: 2px solid #cffafe;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #bae6fd;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .summary-label {
+            font-weight: 600;
+            color: #0369a1;
+        }
+        .summary-value {
+            color: #0c4a6e;
+        }
+        .payment-method {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .payment-option {
+            padding: 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .payment-option:hover {
+            border-color: #06b6d4;
+            background: #f0f9ff;
+        }
+        .payment-option input {
+            display: none;
+        }
+        .payment-option.selected {
+            border-color: #06b6d4;
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-info {
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid #22d3ee;
+            color: #0369a1;
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+        .search-results.show {
+            display: block;
+        }
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover {
+            background: #f9fafb;
+        }
+        .result-name {
+            font-weight: 600;
+            color: #111827;
+        }
+        .result-info {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="medical-dashboard">
+        <!-- Sidebar -->
+        <aside class="medical-sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">Front Desk</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'frontdesk_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="{% url 'frontdesk_book_appointment' %}" class="nav-item active">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'frontdesk_patient_checkin' %}" class="nav-item">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>Check-in/Out</span>
+                </a>
+                <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="{% url 'frontdesk_payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="medical-main">
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Book Appointment</h1>
+                    <p class="page-subtitle">Create a new appointment for a patient</p>
+                </div>
+            </header>
+
+            <div class="medical-content">
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="booking-container">
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step {% if not appointment_data %}active{% else %}completed{% endif %}">
+                            <div class="step-number">1</div>
+                            <span class="step-label">Select Patient</span>
+                        </div>
+                        <div class="step {% if appointment_data and not selected_patient %}active{% elif appointment_data %}completed{% endif %}">
+                            <div class="step-number">2</div>
+                            <span class="step-label">Appointment Details</span>
+                        </div>
+                        <div class="step {% if appointment_data %}active{% endif %}">
+                            <div class="step-number">3</div>
+                            <span class="step-label">Payment</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Patient Selection -->
+                    {% if not selected_patient or not appointment_data %}
+                    <div class="form-section">
+                        <h2 style="margin-top: 0; margin-bottom: 20px;">
+                            <i class="fa-solid fa-user" style="color: var(--medical-cyan); margin-right: 10px;"></i>
+                            Step 1: Select Patient
+                        </h2>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="step" value="1">
+
+                            <!-- Existing Patients -->
+                            <div class="form-group">
+                                <label class="form-label">Select Existing Patient</label>
+                                <div style="position: relative;">
+                                    <input 
+                                        type="text" 
+                                        id="patient_search" 
+                                        class="form-input" 
+                                        placeholder="Search patient by name, phone, or email..."
+                                        autocomplete="off"
+                                    >
+                                    <div id="search_results" class="search-results"></div>
+                                </div>
+                                <input type="hidden" name="patient_id" id="patient_id">
+                            </div>
+
+                            <!-- OR Divider -->
+                            <div style="text-align: center; margin: 20px 0; color: #9ca3af;">
+                                <span style="background: white; padding: 0 10px;">OR</span>
+                            </div>
+
+                            <!-- Create New Patient -->
+                            <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                                <h3 style="margin-top: 0; margin-bottom: 15px; color: #374151;">
+                                    Create New Patient
+                                </h3>
+
+                                <div class="form-group">
+                                    <label class="form-label">Full Name *</label>
+                                    <input 
+                                        type="text" 
+                                        name="new_patient_name" 
+                                        class="form-input"
+                                        placeholder="Patient's full name"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number *</label>
+                                    <input 
+                                        type="tel" 
+                                        name="new_patient_phone" 
+                                        class="form-input"
+                                        placeholder="10-digit phone number"
+                                        pattern="[0-9]{10}"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Email (Optional)</label>
+                                    <input 
+                                        type="email" 
+                                        name="new_patient_email" 
+                                        class="form-input"
+                                        placeholder="patient@example.com"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="button-group" style="justify-content: flex-end; margin-top: 20px;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                    Continue to Appointment Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step 2: Appointment Details -->
+                    {% if selected_patient and not appointment_data %}
+                    <div class="form-section">
+                        <h2 style="margin-top: 0; margin-bottom: 20px;">
+                            <i class="fa-solid fa-calendar" style="color: var(--medical-cyan); margin-right: 10px;"></i>
+                            Step 2: Appointment Details
+                        </h2>
+
+                        <!-- Selected Patient Info -->
+                        <div class="summary-card">
+                            <div class="summary-row">
+                                <span class="summary-label">Patient Name:</span>
+                                <span class="summary-value">{{ selected_patient.full_name }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Phone:</span>
+                                <span class="summary-value">{{ selected_patient.phone }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Email:</span>
+                                <span class="summary-value">{{ selected_patient.user.email }}</span>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="step" value="2">
+
+                            <!-- Doctor Selection -->
+                            <div class="form-group">
+                                <label class="form-label">Select Doctor *</label>
+                                <select name="doctor_id" class="form-select" id="doctor_select" required>
+                                    <option value="">-- Choose a Doctor --</option>
+                                    {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">
+                                        Dr. {{ doctor.user.get_full_name }} - {{ doctor.specialization }}
+                                        (₹{{ doctor.consultation_fee }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Appointment Date -->
+                            <div class="form-group">
+                                <label class="form-label">Appointment Date *</label>
+                                <input 
+                                    type="date" 
+                                    name="appointment_date" 
+                                    class="form-input"
+                                    id="appointment_date"
+                                    min="{{ min_date }}"
+                                    required
+                                >
+                            </div>
+
+                            <!-- Appointment Time -->
+                            <div class="form-group">
+                                <label class="form-label">Appointment Time *</label>
+                                <div class="slot-grid" id="time_slots">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                                <input type="hidden" name="appointment_time" id="appointment_time" required>
+                            </div>
+
+                            <!-- Reason for Visit -->
+                            <div class="form-group">
+                                <label class="form-label">Reason for Visit *</label>
+                                <textarea 
+                                    name="reason" 
+                                    class="form-textarea"
+                                    placeholder="Describe the reason for appointment..."
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="button-group">
+                                <button 
+                                    type="button" 
+                                    class="btn btn-secondary"
+                                    onclick="location.href='{% url 'frontdesk_book_appointment' %}';"
+                                >
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    Back
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                    Continue to Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step 3: Payment -->
+                    {% if appointment_data %}
+                    <div class="form-section">
+                        <h2 style="margin-top: 0; margin-bottom: 20px;">
+                            <i class="fa-solid fa-credit-card" style="color: var(--medical-cyan); margin-right: 10px;"></i>
+                            Step 3: Payment
+                        </h2>
+
+                        <!-- Appointment Summary -->
+                        <div class="summary-card">
+                            <h3 style="margin-top: 0; color: #0369a1;">Appointment Summary</h3>
+                            <div class="summary-row">
+                                <span class="summary-label">Patient:</span>
+                                <span class="summary-value">{{ selected_patient.full_name }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Doctor:</span>
+                                <span class="summary-value">{{ appointment_data.doctor_name }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Date & Time:</span>
+                                <span class="summary-value">
+                                    {{ appointment_data.appointment_date }} at {{ appointment_data.appointment_time }}
+                                </span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Reason:</span>
+                                <span class="summary-value">{{ appointment_data.reason }}</span>
+                            </div>
+                            <div class="summary-row" style="border-top: 2px solid #bae6fd; padding-top: 12px; margin-top: 12px;">
+                                <span class="summary-label">Consultation Fee:</span>
+                                <span class="summary-value" style="font-size: 1.1rem; font-weight: 700;">
+                                    ₹{{ appointment_data.consultation_fee }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="step" value="3">
+                            <input type="hidden" name="amount" value="{{ appointment_data.consultation_fee }}">
+
+                            <!-- Payment Method -->
+                            <div class="form-group">
+                                <label class="form-label">Select Payment Method *</label>
+                                <div class="payment-method">
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment_method" value="Cash" checked>
+                                        <i class="fa-solid fa-money-bill" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                                        <div>Cash</div>
+                                    </label>
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment_method" value="Card">
+                                        <i class="fa-solid fa-credit-card" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                                        <div>Card</div>
+                                    </label>
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment_method" value="UPI">
+                                        <i class="fa-solid fa-mobile-alt" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                                        <div>UPI</div>
+                                    </label>
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment_method" value="NetBanking">
+                                        <i class="fa-solid fa-bank" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                                        <div>Net Banking</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                                <i class="fa-solid fa-check-circle" style="color: #16a34a; margin-right: 10px;"></i>
+                                <span style="color: #166534;">
+                                    Payment marked as completed. Appointment will be confirmed after payment.
+                                </span>
+                            </div>
+
+                            <div class="button-group">
+                                <button 
+                                    type="button" 
+                                    class="btn btn-secondary"
+                                    onclick="location.href='{% url 'frontdesk_book_appointment' %}';"
+                                >
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    Start Over
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid fa-check"></i>
+                                    Confirm & Process Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Patient search
+        document.getElementById('patient_search')?.addEventListener('input', async function(e) {
+            const query = e.target.value.trim();
+            const resultsDiv = document.getElementById('search_results');
+            
+            if (query.length < 2) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`{% url 'frontdesk_search_patient' %}?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = '';
+                data.patients.forEach(patient => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.innerHTML = `
+                        <div class="result-name">${patient.name}</div>
+                        <div class="result-info">${patient.phone} • ${patient.email}</div>
+                    `;
+                    item.onclick = () => {
+                        document.getElementById('patient_id').value = patient.id;
+                        document.getElementById('patient_search').value = patient.name;
+                        resultsDiv.classList.remove('show');
+                    };
+                    resultsDiv.appendChild(item);
+                });
+                
+                resultsDiv.classList.add('show');
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        });
+
+        // Load time slots when doctor and date change
+        async function loadTimeSlots() {
+            const doctorId = document.getElementById('doctor_select')?.value;
+            const appointmentDate = document.getElementById('appointment_date')?.value;
+            
+            if (!doctorId || !appointmentDate) return;
+            
+            try {
+                const response = await fetch(
+                    `{% url 'frontdesk_get_available_slots' %}?doctor_id=${doctorId}&appointment_date=${appointmentDate}`
+                );
+                const data = await response.json();
+                
+                const slotsDiv = document.getElementById('time_slots');
+                slotsDiv.innerHTML = '';
+                
+                data.slots.forEach(slot => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'slot-btn ' + (slot.available ? '' : 'disabled');
+                    btn.textContent = slot.time;
+                    btn.disabled = !slot.available;
+                    
+                    if (slot.available) {
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            document.getElementById('appointment_time').value = slot.time;
+                        };
+                    }
+                    
+                    slotsDiv.appendChild(btn);
+                });
+            } catch (error) {
+                console.error('Slot loading error:', error);
+            }
+        }
+
+        document.getElementById('doctor_select')?.addEventListener('change', loadTimeSlots);
+        document.getElementById('appointment_date')?.addEventListener('change', loadTimeSlots);
+
+        // Payment method selection
+        document.querySelectorAll('.payment-option input').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.parentElement.classList.add('selected');
+            });
+        });
+
+        // Set initial payment method selection
+        document.querySelector('.payment-option input[checked]')?.parentElement.classList.add('selected');
+    </script>
+</body>
+</html>

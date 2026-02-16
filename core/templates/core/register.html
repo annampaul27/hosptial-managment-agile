@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Registration | BetaCare</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{% static 'core/css/register.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="auth-page">
+
+    <div class="auth-container">
+
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h1>Signup</h1>
+                    <p>Create your BetaCare account</p>
+                </div>
+
+                <!-- Django messages -->
+                {% if messages %}
+                <div class="alert-container">
+                    {% for message in messages %}
+                    <div class="alert alert-error">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" />
+                            <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'register' %}" class="auth-form" onsubmit="return validateForm()">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="full_name">Full Name<span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                <path
+                                    d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10ZM10 12.5C6.66667 12.5 0 14.175 0 17.5V20H20V17.5C20 14.175 13.3333 12.5 10 12.5Z"
+                                    fill="#9CA3AF" />
+                            </svg>
+                            <input type="text" id="full_name" name="full_name" placeholder="Enter your full name"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email<span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                <path
+                                    d="M2 4L10 9L18 4M2 4V16C2 16.5304 2.21071 17.0391 2.58579 17.4142C2.96086 17.7893 3.46957 18 4 18H16C16.5304 18 17.0391 17.7893 17.4142 17.4142C17.7893 17.0391 18 16.5304 18 16V4M2 4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H16C16.5304 2 17.0391 2.21071 17.4142 2.58579C17.7893 2.96086 18 3.46957 18 4Z"
+                                    stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number<span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                <path
+                                    d="M2 3C2 2.44772 2.44772 2 3 2H5.15287C5.64171 2 6.0589 2.35341 6.13927 2.8356L6.87858 7.27147C6.95075 7.70451 6.73206 8.13397 6.3394 8.3303L4.79126 9.10437C5.90756 11.8783 8.12168 14.0924 10.8956 15.2087L11.6697 13.6606C11.866 13.2679 12.2955 13.0492 12.7285 13.1214L17.1644 13.8607C17.6466 13.9411 18 14.3583 18 14.8471V17C18 17.5523 17.5523 18 17 18H15C7.8203 18 2 12.1797 2 5V3Z"
+                                    stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <input type="text" id="phone" name="phone" placeholder="10-digit phone number" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="dob" name="dob">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <div class="input-wrapper">
+                            <textarea id="address" name="address" rows="3" placeholder="Enter your address"
+                                class="auth-textarea"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <div class="input-wrapper">
+                            <select id="gender" name="gender" class="filter-select">
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password<span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                <path
+                                    d="M5 10V6C5 3.23858 7.23858 1 10 1C12.7614 1 15 3.23858 15 6V10M3 10H17C18.1046 10 19 10.8954 19 12V17C19 18.1046 18.1046 19 17 19H3C1.89543 19 1 18.1046 1 17V12C1 10.8954 1.89543 10 3 10Z"
+                                    stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <input type="password" id="password" name="password" placeholder="Minimum 6 characters"
+                                required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path
+                                        d="M10 3C5 3 1.73 7.11 1 10C1.73 12.89 5 17 10 17C15 17 18.27 12.89 19 10C18.27 7.11 15 3 10 3Z"
+                                        stroke="#9CA3AF" stroke-width="2" />
+                                    <circle cx="10" cy="10" r="3" stroke="#9CA3AF" stroke-width="2" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password<span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="input-icon">
+                                <path
+                                    d="M5 10V6C5 3.23858 7.23858 1 10 1C12.7614 1 15 3.23858 15 6V10M3 10H17C18.1046 10 19 10.8954 19 12V17C19 18.1046 18.1046 19 17 19H3C1.89543 19 1 18.1046 1 17V12C1 10.8954 1.89543 10 3 10Z"
+                                    stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                placeholder="Re-enter password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path
+                                        d="M10 3C5 3 1.73 7.11 1 10C1.73 12.89 5 17 10 17C15 17 18.27 12.89 19 10C18.27 7.11 15 3 10 3Z"
+                                        stroke="#9CA3AF" stroke-width="2" />
+                                    <circle cx="10" cy="10" r="3" stroke="#9CA3AF" stroke-width="2" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="error-msg" class="error-message"></div>
+
+                    <button type="submit" class="btn-submit">
+                        Sign Up
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            const name = document.getElementById("full_name").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm_password").value;
+            const error = document.getElementById("error-msg");
+
+            error.innerText = "";
+            error.style.display = "none";
+
+            if (name.length < 3) {
+                error.innerText = "Full name must be at least 3 characters";
+                error.style.display = "block";
+                return false;
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                error.innerText = "Phone number must be 10 digits";
+                error.style.display = "block";
+                return false;
+            }
+
+            if (password.length < 6) {
+                error.innerText = "Password must be at least 6 characters";
+                error.style.display = "block";
+                return false;
+            }
+
+            if (password !== confirmPassword) {
+                error.innerText = "Passwords do not match";
+                error.style.display = "block";
+                return false;
+            }
+
+            return true;
+        }
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === "password") {
+                field.type = "text";
+            } else {
+                field.type = "password";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

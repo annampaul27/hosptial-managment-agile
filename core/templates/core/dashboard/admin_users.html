@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Patients | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' or request.resolver_match.url_name == 'admin_user_edit' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" name="q" placeholder="Search by name or email..." value="{{ request.GET.q }}">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Actions -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Manage Patients</h1>
+                        <p class="page-subtitle">View and manage all registered patients in the system</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <!-- Search Form -->
+                        <form method="get" class="inline-search-form">
+                            <div class="inline-search-box">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" name="q" placeholder="Search patients..." value="{{ request.GET.q }}">
+                            </div>
+                        </form>
+                        
+                        <!-- Add Patient Button -->
+                        <a href="{% url 'admin_patient_add' %}" class="add-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Patient</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Patients Table Card -->
+                <div class="medical-table-card">
+                    <table class="medical-table">
+                        <thead>
+                            <tr>
+                                <th class="cell-id">ID</th>
+                                <th class="cell-patient">Patient</th>
+                                <th class="cell-email">Email</th>
+                                <th class="cell-phone">Role</th>
+                                <th class="cell-status">Status</th>
+                                <th class="cell-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <!-- ID Column -->
+                                <td class="cell-id">#{{ user.id }}</td>
+
+                                <!-- Patient Info Column -->
+                                <td class="cell-patient">
+                                    <div class="patient-info">
+                                        <div class="patient-avatar">
+                                            {{ user.first_name|default:user.email|slice:":1"|upper }}
+                                        </div>
+                                        <div class="patient-details">
+                                            <div class="patient-name">
+                                                {{ user.get_full_name|default:"Patient" }}
+                                            </div>
+                                            <div class="patient-id">#{{ user.id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Email Column -->
+                                <td class="cell-email">{{ user.email }}</td>
+
+                                <!-- Role Column -->
+                                <td class="cell-phone">
+                                    <span class="status-badge" style="background: rgba(167, 139, 250, 0.1); color: var(--medical-purple);">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Patient
+                                    </span>
+                                </td>
+
+                                <!-- Status Column -->
+                                <td class="cell-status">
+                                    {% if user.is_active %}
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Actions Column -->
+                                <td class="cell-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'admin_user_detail' user.id %}" class="action-btn view-btn" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        </a>
+                                        <a href="{% url 'admin_user_edit' user.id %}" class="action-btn edit-btn" title="Edit Patient">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </a>
+                                        <button class="action-btn delete-btn" onclick="openDeleteModal({{ user.id }}, '{{ user.get_full_name|default:user.email }}')" title="Delete Patient">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-row">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-users"></i>
+                                        <p>No patients found</p>
+                                        <a href="{% url 'admin_patient_add' %}" class="add-btn-small">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add First Patient
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if users %}
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            Showing <strong>1-{{ users|length }}</strong> of <strong>{{ users|length }}</strong> patients
+                        </div>
+                        <div class="pagination-controls">
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                            <span class="page-current">Page 1 of 1</span>
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete patient <strong id="patientName"></strong>?</p>
+                <p class="warning-text">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn-delete">Delete Patient</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Delete Modal Functions
+        function openDeleteModal(userId, userName) {
+            const modal = document.getElementById('deleteModal');
+            const patientNameEl = document.getElementById('patientName');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            patientNameEl.textContent = userName;
+            confirmBtn.href = "{% url 'admin_user_delete' 0 %}".replace('0', userId);
+            
+            modal.classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+
+        // Escape key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+            }
+        });
+
+        // Handle search form in header
+        document.querySelector('.header-search input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchValue = this.value;
+                window.location.href = "{% url 'admin_users' %}?q=" + encodeURIComponent(searchValue);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

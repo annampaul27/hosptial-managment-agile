@@ -1,0 +1,197 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="medical-dashboard">
+    <!-- Sidebar -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee" />
+                            <stop offset="100%" stop-color="#a78bfa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">Doctor</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'doctor_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'doctor_appointments' %}" class="nav-item active">
+                <i class="fa-solid fa-calendar"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="{% url 'doctor_patients' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Patient Records</span>
+            </a>
+            <a href="{% url 'doctor_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription-bottle"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="{% url 'doctor_schedule' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i>
+                <span>Schedule</span>
+            </a>
+        </nav>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="medical-main">
+        <!-- Header -->
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Appointments</h1>
+                <p class="page-subtitle">Manage your patient appointments</p>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="medical-content">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                        <i class="fa-solid fa-list"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Total Appointments</p>
+                        <h3 class="stat-value">{{ appointments|length }}</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Confirmed</p>
+                        <h3 class="stat-value">{{ stats.confirmed }}</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Completed</p>
+                        <h3 class="stat-value">{{ stats.completed }}</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Pending</p>
+                        <h3 class="stat-value">{{ stats.pending_payment }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Table -->
+            <div class="medical-table-card" style="margin-top: var(--space-6);">
+                <div class="info-header" style="margin-bottom: var(--space-5);">
+                    <h3>
+                        <i class="fa-solid fa-calendar-check" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                        All Appointments
+                    </h3>
+                </div>
+
+                {% if appointments %}
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--gray-50); border-bottom: 2px solid var(--gray-200);">
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Patient Name</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Date</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Time</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Reason</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Status</th>
+                                    <th style="padding: var(--space-3); text-align: center; font-weight: 600; color: var(--gray-700);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr style="border-bottom: 1px solid var(--gray-200); hover-background: var(--gray-50);">
+                                    <td style="padding: var(--space-3); color: var(--gray-800);">{{ appointment.patient.full_name }}</td>
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.appointment_date|date:"d M Y" }}</td>
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.appointment_time|time:"g:i A" }}</td>
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">{{ appointment.reason|truncatechars:30 }}</td>
+                                    <td style="padding: var(--space-3);">
+                                        <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+                                            {% if appointment.status == 'Confirmed' %}
+                                                background: rgba(16, 185, 129, 0.1); color: #10b981;
+                                            {% elif appointment.status == 'Completed' %}
+                                                background: rgba(34, 211, 238, 0.1); color: #06b6d4;
+                                            {% elif appointment.status == 'Pending Payment' %}
+                                                background: rgba(245, 158, 11, 0.1); color: #f59e0b;
+                                            {% elif appointment.status == 'Cancelled' %}
+                                                background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                                            {% endif %}">
+                                            {{ appointment.status }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: var(--space-3); text-align: center;">
+                                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" style="display: inline-block; padding: 6px 12px; background: var(--medical-cyan); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem; margin-right: 6px;">
+                                            <i class="fa-solid fa-eye"></i> View
+                                        </a>
+                                        {% if appointment.status == 'Scheduled' %}
+                                        <a href="{% url 'doctor_confirm_appointment' appointment.id %}" style="display: inline-block; padding: 6px 12px; background: var(--medical-green); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-check"></i> Confirm
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-10);">
+                        <i class="fa-solid fa-calendar-xmark" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-4);"></i>
+                        <p style="color: var(--gray-500);">No appointments found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

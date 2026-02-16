@@ -1,0 +1,459 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .prescription-card {
+            padding: var(--space-5);
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            transition: var(--transition);
+        }
+
+        .prescription-card:hover {
+            border-color: var(--medical-purple);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .prescription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-4);
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .prescription-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: start;
+            gap: var(--space-3);
+        }
+
+        .meta-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(34, 211, 238, 0.1));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .meta-icon i {
+            color: var(--medical-purple);
+        }
+
+        .meta-content h5 {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .meta-content p {
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .medicine-list {
+            background: var(--gray-50);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .medicine-item {
+            padding: var(--space-3);
+            background: var(--white);
+            border-left: 3px solid var(--medical-cyan);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-3);
+        }
+
+        .medicine-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .medicine-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+
+        .medicine-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-2);
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .medicine-detail {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .medicine-detail i {
+            color: var(--medical-purple);
+            font-size: 0.75rem;
+        }
+
+        .instructions-box {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(167, 139, 250, 0.05));
+            border: 1px solid var(--medical-cyan);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-4);
+        }
+
+        .instructions-box h5 {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+
+        .instructions-box p {
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-10) var(--space-6);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray-300);
+            margin-bottom: var(--space-4);
+        }
+
+        .empty-state h3 {
+            color: var(--gray-600);
+            margin-bottom: var(--space-2);
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+        }
+
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: var(--gray-100);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item active">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="{% url 'medical_history' %}" class="nav-item">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical History</span>
+                </a>
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">My Prescriptions</h1>
+                    <p class="page-subtitle">View and manage your medical prescriptions</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'patient_dashboard' %}" class="btn-cancel" style="text-decoration:none;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Display Messages -->
+                {% if messages %}
+                <div style="margin-bottom: var(--space-6);">
+                    {% for message in messages %}
+                    <div style="padding: var(--space-4); background: {% if message.tags == 'success' %}rgba(16, 185, 129, 0.1){% elif message.tags == 'error' %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; border-radius: var(--radius-md); margin-bottom: var(--space-3);">
+                        <p style="color: {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; font-weight: 500;">
+                            {{ message }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Prescriptions List -->
+                <div class="medical-table-card">
+                    <div class="info-header" style="margin-bottom: var(--space-5);">
+                        <div>
+                            <h3><i class="fa-solid fa-prescription" style="color: var(--medical-purple); margin-right: var(--space-2);"></i>Prescription History</h3>
+                            <p style="font-size: 0.9rem; color: var(--gray-600); margin-top: 6px;">
+                                {% if prescriptions %}
+                                    Showing {{ prescriptions|length }} prescription{{ prescriptions|length|pluralize }}
+                                {% else %}
+                                    No prescriptions found
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if prescriptions %}
+                        {% for prescription in prescriptions %}
+                        <div class="prescription-card">
+                            <!-- Header -->
+                            <div class="prescription-header">
+                                <div>
+                                    <h4 style="font-size: 1.2rem; font-weight: 600; color: var(--gray-800); margin-bottom: 6px;">
+                                        Prescription #{{ prescription.id }}
+                                    </h4>
+                                    <span class="date-badge">
+                                        <i class="fa-solid fa-calendar-alt" style="margin-right: 6px; font-size: 0.8rem;"></i>
+                                        {{ prescription.created_at|date:"F d, Y" }}
+                                    </span>
+                                </div>
+                                <button onclick="window.print()" class="btn-cancel" style="border: none; cursor: pointer;">
+                                    <i class="fa-solid fa-print"></i> Print
+                                </button>
+                            </div>
+
+                            <!-- Meta Information -->
+                            <div class="prescription-meta">
+                                <div class="meta-item">
+                                    <div class="meta-icon">
+                                        <i class="fa-solid fa-user-doctor"></i>
+                                    </div>
+                                    <div class="meta-content">
+                                        <h5>Prescribed By</h5>
+                                        <p>Dr. {{ prescription.doctor.user.get_full_name }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="meta-item">
+                                    <div class="meta-icon">
+                                        <i class="fa-solid fa-stethoscope"></i>
+                                    </div>
+                                    <div class="meta-content">
+                                        <h5>Specialization</h5>
+                                        <p>{{ prescription.doctor.specialization }}</p>
+                                    </div>
+                                </div>
+
+                                {% if prescription.appointment %}
+                                <div class="meta-item">
+                                    <div class="meta-icon">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div class="meta-content">
+                                        <h5>Appointment Date</h5>
+                                        <p>{{ prescription.appointment.appointment_date|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Medicine Details -->
+                            <div class="medicine-list">
+                                <h5 style="font-weight: 600; color: var(--gray-800); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                                    <i class="fa-solid fa-pills" style="color: var(--medical-cyan);"></i>
+                                    Prescribed Medication
+                                </h5>
+                                
+                                <div class="medicine-item">
+                                    <div class="medicine-name">
+                                        <i class="fa-solid fa-capsules" style="color: var(--medical-purple); margin-right: 8px;"></i>
+                                        {{ prescription.medicine_name }}
+                                    </div>
+                                    
+                                    <div class="medicine-details">
+                                        <div class="medicine-detail">
+                                            <i class="fa-solid fa-prescription-bottle"></i>
+                                            <span><strong>Dosage:</strong> {{ prescription.dosage }}</span>
+                                        </div>
+                                        <div class="medicine-detail">
+                                            <i class="fa-solid fa-clock"></i>
+                                            <span><strong>Frequency:</strong> {{ prescription.frequency }}</span>
+                                        </div>
+                                        <div class="medicine-detail">
+                                            <i class="fa-solid fa-calendar-days"></i>
+                                            <span><strong>Duration:</strong> {{ prescription.duration }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Instructions -->
+                            {% if prescription.instructions %}
+                            <div class="instructions-box">
+                                <h5>
+                                    <i class="fa-solid fa-info-circle" style="color: var(--medical-cyan);"></i>
+                                    Special Instructions
+                                </h5>
+                                <p>{{ prescription.instructions }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-prescription"></i>
+                            <h3>No Prescriptions Yet</h3>
+                            <p>You don't have any prescriptions yet.</p>
+                            <p style="margin-top: var(--space-2);">Prescriptions will appear here after your doctor consultations.</p>
+                            
+                            <div style="margin-top: var(--space-6);">
+                                <a href="{% url 'patient_book_appointment' %}" class="add-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-2);">
+                                    <i class="fa-solid fa-calendar-plus"></i> Book Appointment
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Info Card -->
+                <div class="medical-table-card" style="margin-top: var(--space-6); background: linear-gradient(135deg, rgba(167, 139, 250, 0.05), rgba(34, 211, 238, 0.05)); border: 1px solid var(--medical-purple);">
+                    <div style="display: flex; align-items: start; gap: var(--space-4);">
+                        <div style="flex-shrink: 0; width: 48px; height: 48px; background: linear-gradient(135deg, var(--medical-purple), var(--medical-cyan)); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-exclamation-triangle" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4 style="font-weight: 600; color: var(--gray-800); margin-bottom: var(--space-2);">Important Reminder</h4>
+                            <ul style="color: var(--gray-600); font-size: 0.9rem; line-height: 1.8; list-style: none; padding: 0;">
+                                <li style="margin-bottom: 8px;"><i class="fa-solid fa-check-circle" style="color: var(--medical-green); margin-right: 8px;"></i> Always follow the prescribed dosage and duration</li>
+                                <li style="margin-bottom: 8px;"><i class="fa-solid fa-check-circle" style="color: var(--medical-green); margin-right: 8px;"></i> Complete the full course even if you feel better</li>
+                                <li style="margin-bottom: 8px;"><i class="fa-solid fa-check-circle" style="color: var(--medical-green); margin-right: 8px;"></i> Contact your doctor if you experience any side effects</li>
+                                <li><i class="fa-solid fa-check-circle" style="color: var(--medical-green); margin-right: 8px;"></i> Store medicines in a cool, dry place</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,438 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .form-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--gray-800);
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--gray-400);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right var(--space-4) center;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .form-label .required {
+            color: var(--error-red);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-5);
+        }
+
+        .doctor-card {
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .doctor-card:hover {
+            background: var(--white);
+            border-color: var(--medical-cyan);
+            box-shadow: var(--shadow-md);
+        }
+
+        .doctor-card.selected {
+            background: rgba(34, 211, 238, 0.08);
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .doctor-card input[type="radio"] {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+
+        .no-doctors {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item active">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="{% url 'medical_history' %}" class="nav-item">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical History</span>
+                </a>
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">Book Appointment</h1>
+                    <p class="page-subtitle">Schedule a consultation with our specialists</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'patient_dashboard' %}" class="btn-cancel" style="text-decoration:none;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Display Messages -->
+                {% if messages %}
+                <div style="margin-bottom: var(--space-6);">
+                    {% for message in messages %}
+                    <div style="padding: var(--space-4); background: {% if message.tags == 'success' %}rgba(16, 185, 129, 0.1){% elif message.tags == 'error' %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; border-radius: var(--radius-md); margin-bottom: var(--space-3);">
+                        <p style="color: {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; font-weight: 500;">
+                            {{ message }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="POST" id="appointmentForm">
+                    {% csrf_token %}
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+
+                        <!-- LEFT COLUMN: Doctor Selection -->
+                        <div class="medical-table-card">
+                            <div class="info-header" style="margin-bottom:var(--space-5); padding-bottom:var(--space-4); border-bottom:1px solid var(--gray-200);">
+                                <h3><i class="fa-solid fa-user-doctor" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Select Doctor</h3>
+                            </div>
+
+                            <!-- Specialization Filter -->
+                            <div class="form-group">
+                                <label class="form-label">Specialization <span class="required">*</span></label>
+                                <select id="specializationSelect" class="form-input" required>
+                                    <option value="">-- Select Specialization --</option>
+                                    {% for spec in specializations %}
+                                    <option value="{{ spec }}">{{ spec }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Doctors List (Dynamic) -->
+                            <div id="doctorsContainer">
+                                <div class="no-doctors">
+                                    <i class="fa-solid fa-user-doctor" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
+                                    <p>Select a specialization to view available doctors</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: Appointment Details -->
+                        <div style="display:flex; flex-direction:column; gap:var(--space-6);">
+
+                            <!-- Appointment Date & Time -->
+                            <div class="medical-table-card">
+                                <div class="info-header" style="margin-bottom:var(--space-5); padding-bottom:var(--space-4); border-bottom:1px solid var(--gray-200);">
+                                    <h3><i class="fa-solid fa-calendar" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>Appointment Details</h3>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Appointment Date <span class="required">*</span></label>
+                                    <input type="date" name="appointment_date" class="form-input" min="{{ today }}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Appointment Time <span class="required">*</span></label>
+                                    <input type="time" name="appointment_time" class="form-input" required>
+                                </div>
+
+                                <div style="background:var(--gray-50); padding:var(--space-4); border-radius:var(--radius-md); border:1px solid var(--gray-200);">
+                                    <p style="font-size:0.82rem; color:var(--gray-600); line-height:1.6;">
+                                        <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); margin-right:6px;"></i>
+                                        <strong>Office Hours:</strong> Mon-Sat, 9:00 AM - 6:00 PM
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Reason for Visit -->
+                            <div class="medical-table-card">
+                                <div class="info-header" style="margin-bottom:var(--space-5); padding-bottom:var(--space-4); border-bottom:1px solid var(--gray-200);">
+                                    <h3><i class="fa-solid fa-notes-medical" style="color:var(--medical-blue); margin-right:var(--space-2);"></i>Reason for Visit</h3>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Describe your symptoms <span class="required">*</span></label>
+                                    <textarea name="reason" class="form-input" placeholder="Please describe your symptoms or reason for visit..." required></textarea>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Hidden field for selected doctor -->
+                    <input type="hidden" name="doctor" id="selectedDoctorId">
+
+                    <!-- Submit Button -->
+                    <div style="display:flex; align-items:center; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-6);">
+                        <a href="{% url 'patient_dashboard' %}" class="btn-cancel" style="text-decoration:none; padding:var(--space-3) var(--space-6);">
+                            Cancel
+                        </a>
+                        <button type="submit" class="add-btn" style="border:none; cursor:pointer; padding:var(--space-3) var(--space-8);">
+                            <i class="fa-solid fa-check"></i> Book Appointment
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const specializationSelect = document.getElementById('specializationSelect');
+            const doctorsContainer = document.getElementById('doctorsContainer');
+            const selectedDoctorInput = document.getElementById('selectedDoctorId');
+            const appointmentForm = document.getElementById('appointmentForm');
+
+            // Listen for specialization change
+            specializationSelect.addEventListener('change', function() {
+                const specialization = this.value;
+
+                if (!specialization) {
+                    doctorsContainer.innerHTML = `
+                        <div class="no-doctors">
+                            <i class="fa-solid fa-user-doctor" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
+                            <p>Select a specialization to view available doctors</p>
+                        </div>
+                    `;
+                    selectedDoctorInput.value = '';
+                    return;
+                }
+
+                // Show loading
+                doctorsContainer.innerHTML = `
+                    <div class="loading">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--medical-cyan);"></i>
+                        <p style="margin-top: var(--space-3);">Loading doctors...</p>
+                    </div>
+                `;
+
+                // Fetch doctors via AJAX
+                fetch(`{% url 'get_doctors_by_specialization' %}?specialization=${encodeURIComponent(specialization)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.doctors.length === 0) {
+                            doctorsContainer.innerHTML = `
+                                <div class="no-doctors">
+                                    <i class="fa-solid fa-user-slash" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
+                                    <p>No doctors found for this specialization</p>
+                                </div>
+                            `;
+                            selectedDoctorInput.value = '';
+                            return;
+                        }
+
+                        // Build doctors list
+                        let html = '';
+                        data.doctors.forEach(doctor => {
+                            html += `
+                                <label class="doctor-card" onclick="selectDoctor(${doctor.id}, this)">
+                                    <input type="radio" name="doctor_radio" value="${doctor.id}">
+                                    <div style="display:flex; align-items:start; gap:var(--space-3);">
+                                        <div class="patient-avatar" style="width:48px; height:48px; background:linear-gradient(135deg, #60a5fa, #8b5cf6); flex-shrink:0;">
+                                            <i class="fa-solid fa-user-doctor"></i>
+                                        </div>
+                                        <div style="flex:1;">
+                                            <h4 style="font-weight:600; color:var(--gray-800); margin-bottom:4px;">Dr. ${doctor.name}</h4>
+                                            <p style="font-size:0.85rem; color:var(--gray-600); margin-bottom:6px;">
+                                                <i class="fa-solid fa-stethoscope" style="color:var(--medical-purple); margin-right:4px;"></i>
+                                                ${doctor.specialization} • ${doctor.department}
+                                            </p>
+                                            <div style="display:flex; gap:var(--space-4); font-size:0.8rem; color:var(--text-medium); margin-bottom:6px;">
+                                                <span><i class="fa-solid fa-medal" style="color:var(--warning-yellow); margin-right:4px;"></i>${doctor.experience} yrs</span>
+                                                <span><i class="fa-solid fa-indian-rupee-sign" style="color:var(--medical-green); margin-right:4px;"></i>₹${doctor.consultation_fee}</span>
+                                            </div>
+                                            ${doctor.bio ? `<p style="font-size:0.8rem; color:var(--gray-500); margin-top:6px;">${doctor.bio}</p>` : ''}
+                                        </div>
+                                    </div>
+                                </label>
+                            `;
+                        });
+
+                        doctorsContainer.innerHTML = html;
+                        selectedDoctorInput.value = '';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching doctors:', error);
+                        doctorsContainer.innerHTML = `
+                            <div class="no-doctors">
+                                <i class="fa-solid fa-exclamation-triangle" style="font-size: 3rem; color: var(--error-red); margin-bottom: var(--space-3);"></i>
+                                <p>Error loading doctors. Please try again.</p>
+                            </div>
+                        `;
+                        selectedDoctorInput.value = '';
+                    });
+            });
+
+            // Form validation
+            appointmentForm.addEventListener('submit', function(e) {
+                if (!selectedDoctorInput.value) {
+                    e.preventDefault();
+                    alert('Please select a doctor before booking.');
+                }
+            });
+        });
+
+        // Function to select doctor (called from onclick)
+        function selectDoctor(doctorId, element) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.doctor-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to clicked card
+            element.classList.add('selected');
+
+            // Set hidden input value
+            document.getElementById('selectedDoctorId').value = doctorId;
+        }
+    </script>
+
+</body>
+</html>

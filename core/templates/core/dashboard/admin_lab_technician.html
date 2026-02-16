@@ -1,0 +1,495 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Technicians | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Modal input styling to match dashboard theme */
+        .modal-body input,
+        .modal-body textarea,
+        .modal-body select {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--gray-800);
+            transition: var(--transition);
+            margin-bottom: var(--space-4);
+        }
+
+        .modal-body input:focus,
+        .modal-body textarea:focus,
+        .modal-body select:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .modal-body textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .modal-body label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .modal-body .form-group {
+            margin-bottom: var(--space-2);
+        }
+
+        .modal-body .required {
+            color: var(--error-red);
+        }
+
+        .lab-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: rgba(167, 139, 250, 0.1);
+            color: var(--medical-purple);
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .lab-badge i {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <!-- New: Lab Technicians -->
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_lab_technician_edit' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <!-- New: Front Desk Staff -->
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="headerSearchInput" placeholder="Search technicians..." value="{{ request.GET.q }}">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Actions -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Lab Technicians</h1>
+                        <p class="page-subtitle">View and manage all laboratory technicians</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <!-- Search Form -->
+                        <form method="get" class="inline-search-form">
+                            <div class="inline-search-box">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" name="q" placeholder="Search technicians..." value="{{ request.GET.q }}">
+                            </div>
+                        </form>
+
+                        <!-- Add Technician Button -->
+                        <button class="add-btn" onclick="openAddModal()">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Technician</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Technicians Table Card -->
+                <div class="medical-table-card">
+                    <table class="medical-table">
+                        <thead>
+                            <tr>
+                                <th class="cell-id">ID</th>
+                                <th class="cell-patient">Name</th>
+                                <th class="cell-email">Email</th>
+                                <th class="cell-phone">Phone</th>
+                                <th class="cell-phone">Lab Assignment</th>
+                                <th class="cell-status">Status</th>
+                                <th class="cell-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for technician in technicians %}
+                            <tr>
+                                <!-- ID -->
+                                <td class="cell-id">T{{ technician.id }}</td>
+
+                                <!-- Name with avatar -->
+                                <td class="cell-patient">
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                                            {{ technician.user.first_name|default:technician.user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div class="patient-details">
+                                            <div class="patient-name">{{ technician.user.get_full_name|default:technician.user.username }}</div>
+                                            <div class="patient-id">@{{ technician.user.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Email -->
+                                <td class="cell-email">{{ technician.user.email|default:"—" }}</td>
+
+                                <!-- Phone -->
+                                <td class="cell-phone">{{ technician.phone|default:"—" }}</td>
+
+                                <!-- Lab Assignment -->
+                                <td class="cell-phone">
+                                    {% if technician.lab %}
+                                    <span class="lab-badge">
+                                        <i class="fa-solid fa-flask"></i>
+                                        {{ technician.lab.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="cell-status">
+                                    {% if technician.status == 'active' %}
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Active
+                                    </span>
+                                    {% elif technician.status == 'on_leave' %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                        On Leave
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="cell-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'admin_lab_technician_edit' technician.id %}" class="action-btn edit-btn" title="Edit Technician">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <button class="action-btn delete-btn"
+                                            onclick="openDeleteModal({{ technician.id }}, '{{ technician.user.get_full_name|default:technician.user.username }}')"
+                                            title="Delete Technician">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="empty-row">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-user-nurse"></i>
+                                        <p>No lab technicians found</p>
+                                        <button class="add-btn-small" onclick="openAddModal()" style="border:none; cursor:pointer;">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add First Technician
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if technicians %}
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            Showing <strong>1-{{ technicians|length }}</strong> of <strong>{{ technicians|length }}</strong> technicians
+                        </div>
+                        <div class="pagination-controls">
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                            <span class="page-current">Page 1 of 1</span>
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== ADD TECHNICIAN MODAL ==================== -->
+    <div class="modal" id="addTechnicianModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-nurse" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>Add New Lab Technician</h3>
+                <button class="modal-close" onclick="closeAddModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="addTechnicianForm" action="{% url 'admin_lab_technician_add' %}">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>Username <span class="required">*</span></label>
+                        <input type="text" name="username" placeholder="e.g. john_tech" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>First Name <span class="required">*</span></label>
+                        <input type="text" name="first_name" placeholder="e.g. John" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name <span class="required">*</span></label>
+                        <input type="text" name="last_name" placeholder="e.g. Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" name="email" placeholder="e.g. john@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number <span class="required">*</span></label>
+                        <input type="text" name="phone" placeholder="e.g. 9876543210" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assign to Lab</label>
+                        <select name="lab_id">
+                            <option value="">-- Not Assigned --</option>
+                            {% for lab in labs %}
+                            <option value="{{ lab.id }}">{{ lab.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password <span class="required">*</span></label>
+                        <input type="password" name="password" placeholder="Enter secure password" required>
+                    </div>
+
+                    <select name="status" class="form-select" required>
+                        <option value="Active" {% if technician.status == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Inactive" {% if technician.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="On Leave" {% if technician.status == 'On Leave' %}selected{% endif %}>On Leave</option>
+                    </select>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="add-btn" onclick="document.getElementById('addTechnicianForm').submit();" style="border:none; cursor:pointer;">
+                    <i class="fa-solid fa-plus"></i> Add Technician
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="technicianName"></strong>?</p>
+                <p class="warning-text">This action cannot be undone and will remove the technician's account and profile.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <form id="deleteTechnicianForm" method="POST" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">
+                        <i class="fa-solid fa-trash"></i> Delete Technician
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ===== ADD MODAL =====
+        function openAddModal() {
+            document.getElementById('addTechnicianModal').classList.add('active');
+        }
+        function closeAddModal() {
+            document.getElementById('addTechnicianModal').classList.remove('active');
+        }
+
+        // ===== DELETE MODAL =====
+        function openDeleteModal(technicianId, technicianName) {
+            document.getElementById('technicianName').textContent = technicianName;
+            document.getElementById('deleteTechnicianForm').action = "{% url 'admin_delete_lab_technician' 0 %}".replace('0', technicianId);
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        // ===== CLOSE MODALS ON BACKDROP CLICK =====
+        document.getElementById('addTechnicianModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        // ===== CLOSE MODALS ON ESCAPE =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        // ===== HEADER SEARCH REDIRECT =====
+        document.getElementById('headerSearchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.location.href = "{% url 'admin_lab_technicians' %}?q=" + encodeURIComponent(this.value);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Care - Login</title>
+    <link rel="stylesheet" href="{% static 'core/css/login.css' %}">
+</head>
+
+<body>
+    <div class="background-overlay"></div>
+
+    <!-- Logo and Branding -->
+    <div class="logo-container">
+        <div class="logo">
+            <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M25 5C23.5 5 22 6 22 8V20H10C8 20 7 21.5 7 23C7 24.5 8 26 10 26H22V38C22 40 23.5 41 25 41C26.5 41 28 40 28 38V26H40C42 26 43 24.5 43 23C43 21.5 42 20 40 20H28V8C28 6 26.5 5 25 5Z"
+                    fill="white" />
+                <path d="M25 45C35 45 43 37 43 27C43 17 35 9 25 9C15 9 7 17 7 27C7 37 15 45 25 45Z" stroke="white"
+                    stroke-width="2" fill="none" />
+            </svg>
+        </div>
+        <h1 class="brand-name">Beta Care</h1>
+        <p class="tagline">Your Health, Our Priority</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Sign In</h2>
+
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Role Selection -->
+            <div class="role-buttons">
+                <button type="button" class="role-btn active" onclick="selectRole('patient', this)"
+                    aria-label="Login as Patient">
+                    Patient
+                </button>
+                <button type="button" class="role-btn" onclick="selectRole('doctor', this)"
+                    aria-label="Login as Doctor">
+                    Doctor
+                </button>
+                <button type="button" class="role-btn" onclick="selectRole('lab', this)" aria-label="Login as Lab">
+                    Lab
+                </button>
+                <button type="button" class="role-btn" onclick="selectRole('admin', this)" aria-label="Login as Admin">
+                    Admin
+                </button>
+                <button type="button" class="role-btn" onclick="selectRole('front_desk', this)"
+                    aria-label="Login as Front Desk">
+                    Front Desk
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form method="POST" id="loginForm">
+                {% csrf_token %}
+
+                <input type="hidden" name="role" id="role" value="patient">
+
+                <!-- Username -->
+                <div class="form-group">
+                    <input type="text" name="username" id="username" placeholder="Username" required
+                        autocomplete="username" aria-label="Username">
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <input type="password" name="password" id="password" placeholder="Password" required
+                        autocomplete="current-password" aria-label="Password">
+                </div>
+
+                <button class="btn-login" type="submit">Login</button>
+            </form>
+
+            <div class="link">
+                New patient?
+                <a href="{% url 'register' %}">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectRole(role, btn) {
+            // Update hidden input
+            document.getElementById("role").value = role;
+
+            // Update active state
+            document.querySelectorAll(".role-btn")
+                .forEach(b => b.classList.remove("active"));
+
+            btn.classList.add("active");
+        }
+
+        // Optional: Add form validation feedback
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                e.preventDefault();
+                alert('Please fill in all fields');
+            }
+        });
+    </script>
+
+</body>
+
+</html>

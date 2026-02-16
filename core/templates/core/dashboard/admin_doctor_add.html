@@ -1,0 +1,616 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Doctor | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Form-specific styles */
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .form-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .section-title i {
+            color: var(--medical-blue);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-5);
+        }
+
+        .form-grid.single-column {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+            font-size: 0.9rem;
+        }
+
+        .required {
+            color: var(--error-red);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            transition: var(--transition);
+            color: var(--gray-800);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--medical-blue);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+
+        .input-group .form-input,
+        .input-group .form-select {
+            padding-left: var(--space-10);
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding-top: var(--space-6);
+            border-top: 2px solid var(--gray-100);
+        }
+
+        .btn-submit {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-4) var(--space-6);
+            background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.25);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(96, 165, 250, 0.35);
+        }
+
+        .btn-secondary {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-4) var(--space-6);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: var(--space-6);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <!-- New: Lab Technicians -->
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <!-- New: Front Desk Staff -->
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Breadcrumb -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Add New Doctor</h1>
+                        <p class="page-subtitle">Register a new medical professional in the system</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <a href="{% url 'admin_doctors' %}" class="btn-cancel"
+                            style="text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-2);">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            Back to Doctors
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Form Container -->
+                <div class="form-container">
+                    <div class="form-card">
+                        <form method="POST">
+                            {% csrf_token %}
+
+                            <!-- Personal Information Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                    Doctor Information
+                                </h3>
+
+                                <div class="form-grid">
+                                    <!-- First Name -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            First Name <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-user"></i>
+                                            <input type="text" name="first_name" class="form-input" 
+                                                   placeholder="Enter first name" required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Last Name -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Last Name <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-user"></i>
+                                            <input type="text" name="last_name" class="form-input" 
+                                                   placeholder="Enter last name" required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Email Address <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-envelope"></i>
+                                            <input type="email" name="email" class="form-input" 
+                                                   placeholder="doctor@example.com" required>
+                                        </div>
+                                        <span class="form-hint">Used for login and communication</span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Department <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-building"></i>
+                                            <input type="text" name="department" class="form-input"
+                                                placeholder="Enter department" required>
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Specialization -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Specialization <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-stethoscope"></i>
+                                            <select name="specialization" class="form-select" required>
+                                                <option value="">Select Specialization</option>
+                                                <option value="Cardiology">Cardiology</option>
+                                                <option value="Dermatology">Dermatology</option>
+                                                <option value="Endocrinology">Endocrinology</option>
+                                                <option value="Gastroenterology">Gastroenterology</option>
+                                                <option value="General Practice">General Practice</option>
+                                                <option value="Gynecology">Gynecology</option>
+                                                <option value="Neurology">Neurology</option>
+                                                <option value="Oncology">Oncology</option>
+                                                <option value="Ophthalmology">Ophthalmology</option>
+                                                <option value="Orthopedics">Orthopedics</option>
+                                                <option value="Pediatrics">Pediatrics</option>
+                                                <option value="Psychiatry">Psychiatry</option>
+                                                <option value="Pulmonology">Pulmonology</option>
+                                                <option value="Radiology">Radiology</option>
+                                                <option value="Surgery">Surgery</option>
+                                                <option value="Urology">Urology</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Professional Details Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fa-solid fa-id-card"></i>
+                                    Professional Details
+                                </h3>
+
+                                <div class="form-grid">
+                                    <!-- License Number -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Medical License Number
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-id-badge"></i>
+                                            <input type="text" name="license_number" class="form-input" 
+                                                   placeholder="e.g., MD12345">
+                                        </div>
+                                        <span class="form-hint">Optional - Can be added later</span>
+                                    </div>
+
+                                    <!-- Years of Experience -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Years of Experience
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-award"></i>
+                                            <input type="number" name="experience" class="form-input" 
+                                                   placeholder="e.g., 5" min="0" max="60">
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone Number -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Phone Number
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-phone"></i>
+                                            <input type="text" name="phone" class="form-input" 
+                                                   placeholder="+1 (555) 000-0000">
+                                        </div>
+                                    </div>
+
+                                    <!-- Consultation Fee -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Consultation Fee (₹)
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-dollar-sign"></i>
+                                            <input type="number" name="consultation_fee" class="form-input" 
+                                                   placeholder="e.g., 100" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Security Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fa-solid fa-lock"></i>
+                                    Account Security
+                                </h3>
+
+                                <div class="form-grid">
+                                    <!-- Password -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Password <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-lock"></i>
+                                            <input type="password" name="password" id="password" class="form-input" 
+                                                   placeholder="Create a strong password" required>
+                                        </div>
+                                        <span class="form-hint">Minimum 8 characters, include numbers and symbols</span>
+                                    </div>
+
+                                    <!-- Confirm Password -->
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Confirm Password <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <i class="input-icon fa-solid fa-lock"></i>
+                                            <input type="password" name="confirm_password" id="confirm_password" 
+                                                   class="form-input" placeholder="Re-enter password" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bio/About Section (Optional) -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fa-solid fa-file-alt"></i>
+                                    Additional Information
+                                </h3>
+
+                                <div class="form-grid single-column">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Bio / About
+                                        </label>
+                                        <textarea name="bio" class="form-textarea" 
+                                                  placeholder="Brief introduction about the doctor (Optional)"></textarea>
+                                        <span class="form-hint">This will be displayed on the doctor's profile</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-actions">
+                                <button type="submit" class="btn-submit">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <span>Create Doctor</span>
+                                </button>
+
+                                <a href="{% url 'admin_doctors' %}" class="btn-secondary">
+                                    <i class="fa-solid fa-times"></i>
+                                    <span>Cancel</span>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript for form validation -->
+    <script>
+        // Password confirmation validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match! Please try again.');
+                document.getElementById('confirm_password').focus();
+                return false;
+            }
+            
+            if (password.length < 8) {
+                e.preventDefault();
+                alert('Password must be at least 8 characters long!');
+                document.getElementById('password').focus();
+                return false;
+            }
+        });
+
+        // Phone number formatting (optional)
+        const phoneInput = document.querySelector('input[name="phone"]');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 10) value = value.slice(0, 10);
+                
+                if (value.length >= 6) {
+                    e.target.value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+                } else if (value.length >= 3) {
+                    e.target.value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                } else {
+                    e.target.value = value;
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>

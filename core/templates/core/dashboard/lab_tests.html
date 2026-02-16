@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Bookings | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Test Bookings</h1>
+                    <p class="page-subtitle">Manage and track all patient test bookings</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Filter Tabs -->
+                <div style="display:flex; gap:var(--space-3); margin-bottom:var(--space-6); border-bottom:2px solid var(--gray-200); padding-bottom:var(--space-2);">
+                    <a href="{% url 'lab_tests' %}" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if not status_filter %}var(--medical-cyan){% else %}var(--gray-500){% endif %}; font-weight:{% if not status_filter %}600{% else %}500{% endif %}; border-bottom:{% if not status_filter %}3px solid var(--medical-cyan){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        All Bookings
+                        {% if total_count > 0 %}
+                            <span style="background:{% if not status_filter %}var(--medical-cyan){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ total_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'lab_tests' %}?status=Pending" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if status_filter == 'Pending' %}var(--medical-cyan){% else %}var(--gray-500){% endif %}; font-weight:{% if status_filter == 'Pending' %}600{% else %}500{% endif %}; border-bottom:{% if status_filter == 'Pending' %}3px solid var(--medical-cyan){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        Pending
+                        {% if pending_count > 0 %}
+                            <span style="background:{% if status_filter == 'Pending' %}var(--medical-cyan){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ pending_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'lab_tests' %}?status=Completed" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if status_filter == 'Completed' %}var(--medical-cyan){% else %}var(--gray-500){% endif %}; font-weight:{% if status_filter == 'Completed' %}600{% else %}500{% endif %}; border-bottom:{% if status_filter == 'Completed' %}3px solid var(--medical-cyan){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        Completed
+                        {% if completed_count > 0 %}
+                            <span style="background:{% if status_filter == 'Completed' %}var(--medical-cyan){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ completed_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+
+                <!-- Bookings Table -->
+                <div class="medical-table-card">
+                    <div class="info-header" style="margin-bottom:var(--space-5);">
+                        <h3>
+                            <i class="fa-solid fa-vials" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                            Patient Test Bookings
+                            {% if status_filter %}
+                                <span style="color:var(--gray-500); font-weight:400; font-size:0.9rem;">- {{ status_filter }}</span>
+                            {% endif %}
+                        </h3>
+                        <div style="display:flex; gap:var(--space-3); align-items:center;">
+                            <input type="text" id="searchInput" placeholder="Search bookings..." style="padding:0.5rem 1rem; border:1px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.9rem; width:250px;">
+                        </div>
+                    </div>
+
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                        <i class="fa-solid fa-user" style="margin-right:6px; color:var(--gray-400);"></i>Patient
+                                    </th>
+                                    <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                        <i class="fa-solid fa-flask" style="margin-right:6px; color:var(--gray-400);"></i>Test
+                                    </th>
+                                    <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                        <i class="fa-solid fa-calendar" style="margin-right:6px; color:var(--gray-400);"></i>Booked On
+                                    </th>
+                                    <th style="text-align:center; padding:var(--space-3) var(--space-4);">
+                                        <i class="fa-solid fa-info-circle" style="margin-right:6px; color:var(--gray-400);"></i>Status
+                                    </th>
+                                    <th style="text-align:center; padding:var(--space-3) var(--space-4);">
+                                        <i class="fa-solid fa-cog" style="margin-right:6px; color:var(--gray-400);"></i>Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsTableBody">
+                                {% for booking in bookings %}
+                                <tr style="border-bottom:1px solid var(--gray-100);" class="booking-row">
+                                    <td style="padding:var(--space-4);">
+                                        <div style="display:flex; align-items:center; gap:var(--space-3);">
+                                            <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #22d3ee, #06b6d4); display:flex; align-items:center; justify-content:center; color:white; font-weight:600;">
+                                                {{ booking.patient.user.first_name|default:booking.patient.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;" class="patient-name">
+                                                    {{ booking.patient.user.get_full_name|default:booking.patient.user.username }}
+                                                </p>
+                                                <p style="font-size:0.8rem; color:var(--gray-500);">
+                                                    {{ booking.patient.user.email|truncatechars:30 }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding:var(--space-4);">
+                                        <div>
+                                            <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;" class="test-name">{{ booking.test.test_name }}</p>
+                                            <p style="font-size:0.8rem; color:var(--gray-500);">
+                                                <i class="fa-solid fa-indian-rupee-sign" style="font-size:0.7rem;"></i> {{ booking.test.price }}
+                                            </p>
+                                        </div>
+                                    </td>
+                                    <td style="padding:var(--space-4);">
+                                        <p style="color:var(--gray-700);">{{ booking.created_at|date:"d M Y" }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);">{{ booking.created_at|date:"h:i A" }}</p>
+                                    </td>
+                                    <td style="padding:var(--space-4); text-align:center;">
+                                        {% if booking.status == 'Pending' or booking.status == 'Booked' %}
+                                            <span class="status-badge status-pending">
+                                                {{ booking.status }}
+                                            </span>
+                                        {% elif booking.status == 'Completed' %}
+                                            <span class="status-badge status-approved">
+                                                {{ booking.status }}
+                                            </span>
+                                        {% elif booking.status == 'In Progress' %}
+                                            <span class="status-badge status-pending">
+                                                {{ booking.status }}
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge status-cancelled">
+                                                {{ booking.status }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding:var(--space-4); text-align:center;">
+                                        <div style="display:flex; gap:var(--space-2); justify-content:center;">
+                                            <a href="#" style="padding:0.5rem 1rem; background:rgba(34,211,238,0.1); color:var(--medical-cyan); border-radius:var(--radius-md); text-decoration:none; font-size:0.85rem; font-weight:600; transition:var(--transition);"
+                                                onmouseover="this.style.background='var(--medical-cyan)'; this.style.color='white';"
+                                                onmouseout="this.style.background='rgba(34,211,238,0.1)'; this.style.color='var(--medical-cyan)';">
+                                                <i class="fa-solid fa-eye"></i> View
+                                            </a>
+                                            {% if booking.status == 'Pending' or booking.status == 'Booked' %}
+                                            <form method="POST" action="{% url 'lab_results' %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                                <button type="submit" style="padding:0.5rem 1rem; background:rgba(167,139,250,0.1); color:var(--medical-purple); border:none; border-radius:var(--radius-md); font-size:0.85rem; font-weight:600; cursor:pointer; transition:var(--transition);"
+                                                    onmouseover="this.style.background='var(--medical-purple)'; this.style.color='white';"
+                                                    onmouseout="this.style.background='rgba(167,139,250,0.1)'; this.style.color='var(--medical-purple)';">
+                                                    <i class="fa-solid fa-check"></i> Complete
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                        <i class="fa-solid fa-inbox" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                        <h3 style="color:var(--gray-600); margin-bottom:var(--space-2);">No test bookings found</h3>
+                        <p style="color:var(--gray-500);">
+                            {% if status_filter %}
+                                No {{ status_filter|lower }} test bookings at the moment.
+                            {% else %}
+                                Test bookings will appear here once patients book tests.
+                            {% endif %}
+                        </p>
+                        {% if status_filter %}
+                        <a href="{% url 'lab_tests' %}" style="display:inline-block; margin-top:var(--space-4); padding:var(--space-2) var(--space-4); background:var(--medical-cyan); color:white; border-radius:var(--radius-md); text-decoration:none; font-weight:600;">
+                            <i class="fa-solid fa-list"></i> View All Bookings
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.booking-row');
+            
+            rows.forEach(row => {
+                const patientName = row.querySelector('.patient-name').textContent.toLowerCase();
+                const testName = row.querySelector('.test-name').textContent.toLowerCase();
+                
+                if (patientName.includes(searchValue) || testName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

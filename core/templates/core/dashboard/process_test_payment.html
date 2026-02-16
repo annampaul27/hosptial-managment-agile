@@ -1,0 +1,381 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Test Payment | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .payment-summary {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .total-row {
+            background: var(--gray-50);
+            margin: 0 calc(-1 * var(--space-6));
+            padding: var(--space-4) var(--space-6);
+            margin-top: var(--space-4);
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            color: var(--medical-green);
+            font-weight: 700;
+        }
+
+        .payment-methods {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .payment-method-option {
+            display: flex;
+            align-items: center;
+            padding: var(--space-4);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .payment-method-option:hover {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.05);
+        }
+
+        .payment-method-option input[type="radio"] {
+            margin-right: var(--space-3);
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .payment-method-option.selected {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.1);
+        }
+
+        .payment-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+            margin-right: var(--space-3);
+            font-size: 1.2rem;
+        }
+
+        .payment-details h4 {
+            margin: 0;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .payment-details p {
+            margin: 4px 0 0 0;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .security-notice {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--status-active);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-6);
+        }
+
+        .security-notice i {
+            color: var(--status-active);
+            margin-right: var(--space-2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item active">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="{% url 'medical_history' %}" class="nav-item">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical History</span>
+                </a>
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">Complete Payment</h1>
+                    <p class="page-subtitle">Secure payment for your test booking</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'patient_diagnostic_tests' %}" class="btn-cancel" style="text-decoration:none;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Tests
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+                <div class="payment-container">
+
+                    <!-- Security Notice -->
+                    <div class="security-notice">
+                        <i class="fa-solid fa-shield-alt"></i>
+                        <strong>Secure Payment:</strong> Your payment information is encrypted and secure.
+                    </div>
+
+                    <!-- Payment Summary -->
+                    <div class="payment-summary">
+                        <h3 style="margin-bottom: var(--space-4); color: var(--gray-800);">
+                            <i class="fa-solid fa-file-invoice" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                            Payment Summary
+                        </h3>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Test Name:</span>
+                            <span class="summary-value">{{ test_booking.test.test_name }}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Laboratory:</span>
+                            <span class="summary-value">{{ test_booking.lab.name }}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Test Date:</span>
+                            <span class="summary-value">{{ test_booking.booking_date|date:"F d, Y" }}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Test Price:</span>
+                            <span class="summary-value">₹{{ test_booking.test.price }}</span>
+                        </div>
+
+                        <div class="total-row">
+                            <div class="summary-row" style="border: none; padding: 0;">
+                                <span class="summary-label" style="font-size: 1.1rem;">Total Amount:</span>
+                                <span class="total-amount">₹{{ payment.amount }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="payment-methods">
+                            <h3 style="margin-bottom: var(--space-4); color: var(--gray-800);">
+                                <i class="fa-solid fa-credit-card" style="color: var(--medical-purple); margin-right: var(--space-2);"></i>
+                                Select Payment Method
+                            </h3>
+
+                            <label class="payment-method-option">
+                                <input type="radio" name="payment_method" value="UPI" required>
+                                <div class="payment-icon" style="background: rgba(103, 58, 183, 0.1); color: var(--medical-purple);">
+                                    <i class="fa-solid fa-mobile-alt"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>UPI Payment</h4>
+                                    <p>Pay using Google Pay, PhonePe, Paytm, etc.</p>
+                                </div>
+                            </label>
+
+                            <label class="payment-method-option">
+                                <input type="radio" name="payment_method" value="Card" required>
+                                <div class="payment-icon" style="background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan);">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Credit/Debit Card</h4>
+                                    <p>Pay securely with your card</p>
+                                </div>
+                            </label>
+
+                            <label class="payment-method-option">
+                                <input type="radio" name="payment_method" value="NetBanking" required>
+                                <div class="payment-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--status-active);">
+                                    <i class="fa-solid fa-university"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Net Banking</h4>
+                                    <p>Pay through your bank account</p>
+                                </div>
+                            </label>
+
+                            <label class="payment-method-option">
+                                <input type="radio" name="payment_method" value="Cash" required>
+                                <div class="payment-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--status-pending);">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Cash Payment</h4>
+                                    <p>Pay at the laboratory</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+                            <a href="{% url 'patient_diagnostic_tests' %}" class="btn-cancel" style="flex: 1; text-decoration: none; text-align: center;">
+                                <i class="fa-solid fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="add-btn" style="flex: 1; border: none; cursor: pointer;">
+                                <i class="fa-solid fa-check-circle"></i> Complete Payment
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Add visual feedback when payment method is selected
+        document.querySelectorAll('.payment-method-option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.payment-method-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Add selected class to chosen option
+                if (this.checked) {
+                    this.closest('.payment-method-option').classList.add('selected');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

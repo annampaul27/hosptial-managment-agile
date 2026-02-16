@@ -1,0 +1,292 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Confirmation | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <style>
+        .confirmation-container {
+            max-width: 600px;
+            margin: 40px auto;
+        }
+        .success-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
+        }
+        .token-box {
+            background: linear-gradient(135deg, #f0f9ff, #e0f7ff);
+            border: 2px solid #06b6d4;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        .token-label {
+            font-size: 0.9rem;
+            color: #0369a1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .token-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #06b6d4;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        .details-box {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .detail-value {
+            color: #6b7280;
+        }
+        .amount-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-top: 2px solid #e5e7eb;
+            border-bottom: 2px solid #e5e7eb;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+        .amount-label {
+            font-weight: 700;
+            color: #374151;
+        }
+        .amount-value {
+            font-weight: 700;
+            color: #059669;
+            font-family: 'Courier New', monospace;
+        }
+        .info-alert {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid #22d3ee;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #0369a1;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        @media print {
+            .button-group {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="medical-dashboard">
+        <!-- Minimal Sidebar for Print -->
+        <aside class="medical-sidebar" style="background: white;">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="medical-main">
+            <div class="medical-content">
+                <div class="confirmation-container">
+                    <!-- Success Card -->
+                    <div class="success-card">
+                        <div class="success-icon">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+
+                        <h1 style="margin: 0 0 10px 0; color: #111827;">Appointment Confirmed!</h1>
+                        <p style="color: #6b7280; margin-bottom: 20px;">
+                            Your appointment has been successfully booked and payment has been received.
+                        </p>
+
+                        <!-- Token -->
+                        <div class="token-box">
+                            <div class="token-label">Your Appointment Token</div>
+                            <div class="token-number">{{ token }}</div>
+                            <p style="margin: 10px 0 0 0; color: #0c4a6e; font-size: 0.9rem;">
+                                Please present this token at the reception
+                            </p>
+                        </div>
+
+                        <!-- Appointment Details -->
+                        <div class="details-box">
+                            <h3 style="margin-top: 0; color: #111827;">Appointment Details</h3>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Patient Name:</span>
+                                <span class="detail-value">{{ appointment.patient.full_name }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Phone:</span>
+                                <span class="detail-value">{{ appointment.patient.phone }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Doctor:</span>
+                                <span class="detail-value">Dr. {{ appointment.doctor.user.get_full_name }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Specialization:</span>
+                                <span class="detail-value">{{ appointment.doctor.specialization }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Appointment Date:</span>
+                                <span class="detail-value">{{ appointment.appointment_date|date:"d M Y" }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Appointment Time:</span>
+                                <span class="detail-value">{{ appointment.appointment_time }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Reason:</span>
+                                <span class="detail-value">{{ appointment.reason }}</span>
+                            </div>
+
+                            <div class="amount-row">
+                                <span class="amount-label">Amount Paid:</span>
+                                <span class="amount-value">₹{{ payment.amount }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Payment Method:</span>
+                                <span class="detail-value">{{ payment.payment_method }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Transaction ID:</span>
+                                <span class="detail-value">{{ payment.transaction_id }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Booking Date & Time:</span>
+                                <span class="detail-value">{{ appointment.created_at|date:"d M Y, H:i" }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Important Information -->
+                        <div class="info-alert">
+                            <strong style="display: block; margin-bottom: 8px;">
+                                <i class="fa-solid fa-info-circle" style="margin-right: 8px;"></i>
+                                Important Information
+                            </strong>
+                            <ul style="margin: 10px 0 0 20px; text-align: left; font-size: 0.9rem;">
+                                <li>Please arrive 10-15 minutes before your appointment time</li>
+                                <li>Bring a valid ID and any relevant medical documents</li>
+                                <li>In case of emergency, contact the hospital at the given phone number</li>
+                                <li>To reschedule or cancel, please contact the reception desk</li>
+                            </ul>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="button-group">
+                            <a href="{% url 'frontdesk_book_appointment' %}" class="btn btn-primary">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                Book Another
+                            </a>
+                            <button class="btn btn-secondary" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i>
+                                Print
+                            </button>
+                            <a href="{% url 'frontdesk_dashboard' %}" class="btn btn-secondary">
+                                <i class="fa-solid fa-home"></i>
+                                Dashboard
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Receipt Section -->
+                    <div style="text-align: center; margin-top: 30px; color: #9ca3af; font-size: 0.9rem;">
+                        <p>Receipt has been generated. Please print for your records.</p>
+                        <p>A confirmation email will be sent to {{ appointment.patient.user.email }}</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

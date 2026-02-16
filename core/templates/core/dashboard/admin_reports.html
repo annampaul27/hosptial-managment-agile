@@ -1,0 +1,494 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Stats Grid Override for Reports */
+        .reports-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        /* Chart Cards */
+        .chart-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .chart-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .chart-title i {
+            color: var(--medical-cyan);
+            font-size: 1.1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        /* Two Column Chart Layout */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .download-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .download-btn i {
+            font-size: 0.8rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search reports...">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Reports & Analytics</h1>
+                        <p class="page-subtitle">View comprehensive reports and performance metrics</p>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="reports-stats-grid">
+                    <!-- Total Patients -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Patients</div>
+                            <div class="stat-value">{{ total_patients }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Doctors -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Doctors</div>
+                            <div class="stat-value">{{ total_doctors }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Labs -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="fa-solid fa-flask"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Labs</div>
+                            <div class="stat-value">{{ total_labs }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Tests -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="fa-solid fa-vial"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Tests</div>
+                            <div class="stat-value">{{ total_tests }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Revenue -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-value">₹{{ total_revenue|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <!-- Appointments Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                Appointments Over Time
+                            </h3>
+                            <button class="download-btn">
+                                <i class="fa-solid fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="appointmentsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fa-solid fa-chart-line"></i>
+                                Revenue Trends
+                            </h3>
+                            <button class="download-btn">
+                                <i class="fa-solid fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js Initialization -->
+    <script>
+        // Appointments Chart
+        const appointmentsCtx = document.getElementById('appointmentsChart').getContext('2d');
+        const appointmentsChart = new Chart(appointmentsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ appointment_labels|safe }},
+                datasets: [{
+                    label: 'Appointments',
+                    data: {{ appointment_data|safe }},
+                    backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                    borderColor: '#22d3ee',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#22d3ee',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        borderColor: '#22d3ee',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ revenue_labels|safe }},
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: {{ revenue_data|safe }},
+                    backgroundColor: 'rgba(167, 139, 250, 0.8)',
+                    borderColor: '#a78bfa',
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        borderColor: '#a78bfa',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return '₹' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 12
+                            },
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>

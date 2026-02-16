@@ -1,0 +1,597 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Appointments | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <style>
+        .appointments-container { max-width: 1200px; margin: 0 auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+        .stat-card { background: var(--white); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); }
+        .stat-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-3); }
+        .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--gray-900); font-family: var(--font-heading); }
+        .stat-label { font-size: 0.85rem; color: var(--gray-600); font-weight: 500; }
+        .filters-bar { display: flex; gap: var(--space-3); margin-bottom: var(--space-6); background: var(--white); padding: var(--space-4); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); flex-wrap: wrap; }
+        .filter-btn { padding: var(--space-2) var(--space-4); border: 2px solid var(--gray-200); border-radius: var(--radius-md); background: var(--white); color: var(--gray-700); font-weight: 500; cursor: pointer; transition: var(--transition); }
+        .filter-btn.active { background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light)); color: white; border-color: var(--medical-cyan); }
+        .appointments-list { display: flex; flex-direction: column; gap: var(--space-4); }
+        .appointment-card { background: var(--white); border-radius: var(--radius-lg); padding: var(--space-6); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); transition: var(--transition); }
+        .appointment-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .appointment-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-4); }
+        .appointment-date { display: flex; align-items: center; gap: var(--space-3); }
+        .date-box { width: 60px; height: 60px; background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light)); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .date-day { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+        .date-month { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; }
+        .appointment-time { font-size: 1.1rem; font-weight: 600; color: var(--gray-800); }
+        .appointment-weekday { font-size: 0.85rem; color: var(--gray-600); }
+        .status-badge { padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning-yellow); }
+        .status-confirmed { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        .status-completed { background: rgba(16, 185, 129, 0.1); color: var(--success-green); }
+        .status-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--error-red); }
+        .status-pending-payment { background: rgba(168, 85, 247, 0.1); color: var(--medical-purple); }
+        .status-scheduled { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        .appointment-body { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--gray-100); }
+        .doctor-info { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+        .doctor-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #60a5fa, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; font-weight: 700; flex-shrink: 0; }
+        .doctor-details { min-width: 0; }
+        .doctor-details h4 { font-weight: 600; color: var(--gray-800); margin-bottom: var(--space-1); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .doctor-specialty { font-size: 0.85rem; color: var(--gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .appointment-info { display: flex; flex-direction: column; gap: var(--space-2); }
+        .info-row { display: flex; align-items: center; gap: var(--space-2); font-size: 0.85rem; color: var(--gray-600); }
+        .info-row i { color: var(--medical-cyan); width: 16px; flex-shrink: 0; }
+        .appointment-actions { display: flex; flex-direction: column; gap: var(--space-2); }
+        .action-btn { padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); border: none; font-weight: 500; cursor: pointer; transition: var(--transition); text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: 0.85rem; }
+        .btn-view { background: var(--gray-100); color: var(--gray-700); }
+        .btn-view:hover { background: var(--gray-200); }
+        .btn-cancel { background: rgba(239, 68, 68, 0.1); color: var(--error-red); }
+        .btn-cancel:hover { background: var(--error-red); color: white; }
+        .btn-reschedule { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        .btn-reschedule:hover { background: var(--medical-cyan); color: white; }
+        .empty-state { text-align: center; padding: var(--space-12) var(--space-6); background: var(--white); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+        .empty-state i { font-size: 4rem; color: var(--gray-300); margin-bottom: var(--space-4); }
+        .empty-state h3 { font-size: 1.25rem; color: var(--gray-800); margin-bottom: var(--space-2); }
+        .empty-state p { color: var(--gray-600); margin-bottom: var(--space-4); }
+        .alert { padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); display: flex; align-items: start; gap: var(--space-3); }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success-green); color: var(--success-green); }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--error-red); color: var(--error-red); }
+        @media (max-width: 1200px) { .appointment-body { grid-template-columns: 1fr; } }
+        @media (max-width: 968px) { 
+            .stats-grid { grid-template-columns: repeat(2, 1fr); } 
+            .appointment-body { grid-template-columns: 1fr; } 
+            .filters-bar { flex-wrap: wrap; } 
+        }
+   
+        /* ✅ BOX SIZING AND RESET */
+        * {
+            box-sizing: border-box;
+        }
+
+        .appointment-detail-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 0 var(--space-4);
+        }
+        
+        .detail-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            margin-bottom: var(--space-6); 
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .back-link { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+            color: var(--medical-cyan); 
+            text-decoration: none; 
+            font-weight: 500; 
+            margin-bottom: var(--space-4); 
+        }
+        .back-link:hover { text-decoration: underline; }
+        
+        .detail-card { 
+            background: var(--white); 
+            border-radius: var(--radius-lg); 
+            padding: var(--space-6); 
+            box-shadow: var(--shadow-sm); 
+            border: 1px solid var(--gray-200); 
+            margin-bottom: var(--space-4); 
+        }
+        
+        .detail-section { 
+            margin-bottom: var(--space-6); 
+            padding-bottom: var(--space-6); 
+            border-bottom: 1px solid var(--gray-100); 
+        }
+        .detail-section:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        
+        .section-title { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: var(--gray-900); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-3); 
+        }
+        .section-title i { 
+            color: var(--medical-cyan); 
+            font-size: 1.5rem;
+        }
+        
+        .detail-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: var(--space-6); 
+        }
+        
+        .detail-item { }
+        
+        .detail-label { 
+            font-size: 0.9rem; 
+            color: var(--gray-600); 
+            font-weight: 500; 
+            margin-bottom: var(--space-1); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .detail-value { 
+            font-size: 1.1rem; 
+            color: var(--gray-900); 
+            font-weight: 600; 
+        }
+        
+        .doctor-card { 
+            display: flex; 
+            gap: var(--space-4); 
+            align-items: flex-start; 
+            padding: var(--space-4); 
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(168, 85, 247, 0.05)); 
+            border-radius: var(--radius-md); 
+        }
+        
+        .doctor-avatar { 
+            width: 80px; 
+            height: 80px; 
+            min-width: 80px;
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #60a5fa, #8b5cf6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 2rem; 
+            font-weight: 700; 
+            flex-shrink: 0; 
+        }
+        
+        .doctor-info { 
+            flex: 1; 
+            min-width: 0;
+        }
+        
+        .doctor-name { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: var(--gray-900); 
+            margin-bottom: var(--space-1); 
+        }
+        
+        .doctor-spec { 
+            font-size: 0.95rem; 
+            color: var(--medical-cyan); 
+            font-weight: 500; 
+            margin-bottom: var(--space-2); 
+        }
+        
+        .doctor-detail { 
+            font-size: 0.9rem; 
+            color: var(--gray-600); 
+            margin-bottom: var(--space-1); 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+        }
+        .doctor-detail i { 
+            color: var(--medical-cyan); 
+            width: 16px; 
+            flex-shrink: 0;
+        }
+        
+        .status-badge { 
+            padding: var(--space-2) var(--space-4); 
+            border-radius: var(--radius-full); 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            display: inline-block; 
+        }
+        
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning-yellow); }
+        .status-confirmed { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        .status-completed { background: rgba(16, 185, 129, 0.1); color: var(--success-green); }
+        .status-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--error-red); }
+        .status-pending-payment { background: rgba(168, 85, 247, 0.1); color: var(--medical-purple); }
+        .status-scheduled { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        
+        /* ✅ ACTION BUTTONS - FIXED OVERLAP ISSUE */
+        .action-buttons { 
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+            margin-top: var(--space-4);
+            padding: 0;
+            align-items: stretch;
+        }
+        
+        .action-btn { 
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            min-height: 42px;
+            min-width: 140px;
+            flex: 0 1 auto;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: white;
+        }
+        .btn-primary:hover { 
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+        
+        .btn-secondary { 
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        .btn-secondary:hover { 
+            background: var(--gray-200);
+        }
+        
+        .btn-danger { 
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn-danger:hover { 
+            background: var(--error-red);
+            color: white;
+        }
+        
+        .alert { 
+            padding: var(--space-4); 
+            border-radius: var(--radius-md); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: flex-start; 
+            gap: var(--space-3); 
+        }
+        .alert-info { background: rgba(34, 211, 238, 0.1); border-left: 4px solid var(--medical-cyan); color: var(--medical-cyan); }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warning-yellow); color: var(--warning-yellow); }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success-green); color: var(--success-green); }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .detail-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+            }
+            .detail-grid { 
+                grid-template-columns: 1fr; 
+            }
+            .action-buttons { 
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .action-btn { 
+                width: 100%;
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+            .doctor-card { 
+                flex-direction: column; 
+                align-items: center; 
+                text-align: center; 
+            }
+            .doctor-avatar { 
+                width: 60px; 
+                height: 60px;
+                min-width: 60px;
+                font-size: 1.5rem; 
+            }
+            .detail-card { 
+                padding: var(--space-4); 
+            }
+        }
+
+        @media (max-width: 480px) {
+            .detail-card { 
+                padding: var(--space-3); 
+            }
+            .action-btn { 
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                min-height: 36px;
+            }
+            .section-title { 
+                font-size: 1.1rem; 
+            }
+            .detail-label { 
+                font-size: 0.8rem; 
+            }
+            .detail-value { 
+                font-size: 1rem; 
+            }
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="medical-dashboard">
+        <aside class="medical-sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs><linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#22d3ee" /><stop offset="100%" stop-color="#a78bfa" /></linearGradient></defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Patient</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item"><i class="fa-solid fa-calendar-plus"></i><span>Book Appointment</span></a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item active"><i class="fa-solid fa-clock"></i><span>My Appointments</span></a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item"><i class="fa-solid fa-flask"></i><span>Diagnostic Tests</span></a>
+                <a href="{% url 'medical_history' %}" class="nav-item"><i class="fa-solid fa-file-medical"></i><span>Medical History</span></a>
+                <a href="{% url 'patient_settings' %}" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span></a>
+            </div>
+        </aside>
+        <main class="medical-main">
+            <header class="medical-header">
+                <div class="header-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="Search appointments..."></div>
+                <div class="header-actions">
+                    <button class="header-icon-btn"><i class="fa-solid fa-bell"></i><span class="notification-badge">3</span></button>
+                    <button class="header-icon-btn"><i class="fa-solid fa-envelope"></i></button>
+                    <button class="header-icon-btn"><i class="fa-solid fa-user-circle"></i></button>
+                </div>
+            </header>
+            <div class="medical-content">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            <i class="fa-solid fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                            <div><strong>{{ message }}</strong></div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">My Appointments</h1>
+                        <p class="page-subtitle">View and manage your healthcare appointments</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <a href="{% url 'patient_book_appointment' %}" class="add-btn"><i class="fa-solid fa-plus"></i><span>Book New</span></a>
+                    </div>
+                </div>
+                <div class="appointments-container">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-yellow);"><i class="fa-solid fa-clock"></i></div>
+                            </div>
+                            <div class="stat-value">{{ pending_count }}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan);"><i class="fa-solid fa-check-circle"></i></div>
+                            </div>
+                            <div class="stat-value">{{ confirmed_count }}</div>
+                            <div class="stat-label">Confirmed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-green);"><i class="fa-solid fa-calendar-check"></i></div>
+                            </div>
+                            <div class="stat-value">{{ completed_count }}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--error-red);"><i class="fa-solid fa-times-circle"></i></div>
+                            </div>
+                            <div class="stat-value">{{ cancelled_count }}</div>
+                            <div class="stat-label">Cancelled</div>
+                        </div>
+                    </div>
+                    <div class="filters-bar">
+                        <button class="filter-btn active" onclick="filterAppointments('all')">All</button>
+                        <button class="filter-btn" onclick="filterAppointments('upcoming')">Upcoming</button>
+                        <button class="filter-btn" onclick="filterAppointments('pending')">Pending</button>
+                        <button class="filter-btn" onclick="filterAppointments('confirmed')">Confirmed</button>
+                        <button class="filter-btn" onclick="filterAppointments('completed')">Completed</button>
+                        <button class="filter-btn" onclick="filterAppointments('cancelled')">Cancelled</button>
+                    </div>
+                    <div class="appointments-list">
+                        {% for appointment in appointments %}
+                        <div class="appointment-card" data-status="{{ appointment.status|lower }}">
+                            <div class="appointment-header">
+                                <div class="appointment-date">
+                                    <div class="date-box">
+                                        <div class="date-day">{{ appointment.appointment_date|date:"d" }}</div>
+                                        <div class="date-month">{{ appointment.appointment_date|date:"M" }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="appointment-time">{{ appointment.appointment_time|time:"g:i A" }}</div>
+                                        <div class="appointment-weekday">{{ appointment.appointment_date|date:"l" }}</div>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-{{ appointment.status|lower }}">{{ appointment.get_status_display|default:appointment.status }}</span>
+                            </div>
+                            <div class="appointment-body">
+                                <!-- Doctor Info Section -->
+                                <div class="doctor-info">
+                                    <div class="doctor-avatar">
+                                        {% if appointment.doctor.user.first_name %}
+                                            {{ appointment.doctor.user.first_name|slice:":1"|upper }}
+                                        {% else %}
+                                            {{ appointment.doctor.user.username|slice:":1"|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="doctor-details">
+                                        <h4>
+                                            Dr. 
+                                            {% if appointment.doctor.user.get_full_name %}
+                                                {{ appointment.doctor.user.get_full_name }}
+                                            {% else %}
+                                                {{ appointment.doctor.user.username }}
+                                            {% endif %}
+                                        </h4>
+                                        <div class="doctor-specialty">
+                                            {% if appointment.doctor.doctorprofile.specialization %}
+                                                {{ appointment.doctor.doctorprofile.specialization }}
+                                            {% else %}
+                                                General Physician
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Appointment Details Section -->
+                                <div class="appointment-info">
+                                    <div class="info-row">
+                                        <i class="fa-solid fa-stethoscope"></i>
+                                        <span>{{ appointment.reason|default:"Checkup" }}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        <span>{{ appointment.appointment_date|date:"M d, Y" }}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fa-solid fa-clock"></i>
+                                        <span>{{ appointment.appointment_time|time:"g:i A" }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons Section -->
+                                <div class="appointment-actions">
+                                    <a href="{% url 'patient_appointment_detail' appointment.id %}" class="action-btn btn-view">
+                                        <i class="fa-solid fa-eye"></i>View Details
+                                    </a>
+                                    {% with status_lower=appointment.status|lower %}
+                                        {% if status_lower == 'pending' or status_lower == 'confirmed' or status_lower == 'scheduled' or status_lower == 'pending payment' %}
+                                            <a href="{% url 'patient_reschedule_appointment' appointment.id %}" class="action-btn btn-reschedule">
+                                                <i class="fa-solid fa-calendar-alt"></i>Reschedule
+                                            </a>
+                                            <button type="button" class="action-btn btn-cancel" onclick="confirmCancel({{ appointment.id }})">
+                                                <i class="fa-solid fa-times"></i>Cancel
+                                            </button>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-calendar-times"></i>
+                            <h3>No Appointments Yet</h3>
+                            <p>You haven't booked any appointments. Start your healthcare journey today!</p>
+                            <a href="{% url 'patient_book_appointment' %}" class="add-btn"><i class="fa-solid fa-plus"></i>Book Your First Appointment</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        function filterAppointments(filter) {
+            const cards = document.querySelectorAll('.appointment-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Remove active class from all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Filter cards
+            cards.forEach(card => {
+                const status = card.dataset.status;
+                
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else if (filter === 'upcoming') {
+                    // Show pending, confirmed, scheduled appointments
+                    card.style.display = (
+                        status === 'pending' || 
+                        status === 'confirmed' || 
+                        status === 'scheduled' || 
+                        status === 'pending payment'
+                    ) ? 'block' : 'none';
+                } else {
+                    // Show appointments matching the selected status
+                    card.style.display = status === filter ? 'block' : 'none';
+                }
+            });
+        }
+        
+        function confirmCancel(appointmentId) {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                window.location.href = "{% url 'patient_cancel_appointment' 0 %}".replace('0', appointmentId);
+            }
+        }
+    </script>
+</body>
+</html>

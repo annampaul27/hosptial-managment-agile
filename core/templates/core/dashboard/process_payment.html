@@ -1,0 +1,331 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Payment | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .payment-method-card {
+            padding: var(--space-5);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .payment-method-card:hover {
+            border-color: var(--medical-cyan);
+            background: var(--gray-50);
+        }
+
+        .payment-method-card input[type="radio"] {
+            display: none;
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.08);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .payment-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="{% url 'medical_history' %}" class="nav-item">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical History</span>
+                </a>
+                <a href="{% url 'payments' %}" class="nav-item active">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">Process Payment</h1>
+                    <p class="page-subtitle">Complete your payment securely</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'payments' %}" class="btn-cancel" style="text-decoration:none;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Payments
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <div style="max-width: 900px; margin: 0 auto;">
+
+                    <!-- Payment Summary -->
+                    <div class="medical-table-card" style="margin-bottom: var(--space-6); background: linear-gradient(135deg, rgba(34,211,238,0.05), rgba(167,139,250,0.05));">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 600; color: var(--gray-900);">
+                                <i class="fa-solid fa-receipt" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                                Payment Summary
+                            </h3>
+                            <span class="status-badge status-pending">
+                                <i class="fa-solid fa-circle"></i>
+                                Pending
+                            </span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); padding: var(--space-4); background: white; border-radius: var(--radius-md);">
+                            <div>
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Bill ID</p>
+                                <p style="font-weight: 600; color: var(--gray-800);">#{{ payment.id }}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Date</p>
+                                <p style="font-weight: 600; color: var(--gray-800);">{{ payment.payment_date|date:"d M Y" }}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Doctor</p>
+                                <p style="font-weight: 600; color: var(--gray-800);">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Appointment Date</p>
+                                <p style="font-weight: 600; color: var(--gray-800);">{{ payment.appointment.appointment_date|date:"d M Y" }}</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: var(--space-5); padding: var(--space-4); background: white; border-radius: var(--radius-md); border-left: 4px solid var(--medical-green);">
+                            <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Amount to Pay</p>
+                            <h2 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--medical-green);">
+                                ₹{{ payment.amount }}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method Selection -->
+                    <form method="POST" id="paymentForm">
+                        {% csrf_token %}
+
+                        <div class="medical-table-card">
+                            <div class="info-header" style="margin-bottom: var(--space-5); padding-bottom: var(--space-4); border-bottom: 1px solid var(--gray-200);">
+                                <h3><i class="fa-solid fa-credit-card" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>Select Payment Method</h3>
+                            </div>
+
+                            <div style="display: grid; gap: var(--space-4);">
+                                
+                                <!-- UPI -->
+                                <label class="payment-method-card" onclick="selectMethod('UPI', this)">
+                                    <input type="radio" name="payment_method" value="UPI">
+                                    <div class="payment-icon" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);">
+                                        <i class="fa-solid fa-mobile-alt"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="font-weight: 600; color: var(--gray-800); margin-bottom: 4px;">UPI Payment</h4>
+                                        <p style="font-size: 0.85rem; color: var(--gray-600);">Pay using Google Pay, PhonePe, Paytm, or any UPI app</p>
+                                    </div>
+                                    <i class="fa-solid fa-check-circle" style="font-size: 1.5rem; color: var(--medical-cyan); display: none;"></i>
+                                </label>
+
+                                <!-- Card -->
+                                <label class="payment-method-card" onclick="selectMethod('Card', this)">
+                                    <input type="radio" name="payment_method" value="Card">
+                                    <div class="payment-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="font-weight: 600; color: var(--gray-800); margin-bottom: 4px;">Credit / Debit Card</h4>
+                                        <p style="font-size: 0.85rem; color: var(--gray-600);">Visa, Mastercard, Rupay, and more</p>
+                                    </div>
+                                    <i class="fa-solid fa-check-circle" style="font-size: 1.5rem; color: var(--medical-cyan); display: none;"></i>
+                                </label>
+
+                                <!-- Net Banking -->
+                                <label class="payment-method-card" onclick="selectMethod('NetBanking', this)">
+                                    <input type="radio" name="payment_method" value="NetBanking">
+                                    <div class="payment-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                                        <i class="fa-solid fa-building-columns"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="font-weight: 600; color: var(--gray-800); margin-bottom: 4px;">Net Banking</h4>
+                                        <p style="font-size: 0.85rem; color: var(--gray-600);">Pay directly from your bank account</p>
+                                    </div>
+                                    <i class="fa-solid fa-check-circle" style="font-size: 1.5rem; color: var(--medical-cyan); display: none;"></i>
+                                </label>
+
+                                <!-- Cash -->
+                                <label class="payment-method-card" onclick="selectMethod('Cash', this)">
+                                    <input type="radio" name="payment_method" value="Cash">
+                                    <div class="payment-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                        <i class="fa-solid fa-money-bill"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="font-weight: 600; color: var(--gray-800); margin-bottom: 4px;">Cash Payment</h4>
+                                        <p style="font-size: 0.85rem; color: var(--gray-600);">Pay at the hospital reception</p>
+                                    </div>
+                                    <i class="fa-solid fa-check-circle" style="font-size: 1.5rem; color: var(--medical-cyan); display: none;"></i>
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-6); padding: var(--space-5); background: white; border-radius: var(--radius-xl); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm);">
+                            <div>
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Total Amount</p>
+                                <p style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--gray-900);">₹{{ payment.amount }}</p>
+                            </div>
+                            <div style="display: flex; gap: var(--space-3);">
+                                <a href="{% url 'payments' %}" class="btn-cancel" style="text-decoration: none; padding: var(--space-3) var(--space-6);">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="add-btn" style="border: none; cursor: pointer; padding: var(--space-3) var(--space-8);">
+                                    <i class="fa-solid fa-lock"></i> Complete Payment
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+
+                    <!-- Security Notice -->
+                    <div style="margin-top: var(--space-6); padding: var(--space-4); background: rgba(34, 211, 238, 0.05); border-left: 4px solid var(--medical-cyan); border-radius: var(--radius-md);">
+                        <p style="font-size: 0.85rem; color: var(--gray-700); line-height: 1.6;">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--medical-cyan); margin-right: 6px;"></i>
+                            <strong>Secure Payment:</strong> All transactions are encrypted and secure. We never store your payment details.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function selectMethod(method, element) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.fa-check-circle').style.display = 'none';
+            });
+
+            // Add selected class to clicked card
+            element.classList.add('selected');
+            element.querySelector('.fa-check-circle').style.display = 'block';
+        }
+
+        // Form validation
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            const selected = document.querySelector('input[name="payment_method"]:checked');
+            if (!selected) {
+                e.preventDefault();
+                alert('Please select a payment method');
+            }
+        });
+    </script>
+
+</body>
+</html>

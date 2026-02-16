@@ -1,0 +1,652 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Lab Technician | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Delete Confirmation Styling */
+        .delete-container {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .delete-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .delete-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto var(--space-5);
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--error-red);
+            font-size: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .delete-header h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .delete-header p {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        /* Technician Info Card */
+        .technician-info-card {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .technician-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            margin-bottom: var(--space-5);
+        }
+
+        .technician-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--medical-purple), var(--accent-indigo));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+        }
+
+        .technician-details {
+            flex: 1;
+        }
+
+        .technician-name {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-1);
+        }
+
+        .technician-username {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        .technician-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .info-label i {
+            font-size: 0.75rem;
+            color: var(--medical-purple);
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .lab-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: rgba(167, 139, 250, 0.15);
+            color: var(--medical-purple);
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 2px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-6);
+        }
+
+        .warning-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .warning-header i {
+            color: var(--error-red);
+            font-size: 1.25rem;
+        }
+
+        .warning-header h4 {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--error-red);
+        }
+
+        .warning-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .warning-list li {
+            padding: var(--space-2) 0;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-2);
+        }
+
+        .warning-list li:before {
+            content: "•";
+            color: var(--error-red);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Confirmation Checkbox */
+        .confirmation-box {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-6);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .checkbox-label {
+            flex: 1;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .checkbox-label strong {
+            color: var(--error-red);
+            font-weight: 600;
+        }
+
+        /* Form Actions */
+        .delete-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-4);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: var(--space-4) var(--space-6);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+        }
+
+        .btn-cancel:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-delete {
+            flex: 1;
+            padding: var(--space-4) var(--space-6);
+            background: var(--error-red);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .btn-delete.enabled {
+            opacity: 1;
+            pointer-events: auto;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-delete.enabled:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: var(--space-4) var(--space-5);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: 0.9rem;
+        }
+
+        .alert i {
+            font-size: 1.1rem;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .delete-container {
+                padding: var(--space-6);
+            }
+
+            .technician-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .delete-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn-cancel,
+            .btn-delete {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <!-- New: Lab Technicians -->
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' or request.resolver_match.url_name == 'admin_delete_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <!-- New: Front Desk Staff -->
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Delete Lab Technician</h1>
+                    <p class="page-subtitle">Confirm deletion of technician account</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            <i class="fa-solid fa-exclamation-circle"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Delete Container -->
+                <div class="delete-container">
+
+                    <!-- Delete Header -->
+                    <div class="delete-header">
+                        <div class="delete-icon">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                        </div>
+                        <h2>Delete Lab Technician</h2>
+                        <p>This action cannot be undone. Please review the information carefully.</p>
+                    </div>
+
+                    <!-- Technician Info Card -->
+                    <div class="technician-info-card">
+                        <div class="technician-profile">
+                            <div class="technician-avatar">
+                                {{ technician.user.first_name|default:technician.user.username|slice:":1"|upper }}
+                            </div>
+                            <div class="technician-details">
+                                <div class="technician-name">
+                                    {{ technician.user.get_full_name|default:technician.user.username }}
+                                </div>
+                                <div class="technician-username">@{{ technician.user.username }}</div>
+                            </div>
+                        </div>
+
+                        <div class="technician-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    Email
+                                </div>
+                                <div class="info-value">{{ technician.user.email|default:"Not provided" }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fa-solid fa-phone"></i>
+                                    Phone
+                                </div>
+                                <div class="info-value">{{ technician.phone|default:"Not provided" }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fa-solid fa-flask"></i>
+                                    Lab Assignment
+                                </div>
+                                <div class="info-value">
+                                    {% if technician.lab %}
+                                        <span class="lab-badge">
+                                            <i class="fa-solid fa-building"></i>
+                                            {{ technician.lab.name }}
+                                        </span>
+                                    {% else %}
+                                        Not Assigned
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fa-solid fa-toggle-on"></i>
+                                    Status
+                                </div>
+                                <div class="info-value">{{ technician.status }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Box -->
+                    <div class="warning-box">
+                        <div class="warning-header">
+                            <i class="fa-solid fa-exclamation-circle"></i>
+                            <h4>Warning: This action will:</h4>
+                        </div>
+                        <ul class="warning-list">
+                            <li>Permanently delete the technician's user account</li>
+                            <li>Remove the technician's profile and all associated data</li>
+                            <li>Revoke all access permissions for this technician</li>
+                            <li>This action <strong>cannot be undone</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- Confirmation Checkbox -->
+                    <div class="confirmation-box">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="confirmDelete">
+                            <span class="checkbox-label">
+                                I understand that this action is <strong>permanent and irreversible</strong>. 
+                                I want to delete {{ technician.user.get_full_name|default:technician.user.username }}'s account.
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Form -->
+                    <form method="POST" action="{% url 'admin_delete_technician' technician.id %}" id="deleteForm">
+                        {% csrf_token %}
+
+                        <!-- Form Actions -->
+                        <div class="delete-actions">
+                            <a href="{% url 'admin_lab_technicians' %}" class="btn-cancel">
+                                <i class="fa-solid fa-times"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn-delete" id="deleteButton" disabled>
+                                <i class="fa-solid fa-trash"></i>
+                                Delete Technician
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Enable delete button only when checkbox is checked
+        const confirmCheckbox = document.getElementById('confirmDelete');
+        const deleteButton = document.getElementById('deleteButton');
+        const deleteForm = document.getElementById('deleteForm');
+
+        confirmCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                deleteButton.classList.add('enabled');
+                deleteButton.disabled = false;
+            } else {
+                deleteButton.classList.remove('enabled');
+                deleteButton.disabled = true;
+            }
+        });
+
+        // Additional confirmation before submitting
+        deleteForm.addEventListener('submit', function(e) {
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Please confirm that you want to delete this technician.');
+                return false;
+            }
+            
+            const confirmed = confirm('Are you absolutely sure? This action cannot be undone.');
+            if (!confirmed) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

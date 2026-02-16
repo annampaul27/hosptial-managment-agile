@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Technician Dashboard | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Welcome Back, {{ request.user.first_name|default:"Lab Technician" }}!</h1>
+                    <p class="page-subtitle">Here's an overview of your lab operations today</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">{{ pending_tests_count|default:"0" }}</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <!-- Pending Tests -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending Bookings</p>
+                            <h3 class="stat-value">{{ pending_tests_count|default:"0" }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-flask"></i>
+                                <span>Awaiting processing</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Completed Tests -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Completed Tests</p>
+                            <h3 class="stat-value">{{ completed_tests_count|default:"0" }}</h3>
+                            <p class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i>
+                                <span>This month</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Lab -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);">
+                            <i class="fa-solid fa-hospital"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Assigned Lab</p>
+                            <h3 class="stat-value" style="font-size: 1.25rem;">{{ assigned_lab_name|default:"-" }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-map-marker-alt"></i>
+                                <span>Current location</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Today's Tests -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                            <i class="fa-solid fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Today's Tests</p>
+                            <h3 class="stat-value">{{ today_tests_count|default:"0" }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-vial"></i>
+                                <span>Scheduled for today</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="info-grid">
+
+                    <!-- Recent Bookings Card -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3><i class="fa-solid fa-vials" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Recent Test Bookings</h3>
+                            <a href="{% url 'lab_tests' %}" style="font-size:0.85rem; color:var(--medical-cyan); text-decoration:none; font-weight:600;">
+                                View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                            </a>
+                        </div>
+
+                        {% if recent_bookings %}
+                        <div class="activity-list">
+                            {% for booking in recent_bookings %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(34, 211, 238, 0.1);">
+                                    <i class="fa-solid fa-user" style="color: var(--medical-cyan);"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">{{ booking.patient.user.get_full_name|default:booking.patient.user.username }}</p>
+                                    <p class="activity-time">
+                                        <i class="fa-solid fa-flask" style="margin-right:4px;"></i>
+                                        {{ booking.test.name }}
+                                        {% if booking.created_at %}
+                                        &nbsp;&middot;&nbsp;
+                                        {{ booking.created_at|date:"d M Y" }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <span class="status-badge {% if booking.status == 'Pending' %}status-pending{% elif booking.status == 'Completed' %}status-approved{% else %}status-cancelled{% endif %}" style="font-size:0.75rem;">
+                                    {{ booking.status }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                            <i class="fa-solid fa-inbox" style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3);"></i>
+                            <p style="color:var(--gray-500);">No recent test bookings</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pending Results Card -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3><i class="fa-solid fa-file-medical" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>Pending Results</h3>
+                            <a href="{% url 'lab_results' %}" style="font-size:0.85rem; color:var(--medical-purple); text-decoration:none; font-weight:600;">
+                                Update <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                            </a>
+                        </div>
+
+                        {% if pending_results %}
+                        <div class="activity-list">
+                            {% for result in pending_results %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(167, 139, 250, 0.1);">
+                                    <i class="fa-solid fa-clipboard-check" style="color: var(--medical-purple);"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">{{ result.test.name }}</p>
+                                    <p class="activity-time">
+                                        <i class="fa-solid fa-user" style="margin-right:4px;"></i>
+                                        {{ result.patient.user.get_full_name|default:result.patient.user.username }}
+                                    </p>
+                                </div>
+                                <a href="{% url 'lab_results' %}" style="font-size:0.75rem; color:var(--medical-purple); text-decoration:none; font-weight:600; padding:0.5rem 1rem; background:rgba(167,139,250,0.1); border-radius:var(--radius-md);">
+                                    Update
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                            <i class="fa-solid fa-check-double" style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3);"></i>
+                            <p style="color:var(--gray-500);">All results up to date</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="medical-table-card" style="margin-top:var(--space-6);">
+                    <div class="info-header" style="margin-bottom:var(--space-5);">
+                        <h3><i class="fa-solid fa-bolt" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Quick Actions</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4);">
+                        
+                        <a href="{% url 'lab_tests' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-cyan)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #22d3ee, #06b6d4); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-vials"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">View Test Bookings</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">Manage bookings</p>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'lab_results' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-purple)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #a78bfa, #8b5cf6); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-file-medical"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Update Results</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">Enter test results</p>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'lab_prices' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-blue)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #60a5fa, #3b82f6); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-tags"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Test Prices</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">Manage pricing</p>
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

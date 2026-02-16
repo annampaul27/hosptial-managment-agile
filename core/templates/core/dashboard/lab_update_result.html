@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Result | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Update Test Result</h1>
+                    <p class="page-subtitle">Enter test results and upload reports</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'lab_results' %}" style="padding:0.75rem 1.5rem; background:var(--gray-100); color:var(--gray-700); border-radius:var(--radius-md); text-decoration:none; font-weight:600; transition:var(--transition);">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Results
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <div style="display:grid; grid-template-columns:1fr 400px; gap:var(--space-6);">
+                    
+                    <!-- Main Form -->
+                    <div class="medical-table-card">
+                        <div class="info-header" style="margin-bottom:var(--space-6);">
+                            <h3><i class="fa-solid fa-file-medical" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>Result Details</h3>
+                        </div>
+
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <!-- Test Information Display -->
+                            <div style="padding:var(--space-5); background:linear-gradient(135deg, rgba(167,139,250,0.05), rgba(139,92,246,0.05)); border-radius:var(--radius-lg); margin-bottom:var(--space-6); border:1px solid var(--gray-200);">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+                                    <div>
+                                        <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:4px;">Test Name</p>
+                                        <p style="font-weight:600; color:var(--gray-800);">{{ booking.test.name }}</p>
+                                    </div>
+                                    <div>
+                                        <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:4px;">Patient Name</p>
+                                        <p style="font-weight:600; color:var(--gray-800);">{{ booking.patient.user.get_full_name }}</p>
+                                    </div>
+                                    <div>
+                                        <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:4px;">Booking Date</p>
+                                        <p style="font-weight:600; color:var(--gray-800);">{{ booking.created_at|date:"d M Y" }}</p>
+                                    </div>
+                                    <div>
+                                        <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:4px;">Sample ID</p>
+                                        <p style="font-weight:600; color:var(--gray-800);">{{ booking.sample_id|default:"Not Assigned" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Status -->
+                            <div style="margin-bottom:var(--space-5);">
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); margin-right:6px;"></i>Result Status *
+                                </label>
+                                <select name="status" required
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    onfocus="this.style.borderColor='var(--medical-cyan)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                                    <option value="Pending" {% if booking.status == "Pending" %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if booking.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if booking.status == "Completed" %}selected{% endif %}>Completed</option>
+                                    <option value="Rejected" {% if booking.status == "Rejected" %}selected{% endif %}>Rejected</option>
+                                </select>
+                            </div>
+
+                            <!-- Test Results/Values -->
+                            <div style="margin-bottom:var(--space-5);">
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-flask" style="color:var(--medical-blue); margin-right:6px;"></i>Test Values / Results
+                                </label>
+                                <textarea name="test_values" rows="5"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; font-family:'Courier New', monospace; resize:vertical; transition:var(--transition);"
+                                    placeholder="Enter test values (e.g., Hemoglobin: 14.5 g/dL, WBC: 7500/μL)"
+                                    onfocus="this.style.borderColor='var(--medical-blue)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">{{ result.test_values|default:'' }}</textarea>
+                            </div>
+
+                            <!-- Remarks/Observations -->
+                            <div style="margin-bottom:var(--space-5);">
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-comment-medical" style="color:var(--medical-purple); margin-right:6px;"></i>Remarks / Observations
+                                </label>
+                                <textarea name="remarks" rows="4"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; font-family:inherit; resize:vertical; transition:var(--transition);"
+                                    placeholder="Any additional observations or notes..."
+                                    onfocus="this.style.borderColor='var(--medical-purple)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">{{ result.remarks|default:'' }}</textarea>
+                            </div>
+
+                            <!-- Upload Report -->
+                            <div style="margin-bottom:var(--space-5);">
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-3);">
+                                    <i class="fa-solid fa-upload" style="color:var(--medical-green); margin-right:6px;"></i>Upload Result Report
+                                </label>
+                                <div style="padding:var(--space-6); background:var(--gray-50); border:2px dashed var(--gray-300); border-radius:var(--radius-lg); text-align:center;">
+                                    <i class="fa-solid fa-file-pdf" style="font-size:2.5rem; color:var(--gray-400); margin-bottom:var(--space-3);"></i>
+                                    <p style="color:var(--gray-600); margin-bottom:var(--space-3); font-weight:500;">Drag and drop report file here</p>
+                                    <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png" id="reportFile"
+                                        style="display:none;">
+                                    <label for="reportFile" style="display:inline-block; padding:0.75rem 1.5rem; background:linear-gradient(135deg, #34d399, #10b981); color:white; border-radius:var(--radius-md); font-weight:600; cursor:pointer; transition:var(--transition);">
+                                        <i class="fa-solid fa-folder-open"></i> Choose File
+                                    </label>
+                                    <p style="font-size:0.8rem; color:var(--gray-400); margin-top:var(--space-3);">Supported: PDF, JPEG, PNG (Max 10MB)</p>
+                                </div>
+                            </div>
+
+                            <!-- Notification Options -->
+                            <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:var(--space-6);">
+                                <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+                                    <input type="checkbox" name="notify_patient" checked
+                                        style="width:20px; height:20px; cursor:pointer;">
+                                    <div>
+                                        <p style="font-weight:600; color:var(--gray-800);">Notify Patient</p>
+                                        <p style="font-size:0.85rem; color:var(--gray-500);">Send email notification to patient when result is updated</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div style="display:flex; gap:var(--space-3); justify-content:flex-end; padding-top:var(--space-5); border-top:2px solid var(--gray-200);">
+                                <a href="{% url 'lab_results' %}" style="padding:0.75rem 2rem; background:var(--gray-100); color:var(--gray-700); border-radius:var(--radius-md); text-decoration:none; font-weight:600; transition:var(--transition);">
+                                    <i class="fa-solid fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" name="save_draft" style="padding:0.75rem 2rem; background:var(--gray-600); color:white; border:none; border-radius:var(--radius-md); font-weight:600; cursor:pointer; transition:var(--transition);">
+                                    <i class="fa-solid fa-save"></i> Save Draft
+                                </button>
+                                <button type="submit" name="submit_result" style="padding:0.75rem 2rem; background:linear-gradient(135deg, #a78bfa, #8b5cf6); color:white; border:none; border-radius:var(--radius-md); font-weight:600; cursor:pointer; transition:var(--transition);">
+                                    <i class="fa-solid fa-check-circle"></i> Submit Result
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Sidebar Info -->
+                    <div>
+                        <!-- Patient Info -->
+                        <div class="medical-table-card" style="margin-bottom:var(--space-5);">
+                            <div class="info-header" style="margin-bottom:var(--space-4);">
+                                <h3><i class="fa-solid fa-user" style="color:var(--medical-cyan); margin-right:var(--space-2); font-size:0.9rem;"></i>Patient Info</h3>
+                            </div>
+                            <div style="text-align:center; margin-bottom:var(--space-4);">
+                                <div style="width:80px; height:80px; margin:0 auto var(--space-3); border-radius:50%; background:linear-gradient(135deg, #22d3ee, #06b6d4); display:flex; align-items:center; justify-content:center; color:white; font-size:2rem; font-weight:700;">
+                                    {{ booking.patient.user.first_name|slice:":1"|upper }}
+                                </div>
+                                <h4 style="color:var(--gray-800); margin-bottom:4px;">{{ booking.patient.user.get_full_name }}</h4>
+                                <p style="font-size:0.85rem; color:var(--gray-500);">{{ booking.patient.user.email }}</p>
+                            </div>
+                            <div style="padding:var(--space-3); background:var(--gray-50); border-radius:var(--radius-md);">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-2);">
+                                    <span style="color:var(--gray-600); font-size:0.85rem;">Patient ID:</span>
+                                    <span style="color:var(--gray-800); font-weight:600; font-size:0.85rem;">#{{ booking.patient.id }}</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-2);">
+                                    <span style="color:var(--gray-600); font-size:0.85rem;">Age:</span>
+                                    <span style="color:var(--gray-800); font-weight:600; font-size:0.85rem;">{{ booking.patient.age|default:"N/A" }}</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span style="color:var(--gray-600); font-size:0.85rem;">Gender:</span>
+                                    <span style="color:var(--gray-800); font-weight:600; font-size:0.85rem;">{{ booking.patient.gender|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Reference -->
+                        <div class="medical-table-card">
+                            <div class="info-header" style="margin-bottom:var(--space-4);">
+                                <h3><i class="fa-solid fa-book-medical" style="color:var(--medical-purple); margin-right:var(--space-2); font-size:0.9rem;"></i>Quick Reference</h3>
+                            </div>
+                            <div style="font-size:0.85rem; color:var(--gray-600); line-height:1.6;">
+                                <div style="padding:var(--space-3); background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:var(--space-3);">
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:var(--space-2);">
+                                        <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); margin-right:6px;"></i>Normal Ranges
+                                    </p>
+                                    <p style="margin-bottom:6px;">• Hemoglobin: 12-16 g/dL</p>
+                                    <p style="margin-bottom:6px;">• WBC: 4000-11000/μL</p>
+                                    <p style="margin-bottom:6px;">• RBC: 4.5-5.5 M/μL</p>
+                                    <p>• Platelets: 150-400 K/μL</p>
+                                </div>
+                                <div style="padding:var(--space-3); background:rgba(239,68,68,0.05); border-radius:var(--radius-md); border:1px solid rgba(239,68,68,0.2);">
+                                    <p style="font-weight:600; color:#dc2626; margin-bottom:var(--space-2);">
+                                        <i class="fa-solid fa-exclamation-triangle" style="margin-right:6px;"></i>Important
+                                    </p>
+                                    <p style="color:var(--gray-600);">Always double-check values before submitting. Results will be immediately available to the patient.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>
