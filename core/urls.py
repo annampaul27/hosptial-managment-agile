@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from . import views
 from .views import lab_reports, logout_view
 from django.contrib.auth import views as auth_views
@@ -93,7 +93,7 @@ urlpatterns = [
         views.patient_reschedule_appointment,
         name='patient_reschedule_appointment'
     ),
-    
+    path('doctor/prescriptions/', views.doctor_prescriptions, name='doctor_prescriptions'),
     
     path(
         'api/available-time-slots/',
@@ -177,6 +177,16 @@ urlpatterns = [
     path('doctor/prescription/<int:prescription_id>/', views.doctor_prescription_detail, name='doctor_prescription_detail'),
     path('doctor/appointment/<int:appointment_id>/add-prescription/', views.doctor_add_prescription, name='doctor_add_prescription'),
     
+    path('doctor/', include([
+        # Prescriptions
+        path('prescriptions/', views.doctor_prescriptions, name='doctor_prescriptions'),
+        path('prescription/<int:prescription_id>/', views.doctor_prescription, name='doctor_prescription'),
+        path('prescription/create/', views.doctor_add_prescription, name='doctor_add_prescription'),
+        path('prescription/<int:prescription_id>/edit/', views.doctor_edit_prescription, name='doctor_edit_prescription'),
+        path('prescription/<int:prescription_id>/delete/', views.doctor_delete_prescription, name='doctor_delete_prescription'),
+        path('prescription/<int:prescription_id>/print/', views.doctor_prescription_print, name='doctor_prescription_print'),
+    ])),
+    
     # Doctor Schedule
     path('doctor/schedule/', views.doctor_schedule, name='doctor_schedule'),
     path('doctor/schedule/update/', views.doctor_schedule_update, name='doctor_schedule_update'),
@@ -258,4 +268,6 @@ urlpatterns = [
     path('frontdesk/settings/', views.frontdesk_settings, name='frontdesk_settings'),
     
     path('doctor/appointment/<int:appointment_id>/reschedule/', views.doctor_reschedule_appointment, name='doctor_reschedule_appointment'),
+    
+    
 ]

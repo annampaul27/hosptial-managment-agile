@@ -1,0 +1,730 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Prescription | BetaCare</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        :root {
+            --medical-cyan: #22d3ee;
+            --medical-purple: #a78bfa;
+            --primary-gradient: linear-gradient(135deg, #22d3ee, #06b6d4);
+            --green-gradient: linear-gradient(135deg, #10b981, #059669);
+            --radius: 10px;
+            --shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 1.75rem 2rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-heading {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #374151;
+            margin: 0 0 1.25rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-heading i {
+            color: var(--medical-cyan);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .req {
+            color: #ef4444;
+        }
+
+        /* ==================== SELECT DROPDOWN FIX ==================== */
+        .form-control {
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            color: #111827;
+            background: #f9fafb;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            appearance: none; /* Remove default styling */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+            background-color: #fff;
+        }
+
+        /* Fix for select options styling */
+        .form-control option {
+            background: white;
+            color: #111827;
+            padding: 8px 12px;
+            border-radius: 0;
+        }
+
+        .form-control option:hover {
+            background: var(--medical-cyan);
+            color: white;
+        }
+
+        .form-control option:checked {
+            background: linear-gradient(var(--medical-cyan), var(--medical-cyan));
+            background-color: var(--medical-cyan);
+            color: white;
+        }
+
+        /* Ensure options don't overflow */
+        .form-control {
+            padding-bottom: 0.75rem;
+            padding-top: 0.75rem;
+            min-height: 44px;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 90px;
+            padding-right: 1rem;
+            background-image: none;
+        }
+
+        .hint {
+            font-size: 0.77rem;
+            color: #9ca3af;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 6px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .tag:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tg {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .tg:hover {
+            background: #22c55e;
+            color: #fff;
+            border-color: #22c55e;
+        }
+
+        .tc {
+            background: #ecfeff;
+            border-color: #a5f3fc;
+            color: #0891b2;
+        }
+
+        .tc:hover {
+            background: var(--medical-cyan);
+            color: #fff;
+            border-color: var(--medical-cyan);
+        }
+
+        .tp {
+            background: #f5f3ff;
+            border-color: #ddd6fe;
+            color: #5b21b6;
+        }
+
+        .tp:hover {
+            background: var(--medical-purple);
+            color: #fff;
+            border-color: var(--medical-purple);
+        }
+
+        .patient-preview {
+            display: none;
+            align-items: center;
+            gap: 0.85rem;
+            background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(167,139,250,0.06));
+            border: 1.5px solid rgba(34,211,238,0.2);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-top: 8px;
+        }
+
+        .patient-preview.show {
+            display: flex;
+        }
+
+        .pv-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .pv-meta p {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #6b7280;
+        }
+
+        .pv-meta strong {
+            font-size: 0.95rem;
+            color: #111827;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .sum-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.87rem;
+        }
+
+        .sum-row:last-child {
+            border-bottom: none;
+        }
+
+        .sum-row span {
+            color: #6b7280;
+        }
+
+        .sum-row strong {
+            color: #111827;
+            max-width: 56%;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .btn-save {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.75rem 1.75rem;
+            width: 100%;
+            background: var(--primary-gradient);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(34,211,238,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.75rem 1.75rem;
+            width: 100%;
+            margin-top: 0.65rem;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background: #e5e7eb;
+        }
+
+        .form-row {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .cols-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        @media (max-width: 768px) {
+            .cols-2,
+            .cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                padding: 1.25rem 1rem;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 310px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* ==================== BREADCRUMB & HEADER ==================== */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: #9ca3af;
+            margin-bottom: 1.25rem;
+        }
+
+        .breadcrumb a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--medical-cyan);
+        }
+
+        .breadcrumb i {
+            font-size: 0.65rem;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            color: #374151;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#g1)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#g1)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge">Doctor</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'doctor_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'doctor_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
+            </a>
+            <a href="{% url 'doctor_patients' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i><span>Patients</span>
+            </a>
+            <a href="{% url 'doctor_prescriptions' %}" class="nav-item active">
+                <i class="fa-solid fa-file-prescription"></i><span>Prescriptions</span>
+            </a>
+            <a href="{% url 'doctor_schedule' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i><span>Schedule</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ========== MAIN ========== -->
+    <main class="medical-main">
+
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Create Prescription</h1>
+                <p class="page-subtitle">Issue a new prescription for your patient</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-icon-btn">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+                <button class="header-icon-btn"><i class="fa-solid fa-envelope"></i></button>
+                <button class="header-icon-btn"><i class="fa-solid fa-user-circle"></i></button>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <a href="{% url 'doctor_dashboard' %}">Dashboard</a>
+                <i class="fa-solid fa-chevron-right"></i>
+                <a href="{% url 'doctor_prescriptions' %}">Prescriptions</a>
+                <i class="fa-solid fa-chevron-right"></i>
+                <span style="color: var(--medical-cyan);">Create New</span>
+            </div>
+
+            <!-- Back Button -->
+            <div class="page-actions">
+                <a href="{% url 'doctor_prescriptions' %}" class="back-btn">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Prescriptions
+                </a>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}{% for message in messages %}
+            <div style="padding:0.9rem 1.25rem;border-radius:10px;margin-bottom:1rem;font-size:0.9rem;
+                background:{% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
+                border-left:4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
+                color:{% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};">
+                <i class="fa-solid fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}{% endif %}
+
+            <!-- FORM -->
+            <form method="POST" action="{% url 'doctor_add_prescription' %}">
+                {% csrf_token %}
+
+                <div class="main-grid">
+
+                    <!-- ===== LEFT COLUMN ===== -->
+                    <div>
+
+                        <!-- Patient Selection -->
+                        <div class="form-section">
+                            <h4 class="section-heading"><i class="fa-solid fa-user-injured"></i> Patient Information</h4>
+
+                            <div class="form-group">
+                                <label for="patient_id">Select Patient <span class="req">*</span></label>
+                                <select name="patient_id" id="patient_id" class="form-control" required onchange="onPatient(this)">
+                                    <option value="">-- Select Patient --</option>
+                                    {% for p in patients %}
+                                    <option value="{{ p.id }}"
+                                        data-name="{{ p.full_name }}"
+                                        data-phone="{{ p.phone }}"
+                                        data-email="{{ p.user.email }}">
+                                        {{ p.full_name }} — {{ p.phone }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="patient-preview" id="pvBox">
+                                    <div class="pv-avatar" id="pvChar">?</div>
+                                    <div class="pv-meta">
+                                        <strong id="pvName"></strong>
+                                        <p id="pvPhone"></p>
+                                        <p id="pvEmail"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medicine Details -->
+                        <div class="form-section">
+                            <h4 class="section-heading"><i class="fa-solid fa-pills"></i> Medicine Details</h4>
+
+                            <!-- Medicine Name -->
+                            <div class="form-group" style="margin-bottom:1.25rem;">
+                                <label for="medicine_name">Medicine Name <span class="req">*</span></label>
+                                <input type="text" id="medicine_name" name="medicine_name"
+                                    class="form-control" required
+                                    placeholder="e.g. Paracetamol, Amoxicillin, Metformin..."
+                                    oninput="s('medicine_name','sumMed')">
+                                <div class="tags">
+                                    <span class="tag tg" onclick="fm('Paracetamol 500mg')">Paracetamol 500mg</span>
+                                    <span class="tag tg" onclick="fm('Amoxicillin 250mg')">Amoxicillin 250mg</span>
+                                    <span class="tag tg" onclick="fm('Metformin 500mg')">Metformin 500mg</span>
+                                    <span class="tag tg" onclick="fm('Ibuprofen 400mg')">Ibuprofen 400mg</span>
+                                    <span class="tag tg" onclick="fm('Atorvastatin 10mg')">Atorvastatin 10mg</span>
+                                    <span class="tag tg" onclick="fm('Cetirizine 10mg')">Cetirizine 10mg</span>
+                                </div>
+                            </div>
+
+                            <!-- Dosage / Frequency / Duration -->
+                            <div class="form-row cols-3">
+                                <div class="form-group">
+                                    <label for="dosage">Dosage <span class="req">*</span></label>
+                                    <input type="text" id="dosage" name="dosage"
+                                        class="form-control" required placeholder="e.g. 500mg"
+                                        oninput="s('dosage','sumDosage')">
+                                    <div class="tags">
+                                        <span class="tag tc" onclick="ff('dosage','sumDosage','250mg')">250mg</span>
+                                        <span class="tag tc" onclick="ff('dosage','sumDosage','500mg')">500mg</span>
+                                        <span class="tag tc" onclick="ff('dosage','sumDosage','1g')">1g</span>
+                                        <span class="tag tc" onclick="ff('dosage','sumDosage','5ml')">5ml</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="frequency">Frequency <span class="req">*</span></label>
+                                    <select id="frequency" name="frequency" class="form-control" required
+                                        onchange="s('frequency','sumFreq')">
+                                        <option value="">-- Select --</option>
+                                        <option>Once daily</option>
+                                        <option>Twice daily</option>
+                                        <option>Three times daily</option>
+                                        <option>Every 6 hours</option>
+                                        <option>Every 8 hours</option>
+                                        <option>Every 12 hours</option>
+                                        <option>As needed</option>
+                                        <option>Before meals</option>
+                                        <option>After meals</option>
+                                        <option>At bedtime</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="duration">Duration <span class="req">*</span></label>
+                                    <select id="duration" name="duration" class="form-control" required
+                                        onchange="s('duration','sumDur')">
+                                        <option value="">-- Select --</option>
+                                        <option>1 day</option>
+                                        <option>3 days</option>
+                                        <option>5 days</option>
+                                        <option>7 days</option>
+                                        <option>10 days</option>
+                                        <option>14 days</option>
+                                        <option>1 month</option>
+                                        <option>2 months</option>
+                                        <option>3 months</option>
+                                        <option>6 months</option>
+                                        <option>Ongoing</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Instructions -->
+                            <div class="form-group" style="margin-top:1.25rem;">
+                                <label for="instructions">Special Instructions</label>
+                                <textarea id="instructions" name="instructions" class="form-control"
+                                    placeholder="e.g. Take with food. Avoid alcohol. Do not crush..."></textarea>
+                                <div class="tags">
+                                    <span class="tag tp" onclick="ai('Take with food.')">Take with food</span>
+                                    <span class="tag tp" onclick="ai('Avoid alcohol.')">Avoid alcohol</span>
+                                    <span class="tag tp" onclick="ai('Take on empty stomach.')">Empty stomach</span>
+                                    <span class="tag tp" onclick="ai('Do not crush or chew.')">Do not crush</span>
+                                    <span class="tag tp" onclick="ai('Store below 25°C.')">Store cool</span>
+                                    <span class="tag tp" onclick="ai('Complete the full course.')">Full course</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ===== RIGHT COLUMN ===== -->
+                    <div>
+
+                        <!-- Status -->
+                        <div class="form-section">
+                            <h4 class="section-heading"><i class="fa-solid fa-toggle-on"></i> Status</h4>
+                            <div class="form-group">
+                                <label for="status">Prescription Status</label>
+                                <select id="status" name="status" class="form-control">
+                                    <option value="Active" selected>Active</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                                <span class="hint">Set Active for current prescriptions</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Summary -->
+                        <div class="form-section" style="background:linear-gradient(135deg,rgba(34,211,238,.04),rgba(167,139,250,.04));border:1.5px solid rgba(34,211,238,.15);">
+                            <h4 class="section-heading"><i class="fa-solid fa-clipboard-list"></i> Summary</h4>
+                            <div>
+                                <div class="sum-row"><span>Patient</span><strong id="sumPat">—</strong></div>
+                                <div class="sum-row"><span>Medicine</span><strong id="sumMed">—</strong></div>
+                                <div class="sum-row"><span>Dosage</span><strong id="sumDosage">—</strong></div>
+                                <div class="sum-row"><span>Frequency</span><strong id="sumFreq">—</strong></div>
+                                <div class="sum-row"><span>Duration</span><strong id="sumDur">—</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Save / Cancel -->
+                        <div class="form-section" style="padding:1.25rem;">
+                            <button type="submit" class="btn-save">
+                                <i class="fa-solid fa-file-medical"></i> Save Prescription
+                            </button>
+                            <a href="{% url 'doctor_prescriptions' %}" class="btn-back">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    /* sync input → summary */
+    function s(inputId, sumId) {
+        const v = document.getElementById(inputId).value;
+        document.getElementById(sumId).textContent = v || '—';
+    }
+
+    /* quick-fill medicine */
+    function fm(name) {
+        document.getElementById('medicine_name').value = name;
+        document.getElementById('sumMed').textContent = name;
+    }
+
+    /* quick-fill any field */
+    function ff(inputId, sumId, val) {
+        document.getElementById(inputId).value = val;
+        document.getElementById(sumId).textContent = val;
+    }
+
+    /* append instruction */
+    function ai(text) {
+        const ta = document.getElementById('instructions');
+        ta.value = ta.value ? ta.value.trimEnd() + ' ' + text : text;
+    }
+
+    /* patient dropdown */
+    function onPatient(sel) {
+        const o = sel.options[sel.selectedIndex];
+        const box = document.getElementById('pvBox');
+        if (o.value) {
+            document.getElementById('pvChar').textContent  = o.dataset.name.charAt(0).toUpperCase();
+            document.getElementById('pvName').textContent  = o.dataset.name;
+            document.getElementById('pvPhone').textContent = '📞 ' + o.dataset.phone;
+            document.getElementById('pvEmail').textContent = '✉  ' + o.dataset.email;
+            box.classList.add('show');
+            document.getElementById('sumPat').textContent = o.dataset.name;
+        } else {
+            box.classList.remove('show');
+            document.getElementById('sumPat').textContent = '—';
+        }
+    }
+</script>
+
+</body>
+</html>

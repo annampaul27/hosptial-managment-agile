@@ -437,6 +437,11 @@
                     <i class="fa-solid fa-user-doctor"></i>
                     <span>Manage Doctors</span>
                 </a>
+                <a href="{% url 'admin_prescriptions' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_prescriptions' or request.resolver_match.url_name == 'admin_add_prescription' %}active{% endif %}">
+                    <i class="fa-solid fa-file-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
                 <a href="{% url 'admin_labs' %}"
                     class="nav-item {% if request.resolver_match.url_name == 'admin_labs' %}active{% endif %}">
                     <i class="fa-solid fa-flask"></i>
