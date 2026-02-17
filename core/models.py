@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
+    email = models.EmailField(null=True, unique=True)
     gender = models.CharField(max_length=10, blank=True)
     dob = models.DateField(null=True, blank=True)
     phone = models.CharField(max_length=15)
@@ -102,7 +103,12 @@ class Prescription(models.Model):
     duration = models.CharField(max_length=50)
     instructions = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
 
 #Labs
 class Lab(models.Model):

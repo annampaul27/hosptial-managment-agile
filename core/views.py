@@ -6427,3 +6427,269 @@ def doctor_reschedule_appointment(request, appointment_id):
     }
 
     return render(request, 'core/dashboard/doctor_appointment_reschedule.html', context)
+
+@login_required
+def doctor_prescriptions(request):
+    """
+    View all prescriptions issued by the logged-in doctor
+    ✅ FIXED: Properly retrieve DoctorProfile
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    prescriptions = Prescription.objects.filter(
+        doctor=doctor_profile
+    ).select_related('patient', 'appointment').order_by('-created_at')
+
+    # Filter by status if provided
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        prescriptions = prescriptions.filter(status=status_filter)
+
+    # Get statistics for dashboard
+    all_prescriptions = Prescription.objects.filter(doctor=doctor_profile)
+    
+    stats = {
+        'total': all_prescriptions.count(),
+        'active': all_prescriptions.filter(status='Active').count(),
+        'completed': all_prescriptions.filter(status='Completed').count(),
+        'cancelled': all_prescriptions.filter(status='Cancelled').count(),
+    }
+
+    context = {
+        'prescriptions': prescriptions,
+        'status_filter': status_filter,
+        'stats': stats,
+        'doctor_profile': doctor_profile,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_prescriptions.html', context)
+
+
+@login_required
+def doctor_prescription(request, prescription_id):
+    """
+    View detailed information about a specific prescription
+    ✅ FIXED: Proper DoctorProfile retrieval
+    ✅ CHANGED: URL name and template name
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    # Get the prescription and verify it belongs to this doctor
+    prescription = get_object_or_404(
+        Prescription,
+        id=prescription_id,
+        doctor=doctor_profile
+    )
+
+    # Get related data
+    patient = prescription.patient
+    appointment = prescription.appointment
+    
+    context = {
+        'prescription': prescription,
+        'patient': patient,
+        'appointment': appointment,
+        'doctor_profile': doctor_profile,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_prescription.html', context)
+
+
+@login_required
+def doctor_add_prescription(request):
+    """
+    Create a new prescription
+    ✅ FIXED: Proper DoctorProfile and form handling
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    if request.method == 'POST':
+        # Get form data
+        patient_id = request.POST.get('patient_id')
+        appointment_id = request.POST.get('appointment_id')
+        medicine_name = request.POST.get('medicine_name', '').strip()
+        dosage = request.POST.get('dosage', '').strip()
+        frequency = request.POST.get('frequency', '').strip()
+        duration = request.POST.get('duration', '').strip()
+        instructions = request.POST.get('instructions', '').strip()
+        status = request.POST.get('status', 'Active')
+
+        # Validation
+        if not all([patient_id, medicine_name, dosage, frequency, duration]):
+            messages.error(request, "All required fields must be filled.")
+            return redirect('doctor_add_prescription')
+
+        try:
+            # Get patient
+            patient = PatientProfile.objects.get(id=patient_id)
+
+            # Get appointment if provided
+            appointment = None
+            if appointment_id:
+                try:
+                    appointment = Appointment.objects.get(id=appointment_id)
+                except Appointment.DoesNotExist:
+                    messages.warning(request, "Appointment not found, prescription created without appointment link.")
+
+            # Create prescription
+            prescription = Prescription.objects.create(
+                patient=patient,
+                doctor=doctor_profile,
+                appointment=appointment,
+                medicine_name=medicine_name,
+                dosage=dosage,
+                frequency=frequency,
+                duration=duration,
+                instructions=instructions,
+                status=status
+            )
+
+            messages.success(
+                request,
+                f"Prescription for {medicine_name} created successfully! Prescription ID: #{prescription.id}"
+            )
+            return redirect('doctor_prescription', prescription_id=prescription.id)
+
+        except PatientProfile.DoesNotExist:
+            messages.error(request, "Selected patient not found.")
+            return redirect('doctor_add_prescription')
+        except Exception as e:
+            messages.error(request, f"Error creating prescription: {str(e)}")
+            return redirect('doctor_add_prescription')
+
+    # GET request - Show form
+    # Get list of patients for dropdown
+    patients = PatientProfile.objects.all().order_by('full_name')
+    
+    # Get list of appointments for optional linking
+    appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        status__in=['Scheduled', 'Confirmed']
+    ).order_by('-appointment_date')
+
+    context = {
+        'patients': patients,
+        'appointments': appointments,
+        'doctor_profile': doctor_profile,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_create_prescription.html', context)
+
+
+@login_required
+def doctor_edit_prescription(request, prescription_id):
+    """
+    Edit an existing prescription
+    ✅ FIXED: Proper DoctorProfile retrieval
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    # Get the prescription and verify ownership
+    prescription = get_object_or_404(
+        Prescription,
+        id=prescription_id,
+        doctor=doctor_profile
+    )
+
+    # Only allow editing if prescription is Active
+    if prescription.status != 'Active':
+        messages.error(request, "Can only edit active prescriptions.")
+        return redirect('doctor_prescription', prescription_id=prescription_id)
+
+    if request.method == 'POST':
+        # Update prescription fields
+        prescription.medicine_name = request.POST.get('medicine_name', prescription.medicine_name).strip()
+        prescription.dosage = request.POST.get('dosage', prescription.dosage).strip()
+        prescription.frequency = request.POST.get('frequency', prescription.frequency).strip()
+        prescription.duration = request.POST.get('duration', prescription.duration).strip()
+        prescription.instructions = request.POST.get('instructions', prescription.instructions).strip()
+        prescription.status = request.POST.get('status', prescription.status)
+        prescription.save()
+
+        messages.success(request, "Prescription updated successfully!")
+        return redirect('doctor_prescription', prescription_id=prescription.id)
+
+    context = {
+        'prescription': prescription,
+        'doctor_profile': doctor_profile,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_edit_prescription.html', context)
+
+
+@login_required
+def doctor_delete_prescription(request, prescription_id):
+    """
+    Delete a prescription (can only delete own prescriptions)
+    ✅ FIXED: Proper permission checking
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    prescription = get_object_or_404(
+        Prescription,
+        id=prescription_id,
+        doctor=doctor_profile
+    )
+
+    if request.method == 'POST':
+        medicine_name = prescription.medicine_name
+        prescription.delete()
+        messages.success(request, f"Prescription for {medicine_name} deleted successfully!")
+        return redirect('doctor_prescriptions')
+
+    context = {
+        'prescription': prescription,
+        'doctor_profile': doctor_profile,
+    }
+
+    return render(request, 'core/dashboard/doctor_confirm_delete_prescription.html', context)
+
+
+@login_required
+def doctor_prescription_print(request, prescription_id):
+    """
+    Generate printable view of prescription
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    prescription = get_object_or_404(
+        Prescription,
+        id=prescription_id,
+        doctor=doctor_profile
+    )
+
+    context = {
+        'prescription': prescription,
+        'doctor_profile': doctor_profile,
+        'is_print': True,  # Flag for template to show print-only layout
+    }
+
+    return render(request, 'core/dashboard/doctor_prescription_print.html', context)
