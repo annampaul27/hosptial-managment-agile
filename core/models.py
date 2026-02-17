@@ -650,3 +650,53 @@ class BloodDonationHistory(models.Model):
         return f"{self.patient.full_name} - {self.donation_date}"
 
 # Create your models here.
+
+from django.db import models
+from django.core.exceptions import ValidationError
+
+
+class DoctorAvailability(models.Model):
+    doctor = models.OneToOneField(
+        'DoctorProfile',
+        on_delete=models.CASCADE,
+        related_name='availability'
+    )
+
+    working_days = models.CharField(
+        max_length=100,
+        help_text="Comma-separated values (e.g., Mon,Tue,Wed)"
+    )
+
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    break_start = models.TimeField(null=True, blank=True)
+    break_end = models.TimeField(null=True, blank=True)
+
+    slot_duration = models.PositiveIntegerField(
+        help_text="Duration in minutes"
+    )
+
+    max_appointments = models.PositiveIntegerField(
+        default=10
+    )
+
+    notes = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        # Validate time logic
+        if self.start_time >= self.end_time:
+            raise ValidationError("End time must be after start time.")
+
+        if self.break_start and self.break_end:
+            if self.break_start >= self.break_end:
+                raise ValidationError("Break end must be after break start.")
+
+            if not (self.start_time <= self.break_start <= self.end_time):
+                raise ValidationError("Break must be within working hours.")
+
+    def __str__(self):
+        return f"{self.doctor} Availability"

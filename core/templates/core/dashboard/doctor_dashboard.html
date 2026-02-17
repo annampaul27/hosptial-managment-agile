@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -18,21 +17,62 @@
 
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* ── Extras not in admin.css ── */
+
+        /* "Edit Schedule" and "Review" action button */
+        .dash-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: 0.65rem 1.25rem;
+            background: linear-gradient(135deg, var(--medical-cyan), var(--primary-blue));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .dash-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Small inline review/view link inside activity items */
+        .activity-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.35rem 0.85rem;
+            background: rgba(34, 211, 238, 0.08);
+            color: var(--medical-cyan);
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .activity-action-btn:hover { background: rgba(34, 211, 238, 0.18); }
+    </style>
 </head>
 
 <body>
 <div class="medical-dashboard">
-    <!-- Sidebar -->
+
+    <!-- ── SIDEBAR ── -->
     <aside class="medical-sidebar">
         <div class="brand">
             <div class="brand-logo">
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
-                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
                     <defs>
                         <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
-                            <stop offset="0%" stop-color="#22d3ee" />
-                            <stop offset="100%" stop-color="#a78bfa" />
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
                         </linearGradient>
                     </defs>
                 </svg>
@@ -43,56 +83,48 @@
         <!-- Profile Card -->
         <div class="profile-card">
             <div class="profile-avatar-wrapper">
-                <div class="profile-avatar">
-                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
-                </div>
+                <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
             </div>
             <div class="profile-details">
                 <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
                 <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
             </div>
-            <span class="role-badge" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">Doctor</span>
+            <span class="role-badge">Doctor</span>
         </div>
 
-        <!-- Navigation Menu -->
+        <!-- Navigation -->
         <nav class="sidebar-nav">
             <a href="{% url 'doctor_dashboard' %}" class="nav-item active">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Dashboard</span>
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
             </a>
             <a href="{% url 'doctor_appointments' %}" class="nav-item">
-                <i class="fa-solid fa-calendar"></i>
-                <span>Appointments</span>
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
             </a>
             <a href="{% url 'doctor_patients' %}" class="nav-item">
-                <i class="fa-solid fa-users"></i>
-                <span>Patient Records</span>
+                <i class="fa-solid fa-users"></i><span>Patient Records</span>
             </a>
             <a href="{% url 'doctor_prescriptions' %}" class="nav-item">
-                <i class="fa-solid fa-prescription-bottle"></i>
-                <span>Prescriptions</span>
+                <i class="fa-solid fa-prescription-bottle"></i><span>Prescriptions</span>
             </a>
             <a href="{% url 'doctor_schedule' %}" class="nav-item">
-                <i class="fa-solid fa-clock"></i>
-                <span>Schedule</span>
+                <i class="fa-solid fa-clock"></i><span>Schedule</span>
             </a>
         </nav>
 
         <!-- Logout -->
         <div class="sidebar-footer">
-            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+            <form method="POST" action="{% url 'logout' %}" style="width:100%;">
                 {% csrf_token %}
-                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    <span>Logout</span>
+                <button type="submit" class="logout-link"
+                        style="width:100%; text-align:left; background:none; border:none; cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
                 </button>
             </form>
         </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- ── MAIN ── -->
     <main class="medical-main">
-        <!-- Header -->
         <header class="medical-header">
             <div class="header-left">
                 <h1 class="page-title">Welcome, Dr. {{ request.user.last_name }}</h1>
@@ -100,325 +132,362 @@
             </div>
             <div class="header-actions">
                 <button class="header-icon-btn" aria-label="Notifications">
-                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    <i class="fa-solid fa-bell"></i>
                     {% if unread_notifications %}
-                        <span class="notification-badge" aria-live="polite">{{ unread_notifications }}</span>
+                        <span class="notification-badge">{{ unread_notifications }}</span>
                     {% endif %}
                 </button>
                 <button class="header-icon-btn" aria-label="Messages">
-                    <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                    <i class="fa-solid fa-envelope"></i>
                 </button>
                 <button class="header-icon-btn" aria-label="Profile">
-                    <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
+                    <i class="fa-solid fa-user-circle"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Content -->
         <div class="medical-content">
-            <!-- Stats Grid -->
+
+            <!-- ── STAT CARDS ── -->
             <div class="stats-grid">
-                <!-- Today's Appointments -->
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#22d3ee,#06b6d4);">
                         <i class="fa-solid fa-calendar-check"></i>
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Today's Appointments</p>
                         <h3 class="stat-value">{{ today_appointments_count|default:"0" }}</h3>
-                        <p class="stat-change" style="color: var(--text-medium);">
+                        <p class="stat-change" style="color:var(--text-medium);">
                             <i class="fa-solid fa-clock"></i>
-                            <span>{% if next_appointment %}Next at {{ next_appointment.appointment_time|time:"g:i A" }}{% else %}No appointments{% endif %}</span>
+                            {% if next_appointment %}Next at {{ next_appointment.appointment_time|time:"g:i A" }}{% else %}No appointments{% endif %}
                         </p>
                     </div>
                 </div>
 
-                <!-- Total Patients -->
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);">
                         <i class="fa-solid fa-users"></i>
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Total Patients</p>
                         <h3 class="stat-value">{{ total_patients|default:"0" }}</h3>
-                        <p class="stat-change" style="color: var(--text-medium);">
-                            <i class="fa-solid fa-user-plus"></i>
-                            <span>In your care</span>
+                        <p class="stat-change" style="color:var(--text-medium);">
+                            <i class="fa-solid fa-user-plus"></i> In your care
                         </p>
                     </div>
                 </div>
 
-                <!-- Pending Prescriptions -->
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#34d399,#10b981);">
                         <i class="fa-solid fa-prescription-bottle"></i>
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Pending Prescriptions</p>
                         <h3 class="stat-value">{{ pending_prescriptions|default:"0" }}</h3>
-                        <p class="stat-change {% if pending_prescriptions > 0 %}negative{% endif %}" style="color: {% if pending_prescriptions > 0 %}#f59e0b{% else %}var(--text-medium){% endif %};">
+                        <p class="stat-change" style="color:{% if pending_prescriptions > 0 %}#f59e0b{% else %}var(--text-medium){% endif %};">
                             <i class="fa-solid fa-{% if pending_prescriptions > 0 %}exclamation-circle{% else %}check-circle{% endif %}"></i>
-                            <span>{% if pending_prescriptions > 0 %}Needs review{% else %}All clear{% endif %}</span>
+                            {% if pending_prescriptions > 0 %}Needs review{% else %}All clear{% endif %}
                         </p>
                     </div>
                 </div>
 
-                <!-- Pending Approvals -->
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#60a5fa,#3b82f6);">
                         <i class="fa-solid fa-clipboard-check"></i>
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Pending Approvals</p>
                         <h3 class="stat-value">{{ pending_approvals|default:"0" }}</h3>
-                        <p class="stat-change" style="color: var(--text-medium);">
-                            <i class="fa-solid fa-hourglass-half"></i>
-                            <span>Awaiting action</span>
+                        <p class="stat-change" style="color:var(--text-medium);">
+                            <i class="fa-solid fa-hourglass-half"></i> Awaiting action
                         </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content Grid -->
+            <!-- ── INFO CARDS ── -->
             <div class="info-grid">
-                <!-- Today's Appointments Card -->
+
+                <!-- Today's Appointments -->
                 <div class="info-card">
                     <div class="info-header">
                         <h3>
-                            <i class="fa-solid fa-calendar-check" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                            <i class="fa-solid fa-calendar-check" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
                             Today's Appointments
                         </h3>
-                        <a href="{% url 'doctor_appointments' %}" style="font-size: 0.85rem; color: var(--medical-cyan); text-decoration: none; font-weight: 600;">
-                            View All <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem; margin-left: 4px;"></i>
+                        <a href="{% url 'doctor_appointments' %}"
+                           style="font-size:0.85rem; color:var(--medical-cyan); text-decoration:none; font-weight:600;">
+                            View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i>
                         </a>
                     </div>
 
                     {% if today_appointments %}
-                        <div class="activity-list">
-                            {% for appointment in today_appointments %}
-                                <div class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(34, 211, 238, 0.1);">
-                                        <i class="fa-solid fa-user-injured" style="color: var(--medical-cyan);"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">{{ appointment.patient.full_name }}</p>
-                                        <p class="activity-time">
-                                            <i class="fa-solid fa-clock" style="margin-right: 4px;"></i>
-                                            {{ appointment.appointment_time|time:"g:i A" }}
-                                            &nbsp;&middot;&nbsp;
-                                            {{ appointment.reason|truncatechars:30 }}
-                                        </p>
-                                    </div>
-                                    <div class="activity-actions">
-                                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="btn-small btn-primary">
-                                            <i class="fa-solid fa-eye"></i> View
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                    <div class="activity-list">
+                        {% for appointment in today_appointments %}
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background:rgba(34,211,238,0.1);">
+                                <i class="fa-solid fa-user-injured" style="color:var(--medical-cyan);"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">{{ appointment.patient.full_name }}</p>
+                                <p class="activity-time">
+                                    <i class="fa-solid fa-clock" style="margin-right:4px;"></i>
+                                    {{ appointment.appointment_time|time:"g:i A" }}
+                                    &nbsp;&middot;&nbsp;
+                                    {{ appointment.reason|truncatechars:30 }}
+                                </p>
+                            </div>
+                            <!-- FIX: was <td class="cell-actions"> inside a <div> — invalid HTML -->
+                            <div style="flex-shrink:0;">
+                                <a href="{% url 'doctor_appointment_detail' appointment.id %}"
+                                   class="activity-action-btn">
+                                    <i class="fa-solid fa-eye"></i> View
+                                </a>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <div style="text-align: center; padding: var(--space-8) var(--space-4);">
-                            <i class="fa-solid fa-calendar-xmark" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
-                            <p style="color: var(--gray-500); margin-bottom: var(--space-4);">No appointments scheduled for today</p>
-                            <a href="{% url 'doctor_appointments' %}" class="add-btn-small" style="text-decoration: none;">
-                                <i class="fa-solid fa-calendar"></i> View Schedule
-                            </a>
-                        </div>
+                    <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                        <i class="fa-solid fa-calendar-xmark"
+                           style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3); display:block;"></i>
+                        <p style="color:var(--gray-500); margin-bottom:var(--space-4);">No appointments scheduled for today</p>
+                        <a href="{% url 'doctor_appointments' %}" class="add-btn-small" style="text-decoration:none;">
+                            <i class="fa-solid fa-calendar"></i> View Schedule
+                        </a>
+                    </div>
                     {% endif %}
                 </div>
 
-                <!-- Pending Prescriptions Card -->
+                <!-- Pending Prescriptions -->
                 <div class="info-card">
                     <div class="info-header">
                         <h3>
-                            <i class="fa-solid fa-prescription" style="color: var(--medical-purple); margin-right: var(--space-2);"></i>
+                            <i class="fa-solid fa-prescription" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>
                             Pending Prescriptions
                         </h3>
-                        <a href="{% url 'doctor_prescriptions' %}" style="font-size: 0.85rem; color: var(--medical-purple); text-decoration: none; font-weight: 600;">
-                            View All <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem; margin-left: 4px;"></i>
+                        <a href="{% url 'doctor_prescriptions' %}"
+                           style="font-size:0.85rem; color:var(--medical-purple); text-decoration:none; font-weight:600;">
+                            View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i>
                         </a>
                     </div>
 
                     {% if pending_prescriptions_list %}
-                        <div class="activity-list">
-                            {% for prescription in pending_prescriptions_list %}
-                                <div class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(167, 139, 250, 0.1);">
-                                        <i class="fa-solid fa-pills" style="color: var(--medical-purple);"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">{{ prescription.patient.full_name }}</p>
-                                        <p class="activity-time">
-                                            <i class="fa-solid fa-clock" style="margin-right: 4px;"></i>
-                                            {{ prescription.created_at|date:"d M Y" }}
-                                        </p>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: var(--space-3);">
-                                        <a href="{% url 'doctor_prescription_detail' prescription.id %}" class="btn-small btn-primary">
-                                            <i class="fa-solid fa-file-medical"></i> Review
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                    <div class="activity-list">
+                        {% for prescription in pending_prescriptions_list %}
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background:rgba(167,139,250,0.1);">
+                                <i class="fa-solid fa-pills" style="color:var(--medical-purple);"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">{{ prescription.patient.full_name }}</p>
+                                <p class="activity-time">
+                                    <i class="fa-solid fa-clock" style="margin-right:4px;"></i>
+                                    {{ prescription.created_at|date:"d M Y" }}
+                                </p>
+                            </div>
+                            <!-- FIX: was class="btn-small btn-primary" — doesn't exist in admin.css -->
+                            <div style="flex-shrink:0;">
+                                <a href="{% url 'doctor_prescription_detail' prescription.id %}"
+                                   class="activity-action-btn">
+                                    <i class="fa-solid fa-file-medical"></i> Review
+                                </a>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <div style="text-align: center; padding: var(--space-8) var(--space-4);">
-                            <i class="fa-solid fa-prescription-bottle" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
-                            <p style="color: var(--gray-500);">No pending prescriptions</p>
-                        </div>
+                    <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                        <i class="fa-solid fa-prescription-bottle"
+                           style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3); display:block;"></i>
+                        <p style="color:var(--gray-500);">No pending prescriptions</p>
+                    </div>
                     {% endif %}
                 </div>
 
-                <!-- Recent Patients Card -->
+                <!-- Recent Patients -->
                 <div class="info-card">
                     <div class="info-header">
                         <h3>
-                            <i class="fa-solid fa-users" style="color: var(--medical-green); margin-right: var(--space-2);"></i>
+                            <i class="fa-solid fa-users" style="color:var(--medical-green); margin-right:var(--space-2);"></i>
                             Recent Patients
                         </h3>
-                        <a href="{% url 'doctor_patients' %}" style="font-size: 0.85rem; color: var(--medical-green); text-decoration: none; font-weight: 600;">
-                            View All <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem; margin-left: 4px;"></i>
+                        <a href="{% url 'doctor_patients' %}"
+                           style="font-size:0.85rem; color:var(--medical-green); text-decoration:none; font-weight:600;">
+                            View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i>
                         </a>
                     </div>
 
                     {% if recent_patients %}
-                        <div class="activity-list">
-                            {% for patient in recent_patients %}
-                                <div class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(16, 185, 129, 0.1);">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--medical-green); font-weight: 600; font-size: 0.9rem;">
-                                            {{ patient.full_name|slice:":1"|upper }}
-                                        </div>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">{{ patient.full_name }}</p>
-                                        <p class="activity-time">
-                                            <i class="fa-solid fa-phone" style="margin-right: 4px;"></i>
-                                            {{ patient.phone }}
-                                        </p>
-                                    </div>
-                                    <div class="activity-actions">
-                                        <a href="{% url 'doctor_patient_detail' patient.id %}" class="btn-small btn-primary">
-                                            <i class="fa-solid fa-folder-open"></i> View
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                    <div class="activity-list">
+                        {% for patient in recent_patients %}
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background:rgba(16,185,129,0.1);">
+                                <span style="color:var(--medical-green); font-weight:700; font-size:0.9rem;">
+                                    {{ patient.full_name|slice:":1"|upper }}
+                                </span>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">{{ patient.full_name }}</p>
+                                <p class="activity-time">
+                                    <i class="fa-solid fa-phone" style="margin-right:4px;"></i>
+                                    {{ patient.phone }}
+                                </p>
+                            </div>
+                            <!-- FIX: was <td class="cell-actions"> inside a <div> — invalid HTML -->
+                            <div style="flex-shrink:0;">
+                                <a href="{% url 'doctor_patient_detail' patient.id %}"
+                                   class="activity-action-btn">
+                                    <i class="fa-solid fa-folder-open"></i> View
+                                </a>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <div style="text-align: center; padding: var(--space-8) var(--space-4);">
-                            <i class="fa-solid fa-user-group" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
-                            <p style="color: var(--gray-500);">No recent patient records</p>
-                        </div>
+                    <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                        <i class="fa-solid fa-user-group"
+                           style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3); display:block;"></i>
+                        <p style="color:var(--gray-500);">No recent patient records</p>
+                    </div>
                     {% endif %}
                 </div>
 
-                <!-- Schedule Overview Card -->
+                <!-- Schedule Overview -->
                 <div class="info-card">
                     <div class="info-header">
                         <h3>
-                            <i class="fa-solid fa-clock" style="color: var(--medical-blue); margin-right: var(--space-2);"></i>
+                            <i class="fa-solid fa-clock" style="color:var(--medical-blue); margin-right:var(--space-2);"></i>
                             Schedule Overview
                         </h3>
-                        <a href="{% url 'doctor_schedule' %}" style="font-size: 0.85rem; color: var(--medical-blue); text-decoration: none; font-weight: 600;">
-                            Manage <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem; margin-left: 4px;"></i>
+                        <a href="{% url 'doctor_schedule' %}"
+                           style="font-size:0.85rem; color:var(--medical-blue); text-decoration:none; font-weight:600;">
+                            Manage <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i>
                         </a>
                     </div>
 
-                    <div style="padding: var(--space-4);">
-                        <div style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
-                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #60a5fa, #3b82f6); display: flex; align-items: center; justify-content: center; color: white;">
+                    <div style="padding:var(--space-2) 0;">
+                        <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4);
+                                    background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:var(--space-3);">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md);
+                                        background:linear-gradient(135deg,#60a5fa,#3b82f6);
+                                        display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0;">
                                 <i class="fa-solid fa-clock"></i>
                             </div>
                             <div>
-                                <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">Working Hours</p>
-                                <p style="font-size: 0.85rem; color: var(--gray-600);">9:00 AM - 5:00 PM</p>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Working Hours</p>
+                                <p style="font-size:0.85rem; color:var(--gray-500);">9:00 AM – 5:00 PM</p>
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); margin-bottom: var(--space-5);">
-                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #60a5fa, #3b82f6); display: flex; align-items: center; justify-content: center; color: white;">
+                        <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4);
+                                    background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:var(--space-5);">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md);
+                                        background:linear-gradient(135deg,#60a5fa,#3b82f6);
+                                        display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0;">
                                 <i class="fa-solid fa-calendar-days"></i>
                             </div>
                             <div>
-                                <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">Working Days</p>
-                                <p style="font-size: 0.85rem; color: var(--gray-600);">Monday - Friday</p>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Working Days</p>
+                                <p style="font-size:0.85rem; color:var(--gray-500);">Monday – Friday</p>
                             </div>
                         </div>
 
-                        <a href="{% url 'doctor_schedule' %}" class="btn btn-primary" style="width: 100%; text-decoration: none; text-align: center; display: inline-block;">
-                            <i class="fa-solid fa-edit"></i> Edit Schedule
+                        <!-- FIX: was class="btn btn-primary" — doesn't exist in admin.css -->
+                        <a href="{% url 'doctor_schedule' %}" class="dash-btn" style="width:100%;">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Schedule
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="medical-table-card" style="margin-top: var(--space-6);">
-                <div class="info-header" style="margin-bottom: var(--space-5);">
+            <!-- ── QUICK ACTIONS ── -->
+            <div class="medical-table-card" style="margin-top:var(--space-6);">
+                <div class="info-header" style="margin-bottom:var(--space-5);">
                     <h3>
-                        <i class="fa-solid fa-bolt" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                        <i class="fa-solid fa-bolt" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
                         Quick Actions
                     </h3>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
-                    
-                    <a href="{% url 'doctor_appointments' %}" 
-                       style="text-decoration: none; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--gray-200);"
-                       onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-cyan)';"
-                       onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
-                        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #22d3ee, #06b6d4); display: flex; align-items: center; justify-content: center; color: white;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--space-4);">
+
+                    {% with actions=True %}
+                    {% for item in ""  %}{% endfor %}
+                    {% endwith %}
+
+                    <a href="{% url 'doctor_appointments' %}"
+                       style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4);
+                              padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);
+                              border:1px solid var(--gray-200); transition:var(--transition);"
+                       onmouseover="this.style.background='var(--gray-100)';this.style.borderColor='var(--medical-cyan)';"
+                       onmouseout="this.style.background='var(--gray-50)';this.style.borderColor='var(--gray-200)';">
+                        <div style="width:48px;height:48px;border-radius:var(--radius-md);
+                                    background:linear-gradient(135deg,#22d3ee,#06b6d4);
+                                    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
                             <i class="fa-solid fa-calendar-check"></i>
                         </div>
                         <div>
-                            <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">View Appointments</p>
-                            <p style="font-size: 0.8rem; color: var(--gray-500);">Manage schedule</p>
+                            <p style="font-weight:600;color:var(--gray-800);margin-bottom:2px;">View Appointments</p>
+                            <p style="font-size:0.8rem;color:var(--gray-500);">Manage schedule</p>
                         </div>
                     </a>
 
-                    <a href="{% url 'doctor_patients' %}" 
-                       style="text-decoration: none; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--gray-200);"
-                       onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-purple)';"
-                       onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
-                        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #a78bfa, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white;">
+                    <a href="{% url 'doctor_patients' %}"
+                       style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4);
+                              padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);
+                              border:1px solid var(--gray-200); transition:var(--transition);"
+                       onmouseover="this.style.background='var(--gray-100)';this.style.borderColor='var(--medical-purple)';"
+                       onmouseout="this.style.background='var(--gray-50)';this.style.borderColor='var(--gray-200)';">
+                        <div style="width:48px;height:48px;border-radius:var(--radius-md);
+                                    background:linear-gradient(135deg,#a78bfa,#8b5cf6);
+                                    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
                             <i class="fa-solid fa-user-plus"></i>
                         </div>
                         <div>
-                            <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">Patient Records</p>
-                            <p style="font-size: 0.8rem; color: var(--gray-500);">View details</p>
+                            <p style="font-weight:600;color:var(--gray-800);margin-bottom:2px;">Patient Records</p>
+                            <p style="font-size:0.8rem;color:var(--gray-500);">View details</p>
                         </div>
                     </a>
 
-                    <a href="{% url 'doctor_prescriptions' %}" 
-                       style="text-decoration: none; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--gray-200);"
-                       onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-green)';"
-                       onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
-                        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #34d399, #10b981); display: flex; align-items: center; justify-content: center; color: white;">
+                    <a href="{% url 'doctor_prescriptions' %}"
+                       style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4);
+                              padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);
+                              border:1px solid var(--gray-200); transition:var(--transition);"
+                       onmouseover="this.style.background='var(--gray-100)';this.style.borderColor='var(--medical-green)';"
+                       onmouseout="this.style.background='var(--gray-50)';this.style.borderColor='var(--gray-200)';">
+                        <div style="width:48px;height:48px;border-radius:var(--radius-md);
+                                    background:linear-gradient(135deg,#34d399,#10b981);
+                                    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
                             <i class="fa-solid fa-prescription"></i>
                         </div>
                         <div>
-                            <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">Prescriptions</p>
-                            <p style="font-size: 0.8rem; color: var(--gray-500);">Review pending</p>
+                            <p style="font-weight:600;color:var(--gray-800);margin-bottom:2px;">Prescriptions</p>
+                            <p style="font-size:0.8rem;color:var(--gray-500);">Review pending</p>
                         </div>
                     </a>
 
-                    <a href="{% url 'doctor_schedule' %}" 
-                       style="text-decoration: none; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--gray-200);"
-                       onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-blue)';"
-                       onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
-                        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #60a5fa, #3b82f6); display: flex; align-items: center; justify-content: center; color: white;">
+                    <a href="{% url 'doctor_schedule' %}"
+                       style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4);
+                              padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);
+                              border:1px solid var(--gray-200); transition:var(--transition);"
+                       onmouseover="this.style.background='var(--gray-100)';this.style.borderColor='var(--medical-blue)';"
+                       onmouseout="this.style.background='var(--gray-50)';this.style.borderColor='var(--gray-200)';">
+                        <div style="width:48px;height:48px;border-radius:var(--radius-md);
+                                    background:linear-gradient(135deg,#60a5fa,#3b82f6);
+                                    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
                             <i class="fa-solid fa-clock"></i>
                         </div>
                         <div>
-                            <p style="font-weight: 600; color: var(--gray-800); margin-bottom: 2px;">Edit Schedule</p>
-                            <p style="font-size: 0.8rem; color: var(--gray-500);">Set availability</p>
+                            <p style="font-weight:600;color:var(--gray-800);margin-bottom:2px;">Edit Schedule</p>
+                            <p style="font-size:0.8rem;color:var(--gray-500);">Set availability</p>
                         </div>
                     </a>
 
                 </div>
             </div>
-        </div>
-    </main>
-</div>
 
+        </div><!-- end .medical-content -->
+    </main>
+</div><!-- end .medical-dashboard -->
+</body>
+</html>

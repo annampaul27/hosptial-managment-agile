@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    path('', views.index, name='index'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register, name='register'),
     path('logout/', logout_view, name='logout'),
@@ -180,12 +180,41 @@ urlpatterns = [
     path('doctor/', include([
         # Prescriptions
         path('prescriptions/', views.doctor_prescriptions, name='doctor_prescriptions'),
-        path('prescription/<int:prescription_id>/', views.doctor_prescription, name='doctor_prescription'),
+        path('prescription/<int:prescription_id>/', views.doctor_prescription_detail, name='doctor_prescription_detail'),
         path('prescription/create/', views.doctor_add_prescription, name='doctor_add_prescription'),
         path('prescription/<int:prescription_id>/edit/', views.doctor_edit_prescription, name='doctor_edit_prescription'),
         path('prescription/<int:prescription_id>/delete/', views.doctor_delete_prescription, name='doctor_delete_prescription'),
         path('prescription/<int:prescription_id>/print/', views.doctor_prescription_print, name='doctor_prescription_print'),
     ])),
+    
+    path('doctor/patients/', 
+        views.doctor_patients, 
+        name='doctor_patients'),
+    
+    # Patient detail/profile
+    path('doctor/patient/<int:patient_id>/', 
+        views.doctor_patient_detail, 
+        name='doctor_patient_detail'),
+    
+    # Patient medical history
+    path('doctor/patient/<int:patient_id>/history/', 
+        views.doctor_patient_medical_history, 
+        name='doctor_patient_medical_history'),
+    
+    # Patient appointments
+    path('doctor/patient/<int:patient_id>/appointments/', 
+        views.doctor_patient_appointments, 
+        name='doctor_patient_appointments'),
+    
+    # Patient prescriptions
+    path('doctor/patient/<int:patient_id>/prescriptions/', 
+        views.doctor_patient_prescriptions, 
+        name='doctor_patient_prescriptions'),
+    
+    # Patient allergies
+    path('doctor/patient/<int:patient_id>/allergies/', 
+        views.doctor_patient_allergies, 
+        name='doctor_patient_allergies'),
     
     # Doctor Schedule
     path('doctor/schedule/', views.doctor_schedule, name='doctor_schedule'),

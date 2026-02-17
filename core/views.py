@@ -6,7 +6,7 @@ from .forms import LabTechnicianForm
 
 
 import core
-from .models import Appointment, Payment, Lab
+from .models import Appointment, DoctorAvailability, Payment, Lab
 from datetime import date
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -34,8 +34,8 @@ from .models import (
 )
 
 
-def home(request):
-    return render(request, 'core/home.html')
+def index(request):
+    return render(request, 'core/index.html')
 
 def logout_view(request):
     logout(request)
@@ -6470,40 +6470,6 @@ def doctor_prescriptions(request):
     return render(request, 'core/dashboard/doctor_prescriptions.html', context)
 
 
-@login_required
-def doctor_prescription(request, prescription_id):
-    """
-    View detailed information about a specific prescription
-    ✅ FIXED: Proper DoctorProfile retrieval
-    ✅ CHANGED: URL name and template name
-    """
-    try:
-        doctor_profile = DoctorProfile.objects.get(user=request.user)
-    except DoctorProfile.DoesNotExist:
-        messages.error(request, "Doctor profile not found.")
-        return redirect('doctor_dashboard')
-
-    # Get the prescription and verify it belongs to this doctor
-    prescription = get_object_or_404(
-        Prescription,
-        id=prescription_id,
-        doctor=doctor_profile
-    )
-
-    # Get related data
-    patient = prescription.patient
-    appointment = prescription.appointment
-    
-    context = {
-        'prescription': prescription,
-        'patient': patient,
-        'appointment': appointment,
-        'doctor_profile': doctor_profile,
-        'unread_notifications': 0,
-    }
-
-    return render(request, 'core/dashboard/doctor_prescription.html', context)
-
 
 @login_required
 def doctor_add_prescription(request):
@@ -6693,3 +6659,704 @@ def doctor_prescription_print(request, prescription_id):
     }
 
     return render(request, 'core/dashboard/doctor_prescription_print.html', context)
+
+# ============================================================
+# FIXED view for doctor_prescription_detail
+# Replace / add to core/views.py
+# ============================================================
+
+@login_required
+def doctor_prescription_detail(request, prescription_id):
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    prescription = get_object_or_404(
+        Prescription,
+        id=prescription_id,
+        doctor=doctor_profile
+    )
+
+    # All prescriptions for the same patient (for the history table at the bottom)
+    patient_prescriptions = Prescription.objects.filter(
+        patient=prescription.patient,
+        doctor=doctor_profile
+    ).order_by('-created_at')
+
+    context = {
+        'prescription':         prescription,
+        'patient_prescriptions': patient_prescriptions,
+        'doctor_profile':        doctor_profile,
+        'unread_notifications':  0,
+    }
+
+    return render(request, 'core/dashboard/doctor_prescription_detail.html', context)
+
+
+# ============================================================
+# FIXED view for doctor_add_prescription
+# Key fix: doctor is already logged in — no doctor_id in form
+# ============================================================
+
+@login_required
+def doctor_add_prescription(request):
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    if request.method == 'POST':
+        patient_id    = request.POST.get('patient_id')
+        appointment_id = request.POST.get('appointment_id')
+        medicine_name = request.POST.get('medicine_name', '').strip()
+        dosage        = request.POST.get('dosage', '').strip()
+        frequency     = request.POST.get('frequency', '').strip()
+        duration      = request.POST.get('duration', '').strip()
+        instructions  = request.POST.get('instructions', '').strip()
+        status        = request.POST.get('status', 'Active')
+
+        if not all([patient_id, medicine_name, dosage, frequency, duration]):
+            messages.error(request, "All required fields must be filled.")
+            return redirect('doctor_add_prescription')
+
+        try:
+            patient = PatientProfile.objects.get(id=patient_id)
+
+            # Appointment is REQUIRED by the model (non-nullable FK)
+            # So we must have a valid appointment_id
+            if not appointment_id:
+                messages.error(request, "Please link an appointment.")
+                return redirect('doctor_add_prescription')
+
+            appointment = Appointment.objects.get(id=appointment_id)
+
+            prescription = Prescription.objects.create(
+                patient=patient,
+                doctor=doctor_profile,
+                appointment=appointment,
+                medicine_name=medicine_name,
+                dosage=dosage,
+                frequency=frequency,
+                duration=duration,
+                instructions=instructions,
+                status=status,
+            )
+
+            messages.success(request, f"Prescription for {medicine_name} created! ID: #{prescription.id}")
+            return redirect('doctor_prescription_detail', prescription_id=prescription.id)
+
+        except PatientProfile.DoesNotExist:
+            messages.error(request, "Selected patient not found.")
+        except Appointment.DoesNotExist:
+            messages.error(request, "Selected appointment not found.")
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+
+        return redirect('doctor_add_prescription')
+
+    # GET — build dropdown data
+    # Only show patients who have appointments with this doctor
+    patients = PatientProfile.objects.filter(
+        appointment__doctor=doctor_profile
+    ).distinct().order_by('full_name')
+
+    appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        status__in=['Scheduled', 'Confirmed']
+    ).select_related('patient').order_by('-appointment_date')
+
+    context = {
+        'patients':             patients,
+        'appointments':         appointments,
+        'doctor_profile':       doctor_profile,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_create_prescription.html', context)
+
+# ==================== DOCTOR PATIENTS VIEWS ====================
+
+@login_required
+def doctor_patients(request):
+    """
+    View all patients under this doctor's care with advanced filtering
+    
+    Features:
+    - List all patients
+    - Search by name, phone, email
+    - Shows appointment count
+    - Shows last visit date
+    - Shows patient status
+    - Shows gender
+    
+    URL: /doctor/patients/
+    Template: core/dashboard/doctor_patients.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    # Get unique patients with appointments to this doctor
+    patient_ids = Appointment.objects.filter(
+        doctor=doctor_profile
+    ).values_list('patient_id', flat=True).distinct()
+
+    patients = PatientProfile.objects.filter(
+        id__in=patient_ids
+    ).order_by('full_name')
+
+    # Search functionality
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        patients = patients.filter(
+            Q(full_name__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(user__email__icontains=search_query)
+        )
+
+    # Add appointment count and last visit for each patient
+    for patient in patients:
+        appointments = Appointment.objects.filter(
+            doctor=doctor_profile,
+            patient=patient
+        )
+        patient.appointment_count = appointments.count()
+        patient.last_appointment = appointments.order_by('-appointment_date').first()
+
+    # Get statistics
+    total_patients = PatientProfile.objects.filter(
+        id__in=patient_ids
+    ).count()
+
+    active_patients = PatientProfile.objects.filter(
+        id__in=patient_ids,
+        status='Active'
+    ).count()
+
+    # Get unread notifications count (implement based on your notification system)
+    unread_notifications = 0
+
+    context = {
+        'patients': patients,
+        'search_query': search_query,
+        'doctor_profile': doctor_profile,
+        'total_patients': total_patients,
+        'active_patients': active_patients,
+        'unread_notifications': unread_notifications,
+    }
+
+    return render(request, 'core/dashboard/doctor_patients.html', context)
+
+
+@login_required
+def doctor_patient_detail(request, patient_id):
+    """
+    View detailed patient information including medical history
+    
+    Features:
+    - Full patient profile
+    - Medical history with this doctor
+    - All appointments with this doctor
+    - Current medications
+    - Allergies
+    - Medical conditions
+    - Surgery history
+    - Option to write prescription
+    
+    URL: /doctor/patient/<patient_id>/
+    Template: core/dashboard/doctor_patient_detail.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+
+    # Verify doctor has seen this patient
+    has_appointment = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).exists()
+
+    if not has_appointment:
+        messages.error(request, "You don't have access to this patient's records")
+        return redirect('doctor_patients')
+
+    # Get patient data
+    appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).select_related('doctor').order_by('-appointment_date')
+
+    prescriptions = Prescription.objects.filter(
+        patient=patient,
+        doctor=doctor_profile
+    ).order_by('-created_at')
+
+    allergies = Allergy.objects.filter(patient=patient)
+    conditions = MedicalCondition.objects.filter(patient=patient)
+    medications = PatientMedication.objects.filter(
+        patient=patient,
+        end_date__isnull=True
+    )
+
+    # Statistics
+    total_appointments = appointments.count()
+    total_prescriptions = prescriptions.count()
+
+    context = {
+        'patient': patient,
+        'doctor_profile': doctor_profile,
+        'appointments': appointments[:10],  # Last 10 appointments
+        'total_appointments': total_appointments,
+        'prescriptions': prescriptions[:5],  # Last 5 prescriptions
+        'total_prescriptions': total_prescriptions,
+        'allergies': allergies,
+        'conditions': conditions,
+        'medications': medications,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_patient_detail.html', context)
+
+
+@login_required
+def doctor_patient_medical_history(request, patient_id):
+    """
+    View complete medical history for a patient
+    
+    Features:
+    - All appointments
+    - All prescriptions
+    - All allergies
+    - All medications
+    - All medical conditions
+    - Surgery history
+    - Family history
+    - Immunizations
+    - Vital signs
+    
+    URL: /doctor/patient/<patient_id>/history/
+    Template: core/dashboard/doctor_patient_medical_history.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+
+    # Verify access
+    has_appointment = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).exists()
+
+    if not has_appointment:
+        messages.error(request, "You don't have access to this patient's records")
+        return redirect('doctor_patients')
+
+    # Get all medical data
+    appointments = Appointment.objects.filter(
+        patient=patient
+    ).order_by('-appointment_date')
+
+    prescriptions = Prescription.objects.filter(
+        patient=patient
+    ).order_by('-created_at')
+
+    allergies = Allergy.objects.filter(patient=patient).order_by('-recorded_date')
+    conditions = MedicalCondition.objects.filter(patient=patient).order_by('-diagnosis_date')
+    medications = PatientMedication.objects.filter(patient=patient).order_by('-start_date')
+
+    # Import additional models if needed
+    from core.models import Surgery, FamilyHistory, Immunization, VitalSigns
+
+    surgeries = Surgery.objects.filter(patient=patient).order_by('-date')
+    family_history = FamilyHistory.objects.filter(patient=patient).order_by('-recorded_date')
+    immunizations = Immunization.objects.filter(patient=patient).order_by('-date')
+    vital_signs = VitalSigns.objects.filter(patient=patient).order_by('-date')[:20]
+
+    context = {
+        'patient': patient,
+        'doctor_profile': doctor_profile,
+        'appointments': appointments,
+        'prescriptions': prescriptions,
+        'allergies': allergies,
+        'conditions': conditions,
+        'medications': medications,
+        'surgeries': surgeries,
+        'family_history': family_history,
+        'immunizations': immunizations,
+        'vital_signs': vital_signs,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_patient_medical_history.html', context)
+
+
+@login_required
+def doctor_patient_appointments(request, patient_id):
+    """
+    View all appointments with a specific patient
+    
+    Features:
+    - List all appointments
+    - Filter by status
+    - Sort by date
+    - Confirm appointments
+    - Complete appointments
+    - Reschedule appointments
+    
+    URL: /doctor/patient/<patient_id>/appointments/
+    Template: core/dashboard/doctor_patient_appointments.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+
+    # Verify access
+    has_appointment = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).exists()
+
+    if not has_appointment:
+        messages.error(request, "You don't have access to this patient's records")
+        return redirect('doctor_patients')
+
+    # Get appointments
+    appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).order_by('-appointment_date', '-appointment_time')
+
+    # Filter by status if provided
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        appointments = appointments.filter(status=status_filter)
+
+    # Statistics
+    total_appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).count()
+
+    pending_count = appointments.filter(
+        status__in=['Pending Payment', 'Scheduled']
+    ).count()
+
+    completed_count = appointments.filter(
+        status='Completed'
+    ).count()
+
+    cancelled_count = appointments.filter(
+        status='Cancelled'
+    ).count()
+
+    context = {
+        'patient': patient,
+        'doctor_profile': doctor_profile,
+        'appointments': appointments,
+        'status_filter': status_filter,
+        'total_appointments': total_appointments,
+        'pending_count': pending_count,
+        'completed_count': completed_count,
+        'cancelled_count': cancelled_count,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_patient_appointments.html', context)
+
+
+@login_required
+def doctor_patient_prescriptions(request, patient_id):
+    """
+    View all prescriptions for a specific patient
+    
+    Features:
+    - List all prescriptions
+    - Filter by status
+    - Write new prescription
+    - Edit prescriptions
+    - Delete prescriptions
+    
+    URL: /doctor/patient/<patient_id>/prescriptions/
+    Template: core/dashboard/doctor_patient_prescriptions.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+
+    # Verify access
+    has_appointment = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).exists()
+
+    if not has_appointment:
+        messages.error(request, "You don't have access to this patient's records")
+        return redirect('doctor_patients')
+
+    # Get prescriptions
+    prescriptions = Prescription.objects.filter(
+        patient=patient,
+        doctor=doctor_profile
+    ).order_by('-created_at')
+
+    # Filter by status if provided
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        prescriptions = prescriptions.filter(status=status_filter)
+
+    # Statistics
+    total_prescriptions = Prescription.objects.filter(
+        patient=patient,
+        doctor=doctor_profile
+    ).count()
+
+    active_count = prescriptions.filter(status='Active').count()
+    completed_count = prescriptions.filter(status='Completed').count()
+
+    context = {
+        'patient': patient,
+        'doctor_profile': doctor_profile,
+        'prescriptions': prescriptions,
+        'status_filter': status_filter,
+        'total_prescriptions': total_prescriptions,
+        'active_count': active_count,
+        'completed_count': completed_count,
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_patient_prescriptions.html', context)
+
+
+@login_required
+def doctor_patient_allergies(request, patient_id):
+    """
+    View and manage patient allergies
+    
+    Features:
+    - List all allergies
+    - Add new allergy
+    - Edit allergy
+    - Delete allergy
+    - Show severity
+    - Show reaction
+    
+    URL: /doctor/patient/<patient_id>/allergies/
+    Template: core/dashboard/doctor_patient_allergies.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('doctor_dashboard')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+
+    # Verify access
+    has_appointment = Appointment.objects.filter(
+        doctor=doctor_profile,
+        patient=patient
+    ).exists()
+
+    if not has_appointment:
+        messages.error(request, "You don't have access to this patient's records")
+        return redirect('doctor_patients')
+
+    # Get allergies
+    allergies = Allergy.objects.filter(patient=patient).order_by('-recorded_date')
+
+    # Statistics
+    critical_count = allergies.filter(severity='Critical').count()
+    severe_count = allergies.filter(severity='Severe').count()
+
+    context = {
+        'patient': patient,
+        'doctor_profile': doctor_profile,
+        'allergies': allergies,
+        'critical_count': critical_count,
+        'severe_count': severe_count,
+        'total_allergies': allergies.count(),
+        'unread_notifications': 0,
+    }
+
+    return render(request, 'core/dashboard/doctor_patient_allergies.html', context)
+
+# ============================================================
+# Replace doctor_schedule() and doctor_schedule_update() in
+# core/views.py with the code below.
+# ============================================================
+
+from datetime import date, timedelta
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+
+@login_required
+def doctor_schedule(request):
+    """
+    Display and manage doctor's weekly schedule and today's time slots.
+    Template: core/dashboard/doctor_schedule.html
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found")
+        return redirect('login')
+
+    today = date.today()
+
+    # ── all_days: passed to the template for the checkbox list ───────────
+    # No split filter needed in the template — the list is built here.
+    ALL_DAY_DEFS = [
+        ('Monday',    'Mon', True),
+        ('Tuesday',   'Tue', True),
+        ('Wednesday', 'Wed', True),
+        ('Thursday',  'Thu', True),
+        ('Friday',    'Fri', True),
+        ('Saturday',  'Sat', False),
+        ('Sunday',    'Sun', False),
+    ]
+    all_days = [
+        {'name': name, 'abbr': abbr, 'default_checked': checked}
+        for name, abbr, checked in ALL_DAY_DEFS
+    ]
+
+    # ── Weekly overview (Mon–Sun of the current week) ─────────────────────
+    WORKING_DAY_NAMES = {'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'}
+    week_start = today - timedelta(days=today.weekday())   # Monday
+
+    week_schedule = []
+    for i in range(7):
+        day_date = week_start + timedelta(days=i)
+        day_name = day_date.strftime('%A')
+        is_working = day_name in WORKING_DAY_NAMES
+
+        appt_count = Appointment.objects.filter(
+            doctor=doctor_profile,
+            appointment_date=day_date,
+            status__in=['Scheduled', 'Confirmed', 'Pending Payment']
+        ).count()
+
+        week_schedule.append({
+            'day':          day_date.strftime('%a'),   # "Mon", "Tue", …
+            'full_day':     day_name,
+            'date':         day_date,
+            'is_today':     day_date == today,
+            'is_working':   is_working,
+            'hours':        '9–5' if is_working else '',
+            'appointments': appt_count if is_working else None,
+        })
+
+    # ── Today's time slots (09:00–17:00, 30-min intervals) ───────────────
+    BREAK_SLOTS = {'13:00', '13:30'}
+
+    todays_booked = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_date=today,
+        status__in=['Scheduled', 'Confirmed', 'Pending Payment']
+    ).select_related('patient').values('appointment_time', 'patient__full_name')
+
+    booked_map = {}
+    for appt in todays_booked:
+        time_str = str(appt['appointment_time'])[:5]   # "HH:MM"
+        booked_map[time_str] = appt['patient__full_name']
+
+    todays_slots = []
+    for hour in range(9, 17):
+        for minute in (0, 30):
+            raw = f"{hour:02d}:{minute:02d}"
+            is_break  = raw in BREAK_SLOTS
+            is_booked = (raw in booked_map) and not is_break
+            display   = f"{hour % 12 or 12}:{minute:02d} {'AM' if hour < 12 else 'PM'}"
+
+            todays_slots.append({
+                'time':         display,
+                'raw_time':     raw,
+                'is_booked':    is_booked,
+                'is_break':     is_break,
+                'patient_name': booked_map.get(raw, ''),
+            })
+
+    # ── Upcoming appointments (next 7 days) ───────────────────────────────
+    upcoming_appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_date__range=[today, today + timedelta(days=7)],
+        status__in=['Scheduled', 'Confirmed', 'Pending Payment']
+    ).select_related('patient').order_by('appointment_date', 'appointment_time')
+
+    context = {
+        'doctor_profile':        doctor_profile,
+        'working_hours':         '9:00 AM – 5:00 PM',
+        'working_days':          'Mon – Fri',
+        'all_days':              all_days,          # ← used by checkbox loop
+        'week_schedule':         week_schedule,     # ← used by weekly overview
+        'todays_slots':          todays_slots,      # ← used by slot grid
+        'upcoming_appointments': upcoming_appointments,
+    }
+
+    return render(request, 'core/dashboard/doctor_schedule.html', context)
+
+
+@login_required
+def doctor_schedule_update(request):
+    """
+    Handle POST from the Update Schedule form.
+    """
+    try:
+        doctor_profile = DoctorProfile.objects.get(user=request.user)
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, "Doctor profile not found")
+        return redirect('login')
+
+    if request.method == 'POST':
+        # Read submitted values
+        working_days  = request.POST.getlist('working_days')
+        start_time    = request.POST.get('start_time', '09:00')
+        end_time      = request.POST.get('end_time', '17:00')
+        break_start   = request.POST.get('break_start', '13:00')
+        break_end     = request.POST.get('break_end', '14:00')
+        slot_duration = request.POST.get('slot_duration', '30')
+        max_appts     = request.POST.get('max_appointments', '16')
+        notes         = request.POST.get('notes', '')
+
+        # TODO: persist to a DoctorAvailability model when you create one:
+        DoctorAvailability.objects.update_or_create(
+            doctor=doctor_profile,
+            defaults={
+                'working_days': ','.join(working_days),
+                'start_time': start_time,
+                'end_time': end_time,
+                'break_start': break_start,
+                'break_end': break_end,
+                'slot_duration': int(slot_duration),
+                'max_appointments': int(max_appts),
+                'notes': notes,
+            }
+        )
+
+        messages.success(request, "Schedule updated successfully!")
+        return redirect('doctor_schedule')
+
+    return redirect('doctor_schedule')
+

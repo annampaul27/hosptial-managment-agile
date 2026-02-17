@@ -1,0 +1,311 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Patients | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* ── Extras not in admin.css ── */
+
+        /* Inline search input styled like dashboard's header search */
+        .search-input {
+            width: 100%;
+            padding: 0.65rem 1rem 0.65rem 2.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            background: var(--white);
+            font-family: var(--font-body);
+            transition: var(--transition);
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34,211,238,0.1);
+        }
+
+        /* Search / action buttons */
+        .search-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 0.65rem 1.5rem;
+            background: linear-gradient(135deg, var(--medical-cyan), var(--primary-blue));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .search-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .clear-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 0.65rem 1.25rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .clear-btn:hover { background: var(--gray-200); }
+
+        /* Appointment count pill */
+        .count-pill {
+            background: #ecfeff;
+            color: #0891b2;
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Patient status */
+        .status-active-badge   { background: rgba(16,185,129,0.1);  color: var(--status-active);   }
+        .status-inactive-badge { background: rgba(239,68,68,0.1);   color: var(--status-inactive); }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge">Doctor</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'doctor_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'doctor_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
+            </a>
+            <a href="{% url 'doctor_patients' %}" class="nav-item active">
+                <i class="fa-solid fa-users"></i><span>Patient Records</span>
+            </a>
+            <a href="{% url 'doctor_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription-bottle"></i><span>Prescriptions</span>
+            </a>
+            <a href="{% url 'doctor_schedule' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i><span>Schedule</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width:100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width:100%; text-align:left; background:none; border:none; cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">My Patients</h1>
+                <p class="page-subtitle">List of all patients you've seen</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-icon-btn" aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if unread_notifications %}<span class="notification-badge">{{ unread_notifications }}</span>{% endif %}
+                </button>
+                <button class="header-icon-btn" aria-label="Messages">
+                    <i class="fa-solid fa-envelope"></i>
+                </button>
+                <button class="header-icon-btn" aria-label="Profile">
+                    <i class="fa-solid fa-user-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Flash Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div style="padding:var(--space-4); border-radius:var(--radius-md); margin-bottom:var(--space-4);
+                    background:{% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
+                    border-left:4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
+                    color:{% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};
+                    font-size:0.9rem;">
+                    <i class="fa-solid fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"
+                       style="margin-right:var(--space-2);"></i>{{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Search Bar -->
+            <div class="medical-table-card" style="padding:var(--space-4); margin-bottom:var(--space-6);">
+                <form method="GET" style="display:flex; gap:var(--space-3); align-items:center;">
+                    <div style="flex:1; position:relative;">
+                        <i class="fa-solid fa-search"
+                           style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--gray-400);"></i>
+                        <input type="text" name="search"
+                               placeholder="Search by name, phone, or email..."
+                               value="{{ search_query }}"
+                               class="search-input">
+                    </div>
+                    <button type="submit" class="search-btn">
+                        <i class="fa-solid fa-search"></i> Search
+                    </button>
+                    {% if search_query %}
+                    <a href="{% url 'doctor_patients' %}" class="clear-btn">
+                        <i class="fa-solid fa-xmark"></i> Clear
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <!-- Patients Table -->
+            {% if patients %}
+            <div class="medical-table-card">
+                <div class="info-header" style="margin-bottom:var(--space-4);">
+                    <h3>
+                        <i class="fa-solid fa-users" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                        Patient Records
+                    </h3>
+                    <span style="font-size:0.85rem; color:var(--gray-500); font-weight:500;">
+                        {{ patients|length }} patient{% if patients|length != 1 %}s{% endif %} found
+                    </span>
+                </div>
+
+                <table class="medical-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Appointments</th>
+                            <th>Last Visit</th>
+                            <th>Gender</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td class="cell-patient">
+                                <div class="patient-info">
+                                    <div class="patient-avatar">{{ patient.full_name|slice:":1"|upper }}</div>
+                                    <div class="patient-details">
+                                        <span class="patient-name">{{ patient.full_name }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="cell-phone">{{ patient.phone }}</td>
+                            <td class="cell-email" style="font-size:0.85rem;">{{ patient.user.email }}</td>
+                            <td>
+                                <span class="count-pill">{{ patient.appointment_count|default:0 }}</span>
+                            </td>
+                            <td>
+                                {% if patient.last_appointment %}
+                                    {{ patient.last_appointment.appointment_date|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if patient.gender %}{{ patient.gender }}
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td class="cell-status">
+                                <span class="status-badge {% if patient.status == 'Active' or not patient.status %}status-active-badge{% else %}status-inactive-badge{% endif %}">
+                                    {{ patient.status|default:"Active" }}
+                                </span>
+                            </td>
+                            <td class="cell-actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'doctor_patient_detail' patient.id %}" class="action-btn view-btn" title="View patient">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="medical-table-card">
+                <div class="empty-row">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-{% if search_query %}magnifying-glass{% else %}users{% endif %}"></i>
+                        <p>
+                            {% if search_query %}
+                                No patients match "{{ search_query }}"
+                            {% else %}
+                                You haven't seen any patients yet.
+                            {% endif %}
+                        </p>
+                        {% if search_query %}
+                        <a href="{% url 'doctor_patients' %}" class="add-btn-small">
+                            <i class="fa-solid fa-arrow-left"></i> Clear Search
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- end .medical-content -->
+    </main>
+</div><!-- end .medical-dashboard -->
+</body>
+</html>

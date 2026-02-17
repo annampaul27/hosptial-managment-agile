@@ -50,39 +50,33 @@
 
         <nav class="sidebar-nav">
             <a href="{% url 'doctor_dashboard' %}" class="nav-item">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Dashboard</span>
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
             </a>
             <a href="{% url 'doctor_appointments' %}" class="nav-item">
-                <i class="fa-solid fa-calendar"></i>
-                <span>Appointments</span>
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
             </a>
             <a href="{% url 'doctor_patients' %}" class="nav-item">
-                <i class="fa-solid fa-users"></i>
-                <span>Patient Records</span>
+                <i class="fa-solid fa-users"></i><span>Patient Records</span>
             </a>
             <a href="{% url 'doctor_prescriptions' %}" class="nav-item active">
-                <i class="fa-solid fa-prescription-bottle"></i>
-                <span>Prescriptions</span>
+                <i class="fa-solid fa-prescription-bottle"></i><span>Prescriptions</span>
             </a>
             <a href="{% url 'doctor_schedule' %}" class="nav-item">
-                <i class="fa-solid fa-clock"></i>
-                <span>Schedule</span>
+                <i class="fa-solid fa-clock"></i><span>Schedule</span>
             </a>
         </nav>
 
         <div class="sidebar-footer">
             <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
                 {% csrf_token %}
-                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    <span>Logout</span>
+                <button type="submit" class="logout-link" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
                 </button>
             </form>
         </div>
     </aside>
 
-    <!-- ==================== MAIN CONTENT ==================== -->
+    <!-- ==================== MAIN ==================== -->
     <main class="medical-main">
 
         <header class="medical-header">
@@ -91,11 +85,9 @@
                 <p class="page-subtitle">Full prescription information</p>
             </div>
             <div class="header-actions">
-                <button class="header-icon-btn" aria-label="Notifications">
-                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
-                    {% if unread_notifications %}
-                        <span class="notification-badge">{{ unread_notifications }}</span>
-                    {% endif %}
+                <button class="header-icon-btn">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if unread_notifications %}<span class="notification-badge">{{ unread_notifications }}</span>{% endif %}
                 </button>
                 <button class="header-icon-btn"><i class="fa-solid fa-envelope"></i></button>
                 <button class="header-icon-btn"><i class="fa-solid fa-user-circle"></i></button>
@@ -105,225 +97,284 @@
         <div class="medical-content">
 
             <!-- Breadcrumb -->
-            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #9ca3af; margin-bottom: 1.25rem;">
-                <a href="{% url 'doctor_dashboard' %}" style="color: #9ca3af; text-decoration: none;">Dashboard</a>
-                <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
-                <a href="{% url 'doctor_prescriptions' %}" style="color: #9ca3af; text-decoration: none;">Prescriptions</a>
-                <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
-                <span style="color: #22d3ee;">Prescription #{{ prescription.id }}</span>
+            <div style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#9ca3af;margin-bottom:1.25rem;">
+                <a href="{% url 'doctor_dashboard' %}" style="color:#9ca3af;text-decoration:none;">Dashboard</a>
+                <i class="fa-solid fa-chevron-right" style="font-size:.65rem;"></i>
+                <a href="{% url 'doctor_prescriptions' %}" style="color:#9ca3af;text-decoration:none;">Prescriptions</a>
+                <i class="fa-solid fa-chevron-right" style="font-size:.65rem;"></i>
+                <span style="color:#22d3ee;">Prescription #{{ prescription.id }}</span>
             </div>
 
             <!-- Messages -->
-            {% if messages %}
-            {% for message in messages %}
-            <div style="padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-3);
-                background: {% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
-                border-left: 4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
-                color: {% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};">
+            {% if messages %}{% for message in messages %}
+            <div style="padding:var(--space-4);border-radius:var(--radius-md);margin-bottom:var(--space-3);font-size:.9rem;
+                background:{% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
+                border-left:4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
+                color:{% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};">
                 <i class="fa-solid fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"></i>
                 {{ message }}
             </div>
-            {% endfor %}
-            {% endif %}
+            {% endfor %}{% endif %}
 
-            <!-- Top Action Bar -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <!-- Action Bar -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
                 <a href="{% url 'doctor_prescriptions' %}"
-                    style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-                           background: #f3f4f6; color: #374151; border-radius: 8px;
-                           text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+                    style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+                           background:#f3f4f6;color:#374151;border-radius:8px;
+                           text-decoration:none;font-size:.88rem;font-weight:600;">
                     <i class="fa-solid fa-arrow-left"></i> Back to Prescriptions
                 </a>
-                <div style="display: flex; gap: 0.75rem;">
-                    <button onclick="window.print()"
-                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-                               background: #f3f4f6; color: #374151; border: none; border-radius: 8px;
-                               font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit;">
-                        <i class="fa-solid fa-print"></i> Print
-                    </button>
-                </div>
+                <button onclick="window.print()"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+                           background:#f3f4f6;color:#374151;border:none;border-radius:8px;
+                           font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
             </div>
 
             <!-- Main Grid -->
-            <div style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start;">
+            <div style="display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start;">
 
-                <!-- ===== LEFT: Prescription Info ===== -->
+                <!-- ===== LEFT ===== -->
                 <div>
 
                     <!-- Medicine Card -->
-                    <div class="medical-table-card" style="margin-bottom: 1.25rem;">
-                        <div class="info-header" style="margin-bottom: var(--space-5);">
+                    <div class="medical-table-card" style="margin-bottom:1.25rem;">
+                        <div class="info-header" style="margin-bottom:var(--space-5);">
                             <h3>
-                                <i class="fa-solid fa-pills" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                                <i class="fa-solid fa-pills" style="color:var(--medical-cyan);margin-right:var(--space-2);"></i>
                                 Medicine Details
                             </h3>
-                            <!-- Status Badge -->
-                            <span style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
-                                {% if prescription.status == 'Active' %}background: rgba(16,185,129,0.1); color: #10b981;
-                                {% elif prescription.status == 'Completed' %}background: rgba(167,139,250,0.12); color: #7c3aed;
-                                {% elif prescription.status == 'Cancelled' %}background: rgba(239,68,68,0.1); color: #ef4444;
-                                {% else %}background: rgba(100,116,139,0.1); color: #64748b;{% endif %}">
-                                {{ prescription.status|default:"Active" }}
+                            <span style="display:inline-block;padding:6px 16px;border-radius:20px;font-size:.85rem;font-weight:600;
+                                {% if prescription.status == 'Active' %}background:rgba(16,185,129,0.1);color:#10b981;
+                                {% elif prescription.status == 'Completed' %}background:rgba(167,139,250,0.12);color:#7c3aed;
+                                {% elif prescription.status == 'Cancelled' %}background:rgba(239,68,68,0.1);color:#ef4444;
+                                {% else %}background:rgba(100,116,139,0.1);color:#64748b;{% endif %}">
+                                {{ prescription.status }}
                             </span>
                         </div>
 
                         <!-- Medicine Name Hero -->
-                        <div style="background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(167,139,250,0.06));
-                                    border: 1.5px solid rgba(34,211,238,0.15); border-radius: 12px;
-                                    padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 52px; height: 52px; border-radius: 12px;
-                                        background: linear-gradient(135deg, #22d3ee, #06b6d4);
-                                        display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fa-solid fa-pills" style="color: white; font-size: 1.3rem;"></i>
+                        <div style="background:linear-gradient(135deg,rgba(34,211,238,0.06),rgba(167,139,250,0.06));
+                                    border:1.5px solid rgba(34,211,238,0.15);border-radius:12px;
+                                    padding:1.25rem 1.5rem;margin-bottom:1.25rem;
+                                    display:flex;align-items:center;gap:1rem;">
+                            <div style="width:52px;height:52px;border-radius:12px;
+                                        background:linear-gradient(135deg,#22d3ee,#06b6d4);
+                                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fa-solid fa-pills" style="color:white;font-size:1.3rem;"></i>
                             </div>
                             <div>
-                                <p style="font-size: 0.78rem; color: #9ca3af; margin: 0 0 3px;">Medicine Name</p>
-                                <h2 style="font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0;">{{ prescription.medicine_name }}</h2>
+                                <p style="font-size:.78rem;color:#9ca3af;margin:0 0 3px;">Medicine Name</p>
+                                <h2 style="font-size:1.3rem;font-weight:700;color:#111827;margin:0;">{{ prescription.medicine_name }}</h2>
                             </div>
                         </div>
 
                         <!-- Dosage / Frequency / Duration -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 1rem 1.25rem; border-left: 3px solid #22d3ee;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Dosage</p>
-                                <strong style="font-size: 1.1rem; color: #111827;">{{ prescription.dosage }}</strong>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+                            <div style="background:#f9fafb;border-radius:10px;padding:1rem 1.25rem;border-left:3px solid #22d3ee;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Dosage</p>
+                                <strong style="font-size:1.1rem;color:#111827;">{{ prescription.dosage }}</strong>
                             </div>
-
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 1rem 1.25rem; border-left: 3px solid #a78bfa;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Frequency</p>
-                                <strong style="font-size: 1rem; color: #111827;">{{ prescription.frequency }}</strong>
+                            <div style="background:#f9fafb;border-radius:10px;padding:1rem 1.25rem;border-left:3px solid #a78bfa;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Frequency</p>
+                                <strong style="font-size:1rem;color:#111827;">{{ prescription.frequency }}</strong>
                             </div>
-
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 1rem 1.25rem; border-left: 3px solid #34d399;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Duration</p>
-                                <strong style="font-size: 1rem; color: #111827;">{{ prescription.duration }}</strong>
+                            <div style="background:#f9fafb;border-radius:10px;padding:1rem 1.25rem;border-left:3px solid #34d399;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Duration</p>
+                                <strong style="font-size:1rem;color:#111827;">{{ prescription.duration }}</strong>
                             </div>
-
                         </div>
 
                         <!-- Instructions -->
                         {% if prescription.instructions %}
-                        <div style="background: #fffbeb; border-radius: 10px; padding: 1rem 1.25rem; border-left: 3px solid #fbbf24;">
-                            <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                                <i class="fa-solid fa-circle-info" style="color: #fbbf24;"></i> Special Instructions
+                        <div style="background:#fffbeb;border-radius:10px;padding:1rem 1.25rem;border-left:3px solid #fbbf24;">
+                            <p style="font-size:.75rem;color:#9ca3af;margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">
+                                <i class="fa-solid fa-circle-info" style="color:#fbbf24;"></i> Special Instructions
                             </p>
-                            <p style="color: #374151; margin: 0; font-size: 0.92rem; line-height: 1.7;">{{ prescription.instructions }}</p>
+                            <p style="color:#374151;margin:0;font-size:.92rem;line-height:1.7;">{{ prescription.instructions }}</p>
                         </div>
                         {% endif %}
-
                     </div>
 
                     <!-- Linked Appointment -->
-                    {% if prescription.appointment %}
                     <div class="medical-table-card">
-                        <div class="info-header" style="margin-bottom: var(--space-4);">
+                        <div class="info-header" style="margin-bottom:var(--space-4);">
                             <h3>
-                                <i class="fa-solid fa-calendar-check" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                                <i class="fa-solid fa-calendar-check" style="color:var(--medical-cyan);margin-right:var(--space-2);"></i>
                                 Linked Appointment
                             </h3>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 0.9rem 1rem;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 4px;">Appointment ID</p>
-                                <strong style="color: #111827;">#{{ prescription.appointment.id }}</strong>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                            <div style="background:#f9fafb;border-radius:10px;padding:.9rem 1rem;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 4px;">Appointment ID</p>
+                                <strong style="color:#111827;">#{{ prescription.appointment.id }}</strong>
                             </div>
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 0.9rem 1rem;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 4px;">Date</p>
-                                <strong style="color: #111827;">{{ prescription.appointment.appointment_date|date:"d M Y" }}</strong>
+                            <div style="background:#f9fafb;border-radius:10px;padding:.9rem 1rem;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 4px;">Date</p>
+                                <strong style="color:#111827;">{{ prescription.appointment.appointment_date|date:"d M Y" }}</strong>
                             </div>
-                            <div style="background: #f9fafb; border-radius: 10px; padding: 0.9rem 1rem;">
-                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0 0 4px;">Status</p>
-                                <strong style="color: #111827;">{{ prescription.appointment.status }}</strong>
+                            <div style="background:#f9fafb;border-radius:10px;padding:.9rem 1rem;">
+                                <p style="font-size:.75rem;color:#9ca3af;margin:0 0 4px;">Status</p>
+                                <strong style="color:#111827;">{{ prescription.appointment.status }}</strong>
                             </div>
                         </div>
-                        <div style="margin-top: 1rem;">
+                        <div style="margin-top:1rem;">
                             <a href="{% url 'doctor_appointment_detail' prescription.appointment.id %}"
-                                style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
-                                       background: var(--medical-cyan); color: white; border-radius: 7px;
-                                       text-decoration: none; font-size: 0.85rem; font-weight: 600;">
+                                style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+                                       background:var(--medical-cyan);color:white;border-radius:7px;
+                                       text-decoration:none;font-size:.85rem;font-weight:600;">
                                 <i class="fa-solid fa-eye"></i> View Appointment
                             </a>
+                        </div>
+                    </div>
+
+                    <!-- Prescription History for this patient -->
+                    {% if patient_prescriptions %}
+                    <div class="medical-table-card" style="margin-top:1.25rem;">
+                        <div class="info-header" style="margin-bottom:var(--space-4);">
+                            <h3>
+                                <i class="fa-solid fa-clock-rotate-left" style="color:var(--medical-cyan);margin-right:var(--space-2);"></i>
+                                Other Prescriptions for {{ prescription.patient.full_name }}
+                            </h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-200);">
+                                        <th style="padding:var(--space-3);text-align:left;font-weight:600;color:var(--gray-700);font-size:.85rem;">Medicine</th>
+                                        <th style="padding:var(--space-3);text-align:left;font-weight:600;color:var(--gray-700);font-size:.85rem;">Dosage</th>
+                                        <th style="padding:var(--space-3);text-align:left;font-weight:600;color:var(--gray-700);font-size:.85rem;">Duration</th>
+                                        <th style="padding:var(--space-3);text-align:left;font-weight:600;color:var(--gray-700);font-size:.85rem;">Status</th>
+                                        <th style="padding:var(--space-3);text-align:left;font-weight:600;color:var(--gray-700);font-size:.85rem;">Date</th>
+                                        <th style="padding:var(--space-3);text-align:center;font-weight:600;color:var(--gray-700);font-size:.85rem;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in patient_prescriptions %}
+                                    <tr style="border-bottom:1px solid var(--gray-200);{% if p.id == prescription.id %}background:rgba(34,211,238,0.04);{% endif %}">
+                                        <td style="padding:var(--space-3);">
+                                            <div style="display:flex;align-items:center;gap:6px;">
+                                                <i class="fa-solid fa-pills" style="color:#22d3ee;font-size:.8rem;"></i>
+                                                <span style="font-weight:600;color:#374151;font-size:.9rem;">{{ p.medicine_name }}</span>
+                                                {% if p.id == prescription.id %}<span style="font-size:.72rem;background:#ecfeff;color:#0891b2;padding:2px 7px;border-radius:999px;margin-left:4px;">Current</span>{% endif %}
+                                            </div>
+                                        </td>
+                                        <td style="padding:var(--space-3);color:#6b7280;font-size:.88rem;">{{ p.dosage }}</td>
+                                        <td style="padding:var(--space-3);color:#6b7280;font-size:.88rem;">{{ p.duration }}</td>
+                                        <td style="padding:var(--space-3);">
+                                            <span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:600;
+                                                {% if p.status == 'Active' %}background:rgba(16,185,129,0.1);color:#10b981;
+                                                {% elif p.status == 'Completed' %}background:rgba(167,139,250,0.12);color:#7c3aed;
+                                                {% else %}background:rgba(239,68,68,0.1);color:#ef4444;{% endif %}">
+                                                {{ p.status }}
+                                            </span>
+                                        </td>
+                                        <td style="padding:var(--space-3);color:#6b7280;font-size:.85rem;">{{ p.created_at|date:"d M Y" }}</td>
+                                        <td style="padding:var(--space-3);text-align:center;">
+                                            {% if p.id != prescription.id %}
+                                            <a href="{% url 'doctor_prescription_detail' p.id %}"
+                                                style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;
+                                                       background:var(--medical-cyan);color:white;border-radius:6px;
+                                                       text-decoration:none;font-size:.8rem;font-weight:600;">
+                                                <i class="fa-solid fa-eye"></i> View
+                                            </a>
+                                            {% else %}
+                                            <span style="font-size:.8rem;color:#9ca3af;">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     {% endif %}
 
                 </div>
 
-                <!-- ===== RIGHT: Patient & Meta ===== -->
+                <!-- ===== RIGHT ===== -->
                 <div>
 
                     <!-- Patient Card -->
-                    <div class="medical-table-card" style="margin-bottom: 1.25rem;">
-                        <div class="info-header" style="margin-bottom: var(--space-4);">
+                    <div class="medical-table-card" style="margin-bottom:1.25rem;">
+                        <div class="info-header" style="margin-bottom:var(--space-4);">
                             <h3>
-                                <i class="fa-solid fa-user-injured" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                                <i class="fa-solid fa-user-injured" style="color:var(--medical-cyan);margin-right:var(--space-2);"></i>
                                 Patient
                             </h3>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <div style="width: 52px; height: 52px; border-radius: 50%;
-                                        background: linear-gradient(135deg, #22d3ee, #a78bfa);
-                                        display: flex; align-items: center; justify-content: center;
-                                        color: white; font-weight: 700; font-size: 1.2rem; flex-shrink: 0;">
+                        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                            <div style="width:52px;height:52px;border-radius:50%;
+                                        background:linear-gradient(135deg,#22d3ee,#a78bfa);
+                                        display:flex;align-items:center;justify-content:center;
+                                        color:white;font-weight:700;font-size:1.2rem;flex-shrink:0;">
                                 {{ prescription.patient.full_name|slice:":1"|upper }}
                             </div>
                             <div>
-                                <strong style="font-size: 1rem; color: #111827; display: block;">{{ prescription.patient.full_name }}</strong>
-                                <span style="font-size: 0.82rem; color: #9ca3af;">{{ prescription.patient.phone }}</span>
+                                <strong style="font-size:1rem;color:#111827;display:block;">{{ prescription.patient.full_name }}</strong>
+                                <span style="font-size:.82rem;color:#9ca3af;">{{ prescription.patient.phone }}</span>
                             </div>
                         </div>
 
-                        <div style="display: grid; gap: 0.6rem;">
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Email</span>
-                                <strong style="color: #111827; max-width: 60%; text-align: right; word-break: break-all;">{{ prescription.patient.user.email }}</strong>
+                        <div style="display:grid;gap:.5rem;">
+                            <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Email</span>
+                                <strong style="color:#111827;max-width:60%;text-align:right;word-break:break-all;">{{ prescription.patient.user.email }}</strong>
                             </div>
-                            {% if prescription.patient.date_of_birth %}
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Date of Birth</span>
-                                <strong style="color: #111827;">{{ prescription.patient.date_of_birth|date:"d M Y" }}</strong>
-                            </div>
-                            {% endif %}
-                            {% if prescription.patient.blood_group %}
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Blood Group</span>
-                                <strong style="color: #ef4444;">{{ prescription.patient.blood_group }}</strong>
+                            {% if prescription.patient.gender %}
+                            <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Gender</span>
+                                <strong style="color:#111827;">{{ prescription.patient.gender }}</strong>
                             </div>
                             {% endif %}
+                            {% if prescription.patient.dob %}
+                            <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Date of Birth</span>
+                                <strong style="color:#111827;">{{ prescription.patient.dob|date:"d M Y" }}</strong>
+                            </div>
+                            {% endif %}
+                            <div style="display:flex;justify-content:space-between;padding:.5rem 0;font-size:.87rem;">
+                                <span style="color:#6b7280;">Status</span>
+                                <span style="padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:600;
+                                    {% if prescription.patient.status == 'Active' %}background:rgba(16,185,129,0.1);color:#10b981;
+                                    {% else %}background:rgba(239,68,68,0.1);color:#ef4444;{% endif %}">
+                                    {{ prescription.patient.status }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Prescription Meta -->
                     <div class="medical-table-card">
-                        <div class="info-header" style="margin-bottom: var(--space-4);">
+                        <div class="info-header" style="margin-bottom:var(--space-4);">
                             <h3>
-                                <i class="fa-solid fa-circle-info" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                                <i class="fa-solid fa-circle-info" style="color:var(--medical-cyan);margin-right:var(--space-2);"></i>
                                 Details
                             </h3>
                         </div>
 
-                        <div style="display: grid; gap: 0.6rem;">
-                            <div style="display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Prescription ID</span>
-                                <strong style="color: #111827;">#{{ prescription.id }}</strong>
+                        <div style="display:grid;gap:.5rem;">
+                            <div style="display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Prescription ID</span>
+                                <strong style="color:#111827;">#{{ prescription.id }}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Issued By</span>
-                                <strong style="color: #111827;">Dr. {{ prescription.doctor.user.get_full_name }}</strong>
+                            <div style="display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Issued By</span>
+                                <strong style="color:#111827;">Dr. {{ prescription.doctor.user.get_full_name }}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Specialization</span>
-                                <strong style="color: #111827;">{{ prescription.doctor.specialization }}</strong>
+                            <div style="display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Specialization</span>
+                                <strong style="color:#111827;">{{ prescription.doctor.specialization }}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Date Issued</span>
-                                <strong style="color: #111827;">{{ prescription.created_at|date:"d M Y" }}</strong>
+                            <div style="display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f3f4f6;font-size:.87rem;">
+                                <span style="color:#6b7280;">Date Issued</span>
+                                <strong style="color:#111827;">{{ prescription.created_at|date:"d M Y" }}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.55rem 0; font-size: 0.87rem;">
-                                <span style="color: #6b7280;">Time</span>
-                                <strong style="color: #111827;">{{ prescription.created_at|time:"g:i A" }}</strong>
+                            <div style="display:flex;justify-content:space-between;padding:.55rem 0;font-size:.87rem;">
+                                <span style="color:#6b7280;">Time</span>
+                                <strong style="color:#111827;">{{ prescription.created_at|time:"g:i A" }}</strong>
                             </div>
                         </div>
                     </div>
@@ -334,6 +385,5 @@
         </div>
     </main>
 </div>
-
 </body>
 </html>
