@@ -299,4 +299,35 @@ urlpatterns = [
     path('doctor/appointment/<int:appointment_id>/reschedule/', views.doctor_reschedule_appointment, name='doctor_reschedule_appointment'),
     
     
+    path('frontdesk/', views.frontdesk_dashboard, name='frontdesk_dashboard'),
+    path('frontdesk/appointments/', views.frontdesk_appointments, name='frontdesk_appointments'),
+    path('frontdesk/appointments/<int:appointment_id>/', views.frontdesk_appointment_detail, name='frontdesk_appointment_detail'),
+    path('frontdesk/book-appointment/', views.frontdesk_book_appointment, name='frontdesk_book_appointment'),
+    path('frontdesk/appointment/confirmation/<int:appointment_id>/', views.frontdesk_appointment_confirmation, name='frontdesk_appointment_confirmation'),
+    path('frontdesk/api/available-slots/', views.frontdesk_get_available_slots, name='frontdesk_get_available_slots'),
+    path('frontdesk/api/search-patient/', views.frontdesk_search_patient, name='frontdesk_search_patient'),
+    path('frontdesk/today-appointments/', views.frontdesk_today_appointments, name='frontdesk_today_appointments'),
+    path('frontdesk/quick-checkin/<int:appointment_id>/', views.frontdesk_quick_checkin, name='frontdesk_quick_checkin'),
+    path('frontdesk/check-in/', views.frontdesk_patient_checkin, name='frontdesk_patient_checkin'),
+    path('frontdesk/patients/', views.frontdesk_patients_list, name='frontdesk_patients_list'),
+    path('frontdesk/patients/<int:patient_id>/', views.frontdesk_patients_detail, name='frontdesk_patients_detail'),
+    path('frontdesk/patients/<int:patient_id>/edit/', views.frontdesk_patients_edit, name='frontdesk_patients_edit'),
+    path('frontdesk/doctors/', views.frontdesk_doctors_list, name='frontdesk_doctors_list'),
+    path('frontdesk/doctors/<int:doctor_id>/', views.frontdesk_doctor_detail, name='frontdesk_doctor_detail'),
+    path('frontdesk/payments/', views.frontdesk_payments, name='frontdesk_payments'),
+    path('frontdesk/payments/<int:payment_id>/', views.frontdesk_payment_detail, name='frontdesk_payment_detail'),
+    path('frontdesk/reports/', views.frontdesk_reports, name='frontdesk_reports'),
+    path('frontdesk/settings/', views.frontdesk_settings, name='frontdesk_settings'),
+    
+    path('doctor/appointment/<int:appointment_id>/reschedule/', views.doctor_reschedule_appointment, name='doctor_reschedule_appointment'),
+    # Lab test booking URLs for front desk
+    path('frontdesk/book-lab-test/', views.frontdesk_book_lab_test, name='frontdesk_book_lab_test'),
+    path('frontdesk/lab-test-confirmation/<int:booking_id>/', views.frontdesk_lab_test_confirmation, name='frontdesk_lab_test_confirmation'),
+    path('frontdesk/lab-bookings/', views.frontdesk_lab_bookings, name='frontdesk_lab_bookings'),
+    path('api/frontdesk/get-tests-by-lab/', views.frontdesk_get_tests_by_lab, name='frontdesk_get_tests_by_lab'),
+    
+    path('frontdesk/patients/add/',          views.frontdesk_add_patient,     name='frontdesk_add_patient'),   
+    path('frontdesk/patients/<int:patient_id>/',       views.frontdesk_patients_detail, name='frontdesk_patients_detail'),
+    path('frontdesk/patients/<int:patient_id>/edit/',  views.frontdesk_patients_edit,   name='frontdesk_patients_edit'),
+    
 ]

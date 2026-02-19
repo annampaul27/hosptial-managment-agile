@@ -7360,3 +7360,1597 @@ def doctor_schedule_update(request):
 
     return redirect('doctor_schedule')
 
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
+from .models import Appointment, DoctorProfile, PatientProfile
+from .forms import RescheduleAppointmentForm
+
+
+@login_required
+def patient_reschedule_appointment(request, appointment_id):
+    """
+    View for patients to reschedule their appointments
+    """
+    # Get the appointment
+    appointment = get_object_or_404(
+        Appointment,
+        id=appointment_id,
+        patient__user=request.user
+    )
+    
+    # Check if appointment can be rescheduled
+    if appointment.status not in ['Pending Payment', 'Scheduled', 'Confirmed']:
+        messages.error(
+            request,
+            f'Cannot reschedule an appointment with status: {appointment.get_status_display()}'
+        )
+        return redirect('patient_appointment_detail', appointment_id=appointment.id)
+    
+    # Check if appointment is not too soon (e.g., less than 24 hours away)
+    appointment_datetime = timezone.make_aware(
+        timezone.datetime.combine(appointment.appointment_date, appointment.appointment_time)
+    )
+    
+    if appointment_datetime - timezone.now() < timedelta(hours=24):
+        messages.error(
+            request,
+            'Cannot reschedule appointments less than 24 hours before the scheduled time. Please contact support.'
+        )
+        return redirect('patient_appointment_detail', appointment_id=appointment.id)
+    
+    if request.method == 'POST':
+        form = RescheduleAppointmentForm(request.POST, instance=appointment)
+        
+        if form.is_valid():
+            # Save the updated appointment
+            updated_appointment = form.save(commit=False)
+            
+            # Keep the status or update it based on your business logic
+            # For example, you might want to set it back to 'Pending Payment' if they change doctors
+            if updated_appointment.doctor != appointment.doctor:
+                updated_appointment.status = 'Pending Payment'
+            
+            updated_appointment.save()
+            
+            # Log the reschedule reason if provided
+            reschedule_reason = form.cleaned_data.get('reschedule_reason')
+            notes = form.cleaned_data.get('notes')
+            
+            # You could save these to a RescheduleHistory model or add to appointment notes
+            # For now, we'll just show a success message
+            
+            messages.success(
+                request,
+                f'Your appointment has been rescheduled to {updated_appointment.appointment_date.strftime("%B %d, %Y")} at {updated_appointment.appointment_time.strftime("%I:%M %p")}'
+            )
+            
+            return redirect('patient_appointment_detail', appointment_id=updated_appointment.id)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = RescheduleAppointmentForm(instance=appointment)
+    
+    # Get available doctors for selection
+    available_doctors = DoctorProfile.objects.filter(status='Active')
+    
+    # Calculate minimum date (tomorrow)
+    min_date = timezone.now().date() + timedelta(days=1)
+    
+    context = {
+        'appointment': appointment,
+        'form': form,
+        'available_doctors': available_doctors,
+        'min_date': min_date,
+    }
+    
+    return render(request, 'core/dashboard/patient_reschedule_appointment.html', context)
+
+
+# Optional: Create a view for getting available time slots via AJAX
+@login_required
+def get_available_time_slots(request):
+    """
+    AJAX endpoint to get available time slots for a doctor on a specific date
+    """
+    import json
+    from django.http import JsonResponse
+    
+    if request.method == 'GET':
+        doctor_id = request.GET.get('doctor_id')
+        date_str = request.GET.get('date')
+        
+        if not doctor_id or not date_str:
+            return JsonResponse({'error': 'Missing parameters'}, status=400)
+        
+        try:
+            from datetime import datetime
+            doctor = DoctorProfile.objects.get(id=doctor_id)
+            appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            # Define all possible time slots (customize these based on your needs)
+            all_time_slots = [
+                '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+                '17:00', '17:30', '18:00'
+            ]
+            
+            # Get booked slots for this doctor on this date
+            booked_appointments = Appointment.objects.filter(
+                doctor=doctor,
+                appointment_date=appointment_date,
+                status__in=['Pending Payment', 'Scheduled', 'Confirmed']
+            ).values_list('appointment_time', flat=True)
+            
+            booked_times = []
+            for t in booked_appointments:
+                try:
+                    time_string = str(appointment_time).strip()
+                    time_only = time_string[:5]
+                    if ':' in time_only and len(time_only) == 5:
+                        booked_times.add(time_only)
+                    else:
+                        booked_times.append(str(t))
+                except:
+                    booked_times.append(str(t))
+            
+            # Mark slots as available or booked
+            time_slots = []
+            for slot in all_time_slots:
+                time_slots.append({
+                    'time': slot,
+                    'available': slot not in booked_times
+                })
+            
+            return JsonResponse({'slots': time_slots})
+            
+        except DoctorProfile.DoesNotExist:
+            return JsonResponse({'error': 'Doctor not found'}, status=404)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date format'}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.db.models import Q, Sum, Count
+from datetime import datetime, timedelta
+
+from core.models import (
+    FrontDeskProfile, Appointment, PatientProfile, DoctorProfile,
+    Payment, PatientHistory, TestBooking
+)
+
+
+def get_frontdesk_profile(user):
+    """Helper function to get front desk profile"""
+    try:
+        return FrontDeskProfile.objects.get(user=user)
+    except FrontDeskProfile.DoesNotExist:
+        return None
+
+
+@login_required
+def frontdesk_dashboard(request):
+    """Main Front Desk Dashboard"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    today = timezone.now().date()
+    
+    # Get statistics
+    todays_appointments = Appointment.objects.filter(
+        appointment_date=today
+    ).order_by('appointment_time')
+    
+    todays_appointments_count = todays_appointments.count()
+    
+    # Pending check-ins (appointments scheduled for today but not checked in)
+    pending_checkins = todays_appointments.filter(
+        status__in=['Scheduled', 'Confirmed']
+    )
+    pending_checkin_count = pending_checkins.count()
+    
+    # Checked-in today
+    checkedin_count = todays_appointments.filter(
+        status='Completed'
+    ).count()
+    
+    # Pending payments
+    pending_payments = Payment.objects.filter(payment_status='Pending')
+    total_pending_payments = pending_payments.aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    pending_appointments_count = Appointment.objects.filter(
+        status__in=['Pending Payment', 'Scheduled']
+    ).count()
+
+    context = {
+        'todays_appointments': todays_appointments[:5],
+        'todays_appointments_count': todays_appointments_count,
+        'pending_checkin_count': pending_checkin_count,
+        'pending_checkins': pending_checkins[:5],
+        'checkedin_count': checkedin_count,
+        'total_pending_payments': total_pending_payments,
+        'pending_appointments_count': pending_appointments_count,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_dashboard.html', context)
+
+
+@login_required
+def frontdesk_appointments(request):
+    """Manage all appointments"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    # Get all appointments
+    appointments = Appointment.objects.all().order_by('-appointment_date', '-appointment_time')
+    
+    # Filter by status if provided
+    status = request.GET.get('status')
+    if status:
+        appointments = appointments.filter(status=status)
+    
+    # Filter by date range if provided
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    if date_from:
+        appointments = appointments.filter(appointment_date__gte=date_from)
+    if date_to:
+        appointments = appointments.filter(appointment_date__lte=date_to)
+    
+    # Search by patient name or doctor name
+    search = request.GET.get('search')
+    if search:
+        appointments = appointments.filter(
+            Q(patient__full_name__icontains=search) |
+            Q(doctor__user__first_name__icontains=search) |
+            Q(doctor__user__last_name__icontains=search)
+        )
+    
+    # Status choices for filter
+    status_choices = Appointment.STATUS_CHOICES
+
+    context = {
+        'appointments': appointments,
+        'status_choices': status_choices,
+        'current_status': status,
+        'search_query': search,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_appointments.html', context)
+
+
+@login_required
+def frontdesk_appointment_detail(request, appointment_id):
+    """View and edit appointment details"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    if request.method == 'POST':
+        # Update appointment status
+        new_status = request.POST.get('status')
+        if new_status in dict(Appointment.STATUS_CHOICES):
+            appointment.status = new_status
+            appointment.save()
+            messages.success(request, f"Appointment status updated to {new_status}")
+            return redirect('frontdesk_appointment_detail', appointment_id=appointment_id)
+
+    context = {
+        'appointment': appointment,
+        'status_choices': Appointment.STATUS_CHOICES,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_appointment_detail.html', context)
+
+
+@login_required
+def frontdesk_patient_checkin(request):
+    """Patient check-in/check-out management"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    today = timezone.now().date()
+    
+    # Get today's appointments
+    todays_appointments = Appointment.objects.filter(
+        appointment_date=today
+    ).order_by('appointment_time')
+    
+    # Pending check-ins
+    pending_checkins = todays_appointments.filter(
+        status__in=['Scheduled', 'Confirmed']
+    )
+    
+    # Already checked in
+    checked_in = todays_appointments.filter(
+        status='Completed'
+    )
+
+    if request.method == 'POST':
+        appointment_id = request.POST.get('appointment_id')
+        action = request.POST.get('action')  # 'check_in' or 'check_out'
+        
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+        
+        if action == 'check_in':
+            appointment.status = 'Confirmed'
+            appointment.save()
+            messages.success(request, f"{appointment.patient.full_name} checked in successfully!")
+        
+        elif action == 'check_out':
+            appointment.status = 'Completed'
+            appointment.save()
+            messages.success(request, f"{appointment.patient.full_name} checked out successfully!")
+        
+        return redirect('frontdesk_patient_check_in')
+
+    context = {
+        'pending_checkins': pending_checkins,
+        'checked_in': checked_in,
+        'todays_date': today,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_patient_checkin.html', context)
+
+
+@login_required
+def frontdesk_patients_list(request):
+    """View all patients"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    patients = PatientProfile.objects.all().order_by('full_name')
+    
+    # Search by name or phone
+    search = request.GET.get('search')
+    if search:
+        patients = patients.filter(
+            Q(full_name__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(user__email__icontains=search)
+        )
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        patients = patients.filter(status=status)
+
+    context = {
+        'patients': patients,
+        'search_query': search,
+        'current_status': status,
+        'status_choices': ['Active', 'Inactive'],
+    }
+
+    return render(request, 'core/dashboard/frontdesk_patients_list.html', context)
+
+
+@login_required
+def frontdesk_patients_detail(request, patient_id):
+    """View patient details"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+    
+    # Get patient's appointments
+    appointments = Appointment.objects.filter(patient=patient).order_by('-appointment_date')
+    
+    # Get patient's payments
+    payments = Payment.objects.filter(patient=patient).order_by('-payment_date')
+    
+    # Get patient's test bookings
+    test_bookings = TestBooking.objects.filter(patient=patient).order_by('-booking_date')
+
+    context = {
+        'patient': patient,
+        'appointments': appointments[:5],
+        'payments': payments[:5],
+        'test_bookings': test_bookings[:5],
+    }
+
+    return render(request, 'core/dashboard/frontdesk_patients_detail.html', context)
+
+
+@login_required
+def frontdesk_doctors_list(request):
+    """View all doctors"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    doctors = DoctorProfile.objects.all().order_by('user__first_name')
+    
+    # Search by name or specialization
+    search = request.GET.get('search')
+    if search:
+        doctors = doctors.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(specialization__icontains=search) |
+            Q(department__icontains=search)
+        )
+    
+    # Filter by specialization
+    specialization = request.GET.get('specialization')
+    if specialization:
+        doctors = doctors.filter(specialization=specialization)
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        doctors = doctors.filter(status=status)
+
+    context = {
+        'doctors': doctors,
+        'search_query': search,
+        'current_specialization': specialization,
+        'current_status': status,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_doctors_list.html', context)
+
+
+@login_required
+def frontdesk_doctor_detail(request, doctor_id):
+    """View doctor details and schedule"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+    
+    # Get doctor's appointments
+    appointments = Appointment.objects.filter(doctor=doctor).order_by('-appointment_date')
+    
+    # Today's appointments for this doctor
+    today = timezone.now().date()
+    todays_appointments = appointments.filter(appointment_date=today)
+
+    context = {
+        'doctor': doctor,
+        'appointments': appointments[:10],
+        'todays_appointments': todays_appointments,
+        'todays_appointments_count': todays_appointments.count(),
+    }
+
+    return render(request, 'core/dashborad/frontdesk_doctor_detail.html', context)
+
+
+@login_required
+def frontdesk_payments(request):
+    """Manage payments"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    payments = Payment.objects.all().order_by('-payment_date')
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        payments = payments.filter(payment_status=status)
+    
+    # Search by patient name
+    search = request.GET.get('search')
+    if search:
+        payments = payments.filter(
+            Q(patient__full_name__icontains=search) |
+            Q(patient__user__email__icontains=search)
+        )
+    
+    # Statistics
+    total_payments = payments.aggregate(total=Sum('amount'))['total'] or 0
+    paid_payments = payments.filter(payment_status='Paid').aggregate(total=Sum('amount'))['total'] or 0
+    pending_payments = payments.filter(payment_status='Pending').aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'payments': payments,
+        'status_choices': Payment.PAYMENT_STATUS,
+        'current_status': status,
+        'search_query': search,
+        'total_payments': total_payments,
+        'paid_payments': paid_payments,
+        'pending_payments': pending_payments,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_payments.html', context)
+
+
+@login_required
+def frontdesk_payment_detail(request, payment_id):
+    """View and update payment details"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    payment = get_object_or_404(Payment, id=payment_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('payment_status')
+        if new_status in dict(Payment.PAYMENT_STATUS):
+            payment.payment_status = new_status
+            payment.save()
+            messages.success(request, f"Payment status updated to {new_status}")
+            return redirect('frontdesk_payment_detail', payment_id=payment_id)
+
+    context = {
+        'payment': payment,
+        'payment_methods': Payment.PAYMENT_METHODS,
+        'payment_statuses': Payment.PAYMENT_STATUS,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_payment_detail.html', context)
+
+@login_required
+def frontdesk_reports(request):
+    """View reports and analytics"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    today = timezone.now().date()
+    month_ago = today - timedelta(days=30)
+    
+    # Daily statistics
+    todays_appointments = Appointment.objects.filter(appointment_date=today).count()
+    todays_checkins = Appointment.objects.filter(
+        appointment_date=today,
+        status='Completed'
+    ).count()
+    
+    # Monthly statistics
+    monthly_appointments = Appointment.objects.filter(
+        appointment_date__gte=month_ago
+    ).count()
+    
+    monthly_payments = Payment.objects.filter(
+        payment_date__gte=month_ago,
+        payment_status='Paid'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Doctor statistics
+    doctor_appointments = DoctorProfile.objects.annotate(
+        appointment_count=Count('appointment')
+    ).order_by('-appointment_count')[:5]
+    
+    # Payment statistics
+    payment_by_method = Payment.objects.filter(
+        payment_date__gte=month_ago
+    ).values('payment_method').annotate(
+        count=Count('id'),
+        total=Sum('amount')
+    )
+
+    context = {
+        'todays_appointments': todays_appointments,
+        'todays_checkins': todays_checkins,
+        'monthly_appointments': monthly_appointments,
+        'monthly_payments': monthly_payments,
+        'doctor_appointments': doctor_appointments,
+        'payment_by_method': payment_by_method,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_reports.html', context)
+
+
+@login_required
+def frontdesk_settings(request):
+    """Front desk settings"""
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        # Update profile information
+        user = request.user
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.save()
+        
+        # Update password if provided
+        old_password = request.POST.get('old_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if old_password and new_password:
+            if user.check_password(old_password):
+                if new_password == confirm_password:
+                    user.set_password(new_password)
+                    user.save()
+                    messages.success(request, "Password updated successfully!")
+                else:
+                    messages.error(request, "New passwords do not match!")
+            else:
+                messages.error(request, "Old password is incorrect!")
+        
+        if not old_password:
+            messages.success(request, "Profile updated successfully!")
+        
+        return redirect('frontdesk_settings')
+
+    context = {
+        'frontdesk': frontdesk,
+    }
+
+    return render(request, 'core/dashboard/frontdesk_settings.html', context)
+
+def frontdesk_patients_edit(request, patient_id):
+    patient = PatientProfile.objects.get(id=patient_id)
+    
+    if request.method == 'POST':
+        form = PatientForm(request.POST, instance=patient)
+        if form.is_valid():
+            form.save()
+            return redirect('patient_detail', patient_id=patient.id)
+    else:
+        form = PatientForm(instance=patient)
+    
+    return render(request, 'core/dashboard/frontdesk_patients_edit.html', {'form': form, 'patient': patient})
+    
+
+def get_frontdesk_profile(user):
+    """Helper function to get front desk profile"""
+    try:
+        return FrontDeskProfile.objects.get(user=user)
+    except FrontDeskProfile.DoesNotExist:
+        return None
+
+# Add these views to your core/views.py - FIXED VERSION 2
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.http import JsonResponse
+from datetime import date, datetime, timedelta
+from decimal import Decimal
+import uuid
+
+from core.models import (
+    FrontDeskProfile, PatientProfile, DoctorProfile, Appointment,
+    Payment
+)
+
+
+def get_frontdesk_profile(user):
+    """Helper function to get front desk profile"""
+    try:
+        return FrontDeskProfile.objects.get(user=user)
+    except FrontDeskProfile.DoesNotExist:
+        return None
+
+
+def generate_unique_username(email):
+    """
+    Generate a unique username from email or create a random one
+    """
+    # Try using email first
+    if email:
+        base_username = email.split('@')[0]
+    else:
+        base_username = f"patient_{uuid.uuid4().hex[:8]}"
+    
+    username = base_username
+    counter = 1
+    
+    # If username exists, append a number
+    while User.objects.filter(username=username).exists():
+        username = f"{base_username}{counter}"
+        counter += 1
+    
+    return username
+
+
+@login_required
+def frontdesk_book_appointment(request):
+    """
+    Front desk staff books appointments for patients
+    Flow:
+    1. Select or create patient
+    2. Select doctor and time
+    3. Collect payment
+    4. Generate token
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        step = request.POST.get('step', '1')
+        
+        # Step 1: Patient Selection/Creation
+        if step == '1':
+            patient_id = request.POST.get('patient_id')
+            new_patient_name = request.POST.get('new_patient_name')
+            new_patient_phone = request.POST.get('new_patient_phone')
+            new_patient_email = request.POST.get('new_patient_email')
+            
+            if patient_id:
+                # Existing patient selected
+                try:
+                    patient = PatientProfile.objects.get(id=patient_id)
+                    request.session['selected_patient_id'] = patient.id
+                    messages.success(request, f"Patient {patient.full_name} selected")
+                except PatientProfile.DoesNotExist:
+                    messages.error(request, "Patient not found")
+                    return redirect('frontdesk_book_appointment')
+            
+            elif new_patient_name and new_patient_phone:
+                # Create new patient - FIXED
+                try:
+                    # Generate unique username
+                    if new_patient_email:
+                        username = generate_unique_username(new_patient_email)
+                    else:
+                        username = generate_unique_username(None)
+                    
+                    # Create user with unique username
+                    user = User.objects.create_user(
+                        username=username,
+                        email=new_patient_email or '',
+                        password=uuid.uuid4().hex[:12]
+                    )
+                    
+                    # Create patient profile
+                    patient = PatientProfile.objects.create(
+                        user=user,
+                        full_name=new_patient_name,
+                        phone=new_patient_phone,
+                        status='Active'
+                    )
+                    
+                    request.session['selected_patient_id'] = patient.id
+                    messages.success(request, f"New patient {patient.full_name} created")
+                except Exception as e:
+                    messages.error(request, f"Error creating patient: {str(e)}")
+                    return redirect('frontdesk_book_appointment')
+            else:
+                messages.error(request, "Please select or create a patient")
+                return redirect('frontdesk_book_appointment')
+        
+        # Step 2: Doctor and Time Selection
+        elif step == '2':
+            selected_patient_id = request.session.get('selected_patient_id')
+            if not selected_patient_id:
+                messages.error(request, "Please select a patient first")
+                return redirect('frontdesk_book_appointment')
+            
+            doctor_id = request.POST.get('doctor_id')
+            appointment_date = request.POST.get('appointment_date')
+            appointment_time = request.POST.get('appointment_time')
+            reason = request.POST.get('reason')
+            
+            # Validation
+            if not all([doctor_id, appointment_date, appointment_time, reason]):
+                messages.error(request, "All fields are required")
+                return redirect('frontdesk_book_appointment')
+            
+            try:
+                doctor = DoctorProfile.objects.get(id=doctor_id)
+                
+                # Check if slot is available
+                existing_appointment = Appointment.objects.filter(
+                    doctor=doctor,
+                    appointment_date=appointment_date,
+                    appointment_time=appointment_time,
+                    status__in=['Pending Payment', 'Scheduled', 'Confirmed']
+                ).exists()
+                
+                if existing_appointment:
+                    messages.error(request, "This time slot is already booked. Please select another time.")
+                    return redirect('frontdesk_book_appointment')
+                
+                # Store in session
+                request.session['appointment_data'] = {
+                    'doctor_id': doctor_id,
+                    'appointment_date': appointment_date,
+                    'appointment_time': appointment_time,
+                    'reason': reason,
+                    'doctor_name': f"Dr. {doctor.user.get_full_name()}",
+                    'consultation_fee': str(doctor.consultation_fee)
+                }
+                
+                messages.success(request, "Appointment details confirmed. Proceed to payment.")
+                
+            except DoctorProfile.DoesNotExist:
+                messages.error(request, "Doctor not found")
+                return redirect('frontdesk_book_appointment')
+        
+        # Step 3: Payment Processing
+        elif step == '3':
+            selected_patient_id = request.session.get('selected_patient_id')
+            appointment_data = request.session.get('appointment_data')
+            
+            if not selected_patient_id or not appointment_data:
+                messages.error(request, "Session expired. Please start over.")
+                return redirect('frontdesk_book_appointment')
+            
+            payment_method = request.POST.get('payment_method')
+            amount = Decimal(request.POST.get('amount', '0'))
+            
+            if not payment_method or amount <= 0:
+                messages.error(request, "Invalid payment details")
+                return redirect('frontdesk_book_appointment')
+            
+            try:
+                patient = PatientProfile.objects.get(id=selected_patient_id)
+                doctor = DoctorProfile.objects.get(id=appointment_data['doctor_id'])
+                
+                # Create appointment
+                appointment = Appointment.objects.create(
+                    patient=patient,
+                    doctor=doctor,
+                    appointment_date=appointment_data['appointment_date'],
+                    appointment_time=appointment_data['appointment_time'],
+                    reason=appointment_data['reason'],
+                    status='Pending Payment'
+                )
+                
+                # Create payment
+                transaction_id = f"TXN{uuid.uuid4().hex[:12].upper()}"
+                payment = Payment.objects.create(
+                    patient=patient,
+                    appointment=appointment,
+                    amount=amount,
+                    payment_method=payment_method,
+                    payment_status='Paid',
+                    transaction_id=transaction_id
+                )
+                
+                # Update appointment status to Scheduled after payment
+                appointment.status = 'Scheduled'
+                appointment.save()
+                
+                # Clear session safely
+                if 'selected_patient_id' in request.session:
+                    del request.session['selected_patient_id']
+                if 'appointment_data' in request.session:
+                    del request.session['appointment_data']
+                
+                # Generate token
+                token_number = generate_token(appointment)
+                
+                messages.success(
+                    request,
+                    f"Appointment booked successfully! Token: {token_number}"
+                )
+                
+                return redirect('frontdesk_appointment_confirmation', appointment_id=appointment.id)
+                
+            except Exception as e:
+                messages.error(request, f"Error processing payment: {str(e)}")
+                return redirect('frontdesk_book_appointment')
+    
+    # GET request - Show form
+    patients = PatientProfile.objects.all().order_by('full_name')
+    doctors = DoctorProfile.objects.filter(status='Active').order_by('user__first_name')
+    
+    # Check if we're in the middle of booking
+    selected_patient_id = request.session.get('selected_patient_id')
+    appointment_data = request.session.get('appointment_data')
+    
+    selected_patient = None
+    if selected_patient_id:
+        try:
+            selected_patient = PatientProfile.objects.get(id=selected_patient_id)
+        except PatientProfile.DoesNotExist:
+            pass
+    
+    context = {
+        'patients': patients,
+        'doctors': doctors,
+        'selected_patient': selected_patient,
+        'appointment_data': appointment_data,
+        'today': date.today().isoformat(),
+        'min_date': (date.today() + timedelta(days=1)).isoformat(),
+    }
+    
+    return render(request, 'core/dashboard/frontdesk_book_appointment.html', context)
+
+
+@login_required
+def frontdesk_appointment_confirmation(request, appointment_id):
+    """
+    Show appointment confirmation with token
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    
+    # Get payment info
+    payment = Payment.objects.filter(appointment=appointment).first()
+    
+    # Get token from appointment
+    token = getattr(appointment, 'token_number', None)
+    
+    context = {
+        'appointment': appointment,
+        'payment': payment,
+        'token': token,
+    }
+    
+    return render(request, 'core/dashboard/frontdesk_appointment_confirmation.html', context)
+
+# ==========================================
+# FINAL FRONTDESK FIX
+# Replace frontdesk_get_available_slots() completely
+# ==========================================
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def frontdesk_get_available_slots(request):
+    """
+    AJAX endpoint to get available time slots for a doctor on a specific date
+    FINAL FIX: Bulletproof conversion of appointment times
+    """
+    
+    if request.method == 'GET':
+        doctor_id = request.GET.get('doctor_id')
+        appointment_date = request.GET.get('appointment_date')
+        
+        if not doctor_id or not appointment_date:
+            return JsonResponse({'error': 'Missing parameters'}, status=400)
+        
+        try:
+            from core.models import DoctorProfile, Appointment
+            
+            doctor = DoctorProfile.objects.get(id=doctor_id)
+            
+            # Define time slots (9 AM to 6 PM, 30-min intervals)
+            time_slots = []
+            for hour in range(9, 18):
+                for minute in [0, 30]:
+                    time_str = f"{hour:02d}:{minute:02d}"
+                    time_slots.append(time_str)
+            
+            # Get booked appointments
+            booked_appointments = Appointment.objects.filter(
+                doctor=doctor,
+                appointment_date=appointment_date,
+                status__in=['Pending Payment', 'Scheduled', 'Confirmed']
+            ).values_list('appointment_time', flat=True)
+            
+            # ==========================================
+            # BULLETPROOF CONVERSION (THIS IS THE KEY FIX)
+            # ==========================================
+            booked_times = set()  # Use set, not list (faster)
+            
+            for appointment_time in booked_appointments:
+                try:
+                    # Step 1: Convert to string FIRST
+                    time_string = str(appointment_time).strip()
+                    
+                    # Step 2: Extract HH:MM (first 5 characters)
+                    if len(time_string) >= 5:
+                        time_only = time_string[:5]
+                    else:
+                        time_only = time_string
+                    
+                    # Step 3: Validate it's in HH:MM format
+                    if ':' in time_only and len(time_only) == 5:
+                        booked_times.add(time_only)
+                    else:
+                        # Try to fix the format
+                        parts = time_string.split(':')
+                        if len(parts) >= 2:
+                            hour = parts[0].zfill(2)
+                            minute = parts[1][:2].zfill(2)
+                            booked_times.add(f"{hour}:{minute}")
+                
+                except Exception as e:
+                    # If all else fails, just skip this time
+                    print(f"Warning: Could not process time {appointment_time}: {e}")
+                    pass
+            
+            # Build response with available slots
+            available_slots = []
+            for slot in time_slots:
+                is_available = slot not in booked_times
+                available_slots.append({
+                    'time': slot,
+                    'available': is_available
+                })
+            
+            return JsonResponse({'slots': available_slots})
+        
+        except DoctorProfile.DoesNotExist:
+            return JsonResponse({'error': 'Doctor not found'}, status=404)
+        except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            print(f"Error in frontdesk_get_available_slots: {error_detail}")
+            return JsonResponse({
+                'error': f'Server error: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def frontdesk_search_patient(request):
+    """
+    AJAX endpoint to search for existing patients
+    """
+    if request.method == 'GET':
+        query = request.GET.get('q', '').strip()
+        
+        if not query or len(query) < 2:
+            return JsonResponse({'patients': []})
+        
+        patients = PatientProfile.objects.filter(
+            full_name__icontains=query
+        )[:10]
+        
+        patients_data = []
+        for patient in patients:
+            patients_data.append({
+                'id': patient.id,
+                'name': patient.full_name,
+                'phone': patient.phone,
+                'email': patient.user.email,
+                'gender': patient.gender or 'Not specified',
+                'dob': str(patient.dob) if patient.dob else 'N/A',
+            })
+        
+        return JsonResponse({'patients': patients_data})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def generate_token(appointment):
+    """
+    Generate appointment token - SIMPLE VERSION
+    """
+    # Convert to string first
+    date_obj = appointment.appointment_date
+    
+    if isinstance(date_obj, str):
+        # Remove all non-digits and take first 4 chars
+        date_str = ''.join(filter(str.isdigit, date_obj))[-4:]
+    else:
+        date_str = date_obj.strftime('%d%m')
+    
+    # Count appointments for this date
+    count = Appointment.objects.filter(
+        appointment_date=appointment.appointment_date
+    ).count()
+    
+    token_number = f"{date_str}-{count:03d}"
+    
+    return token_number
+
+
+
+
+
+@login_required
+def frontdesk_today_appointments(request):
+    """
+    View today's appointments and manage check-ins
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    today = date.today()
+    
+    # Get today's appointments sorted by time
+    todays_appointments = Appointment.objects.filter(
+        appointment_date=today
+    ).select_related('patient', 'doctor', 'doctor__user').order_by('appointment_time')
+    
+    # Separate by status
+    pending_checkin = todays_appointments.filter(
+        status__in=['Scheduled', 'Pending Payment']
+    )
+    
+    checked_in = todays_appointments.filter(
+        status='Confirmed'
+    )
+    
+    completed = todays_appointments.filter(
+        status='Completed'
+    )
+
+    context = {
+        'todays_appointments': todays_appointments,
+        'pending_checkin': pending_checkin,
+        'checked_in': checked_in,
+        'completed': completed,
+        'today': today,
+    }
+    
+    return render(request, 'core/dashboard/frontdesk_today_appointments.html', context)
+
+
+@login_required
+def frontdesk_quick_checkin(request, appointment_id):
+    """
+    Quick check-in for appointment
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this action.")
+        return redirect('login')
+
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    
+    if request.method == 'POST':
+        # Update status to Confirmed (patient checked in)
+        appointment.status = 'Confirmed'
+        appointment.save()
+        
+        messages.success(
+            request,
+            f"{appointment.patient.full_name} checked in successfully!"
+        )
+        
+        return redirect('frontdesk_today_appointments')
+    
+    return redirect('frontdesk_today_appointments')
+
+
+@login_required
+def frontdesk_patients_edit(request, patient_id):
+    """
+    Edit patient information by front desk staff
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    patient = get_object_or_404(PatientProfile, id=patient_id)
+    
+    if request.method == 'POST':
+        # Update patient information
+        patient.full_name = request.POST.get('full_name', patient.full_name)
+        patient.phone = request.POST.get('phone', patient.phone)
+        patient.gender = request.POST.get('gender', patient.gender)
+        patient.dob = request.POST.get('dob', patient.dob) if request.POST.get('dob') else patient.dob
+        patient.address = request.POST.get('address', patient.address)
+        patient.status = request.POST.get('status', patient.status)
+        patient.save()
+        
+        # Update user email if provided
+        user = patient.user
+        new_email = request.POST.get('email', user.email)
+        if new_email and new_email != user.email:
+            # Check if email already exists
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                messages.error(request, "This email is already in use")
+                return redirect('frontdesk_patients_edit', patient_id=patient_id)
+            user.email = new_email
+            user.save()
+        
+        messages.success(request, f"Patient {patient.full_name} updated successfully!")
+        return redirect('frontdesk_patients_detail', patient_id=patient_id)
+    
+    context = {
+        'patient': patient,
+        'genders': ['Male', 'Female', 'Other'],
+        'statuses': ['Active', 'Inactive'],
+    }
+    
+    return render(request, 'core/dashboard/frontdesk_patients_edit.html', context)
+
+@login_required
+def doctor_reschedule_appointment(request, appointment_id):
+    """Reschedule an appointment"""
+
+    # ✅ Get DoctorProfile from logged in user
+    doctor_profile = request.user.doctorprofile
+
+    # ✅ Now filter correctly
+    appointment = get_object_or_404(
+        Appointment,
+        id=appointment_id,
+        doctor=doctor_profile
+    )
+
+    if request.method == 'POST':
+        new_date = request.POST.get('appointment_date')
+        new_time = request.POST.get('appointment_time')
+        reschedule_reason = request.POST.get('reschedule_reason', '')
+        notify_patient = request.POST.get('notify_patient') == 'on'
+
+        # Update appointment
+        appointment.appointment_date = new_date
+        appointment.appointment_time = new_time
+
+        # Store reschedule reason
+        if reschedule_reason:
+            if appointment.notes:
+                appointment.notes += f"\n\nRescheduled: {reschedule_reason}"
+            else:
+                appointment.notes = f"Rescheduled: {reschedule_reason}"
+
+        appointment.save()
+
+        if notify_patient:
+            # Add email logic later
+            pass
+
+        messages.success(
+            request,
+            f'Appointment rescheduled successfully to {new_date} at {new_time}'
+        )
+
+        return redirect('doctor_appointment_detail', appointment_id=appointment.id)
+
+    context = {
+        'appointment': appointment,
+        'today': timezone.now().date(),
+    }
+
+    return render(request, 'core/dashboard/doctor_appointment_reschedule.html', context)
+
+# ==========================================
+# FRONT DESK LAB TEST BOOKING VIEWS
+# Add these to your core/views.py
+# ==========================================
+
+@login_required
+def frontdesk_book_lab_test(request):
+    """
+    Front desk books lab tests on behalf of patients
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        patient_id = request.POST.get('patient')
+        test_id = request.POST.get('test')
+        booking_date = request.POST.get('booking_date')
+        payment_method = request.POST.get('payment_method')
+
+        if not all([patient_id, test_id, booking_date, payment_method]):
+            messages.error(request, "All fields are required.")
+            return redirect('frontdesk_book_lab_test')
+
+        try:
+            patient = PatientProfile.objects.get(id=patient_id, status='Active')
+            test = DiagnosticTest.objects.get(id=test_id)
+
+            # Check if already booked
+            existing = TestBooking.objects.filter(
+                patient=patient,
+                test=test
+            ).exclude(status='Cancelled').exists()
+
+            if existing:
+                messages.warning(request, f"{patient.full_name} already has a booking for {test.test_name}.")
+                return redirect('frontdesk_book_lab_test')
+
+            # Create booking
+            booking = TestBooking.objects.create(
+                patient=patient,
+                test=test,
+                lab=test.lab,
+                booking_date=booking_date,
+                status='Booked'
+            )
+
+            # Create payment (mark as Paid since front desk collects payment)
+            import uuid
+            payment = Payment.objects.create(
+                patient=patient,
+                test_booking=booking,
+                amount=test.price,
+                payment_method=payment_method,
+                payment_status='Paid',
+                transaction_id=f"TXN{uuid.uuid4().hex[:12].upper()}"
+            )
+
+            messages.success(
+                request,
+                f"Lab test '{test.test_name}' booked successfully for "
+                f"{patient.full_name} on {booking_date}. "
+                f"Payment of ₹{test.price} collected via {payment_method}."
+            )
+            return redirect('frontdesk_lab_test_confirmation', booking_id=booking.id)
+
+        except PatientProfile.DoesNotExist:
+            messages.error(request, "Patient not found.")
+        except DiagnosticTest.DoesNotExist:
+            messages.error(request, "Test not found.")
+        except Exception as e:
+            messages.error(request, f"Error booking test: {str(e)}")
+
+        return redirect('frontdesk_book_lab_test')
+
+    # GET - Load form data
+    patients = PatientProfile.objects.filter(status='Active').order_by('full_name')
+    labs = Lab.objects.filter(status='Active').order_by('name')
+    tests = DiagnosticTest.objects.filter(is_active=True).select_related('lab').order_by('test_name')
+
+    from datetime import date
+    context = {
+        'patients': patients,
+        'labs': labs,
+        'tests': tests,
+        'today': date.today().isoformat(),
+        'payment_methods': Payment.PAYMENT_METHODS,
+    }
+    return render(request, 'core/dashboard/frontdesk_book_lab_test.html', context)
+
+
+@login_required
+def frontdesk_lab_test_confirmation(request, booking_id):
+    """Show lab test booking confirmation"""
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    booking = get_object_or_404(TestBooking, id=booking_id)
+    payment = Payment.objects.filter(test_booking=booking).first()
+
+    context = {
+        'booking': booking,
+        'payment': payment,
+    }
+    return render(request, 'core/dashboard/frontdesk_lab_test_confirmation.html', context)
+
+
+@login_required
+def frontdesk_lab_bookings(request):
+    """View all lab test bookings"""
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    bookings = TestBooking.objects.all().select_related(
+        'patient', 'test', 'lab'
+    ).order_by('-created_at')
+
+    # Filters
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('search', '')
+    lab_filter = request.GET.get('lab', '')
+
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+    if lab_filter:
+        bookings = bookings.filter(lab__id=lab_filter)
+    if search:
+        bookings = bookings.filter(
+            Q(patient__full_name__icontains=search) |
+            Q(test__test_name__icontains=search)
+        )
+
+    labs = Lab.objects.filter(status='Active')
+
+    context = {
+        'bookings': bookings,
+        'status_filter': status_filter,
+        'search_query': search,
+        'lab_filter': lab_filter,
+        'labs': labs,
+        'total_count': bookings.count(),
+    }
+    return render(request, 'core/dashboard/frontdesk_lab_bookings.html', context)
+
+
+@login_required
+def frontdesk_get_tests_by_lab(request):
+    """AJAX - Get tests filtered by lab"""
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    lab_id = request.GET.get('lab_id', '')
+    if not lab_id:
+        tests = DiagnosticTest.objects.filter(is_active=True).select_related('lab')
+    else:
+        tests = DiagnosticTest.objects.filter(lab__id=lab_id, is_active=True).select_related('lab')
+
+    tests_data = []
+    for test in tests:
+        tests_data.append({
+            'id': test.id,
+            'test_name': test.test_name,
+            'category': test.category,
+            'price': str(test.price),
+            'result_duration': test.result_duration,
+            'sample_type': test.sample_type,
+            'lab_name': test.lab.name,
+            'home_collection': test.home_collection,
+        })
+
+    return JsonResponse({'tests': tests_data})
+
+# ============================================================
+#  1. ADD THIS VIEW to core/views.py
+#     (paste anywhere near the other frontdesk_ views)
+# ============================================================
+
+@login_required
+def frontdesk_add_patient(request):
+    """
+    Handles the Add New Patient modal form submission.
+    On success  → redirect back to patient list with success message.
+    On error    → redirect back with error message + open_modal=True
+                  so the modal re-opens automatically.
+    """
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    if request.method != 'POST':
+        return redirect('frontdesk_patients_list')
+
+    # ── Collect form data ──────────────────────────────────────────
+    first_name = request.POST.get('first_name', '').strip()
+    last_name  = request.POST.get('last_name',  '').strip()
+    email      = request.POST.get('email',      '').strip()
+    phone      = request.POST.get('phone',      '').strip()
+    gender     = request.POST.get('gender',     '').strip()
+    dob        = request.POST.get('dob',        '').strip() or None
+    address    = request.POST.get('address',    '').strip()
+    status     = request.POST.get('status',     'Active').strip()
+
+    # ── Basic validation ───────────────────────────────────────────
+    if not all([first_name, last_name, email, phone]):
+        messages.error(request, "First name, last name, email and phone are required.")
+        return redirect(f"{request.META.get('HTTP_REFERER', '/frontdesk/patients/')}?open_modal=1")
+
+    # ── Check for duplicate email ──────────────────────────────────
+    if User.objects.filter(email=email).exists():
+        messages.error(request, f"A patient with the email '{email}' already exists.")
+        return redirect(f"/frontdesk/patients/?open_modal=1")
+
+    try:
+        # ── Create Django User ─────────────────────────────────────
+        username = generate_unique_username(email)
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=uuid.uuid4().hex,        # random password — patient can reset via email
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        # ── Create PatientProfile ──────────────────────────────────
+        patient = PatientProfile.objects.create(
+            user=user,
+            full_name=f"{first_name} {last_name}",
+            phone=phone,
+            gender=gender,
+            dob=dob,
+            address=address,
+            status=status,
+        )
+
+        messages.success(
+            request,
+            f"Patient {patient.full_name} added successfully!"
+        )
+        return redirect('frontdesk_patients_list')
+
+    except Exception as e:
+        messages.error(request, f"Error creating patient: {e}")
+        return redirect(f"/frontdesk/patients/?open_modal=1")
+
+
+# ── Helper used above ──────────────────────────────────────────────
+# (already defined if you applied the previous views file —
+#  only add this if it's not already in your views.py)
+
+def generate_unique_username(email=None):
+    """Generate a unique Django username derived from the email."""
+    import uuid as _uuid
+    base = email.split('@')[0] if email else f"patient_{_uuid.uuid4().hex[:8]}"
+    username, counter = base, 1
+    while User.objects.filter(username=username).exists():
+        username = f"{base}{counter}"
+        counter += 1
+    return username
+
+
+# ── Updated frontdesk_patients_list view ──────────────────────────
+# (adds total_count / active_count / inactive_count to context
+#  and handles the ?open_modal=1 query param)
+
+@login_required
+def frontdesk_patients_list(request):
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    patients = PatientProfile.objects.all().order_by('full_name')
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        patients = patients.filter(
+            Q(full_name__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(user__email__icontains=search)
+        )
+
+    status = request.GET.get('status', '').strip()
+    if status:
+        patients = patients.filter(status=status)
+
+    all_patients = PatientProfile.objects.all()
+
+    context = {
+        'patients':       patients,
+        'search_query':   search,
+        'current_status': status,
+        # counts for the stat cards (optional — only needed if your
+        # template shows them; the template above does not, but keep
+        # them for future use)
+        'total_count':    all_patients.count(),
+        'active_count':   all_patients.filter(status='Active').count(),
+        'inactive_count': all_patients.filter(status='Inactive').count(),
+        # re-open the modal if we were redirected back after an error
+        'open_modal':     request.GET.get('open_modal', False),
+    }
+    return render(request, 'core/dashboard/frontdesk_patients_list.html', context)
+
+
+
+#   path('frontdesk/patients/',              views.frontdesk_patients_list,   name='frontdesk_patients_list'),
+#   

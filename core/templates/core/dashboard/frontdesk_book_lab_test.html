@@ -1,0 +1,643 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Lab Test | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Step Progress */
+        .step-track { display:flex; align-items:center; margin-bottom:28px; }
+        .step-item {
+            display:flex; align-items:center; gap:10px;
+            padding:11px 18px; border-radius:10px;
+            font-size:0.83rem; font-weight:600;
+            color:#9ca3af; background:#f9fafb;
+            border:1.5px solid #e5e7eb; flex:1; transition:all 0.3s;
+        }
+        .step-item.active { background:rgba(34,211,238,0.07); border-color:#22d3ee; color:#0e7490; }
+        .step-item.done   { background:rgba(52,211,153,0.07); border-color:#34d399; color:#065f46; }
+        .step-bubble {
+            width:26px; height:26px; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.78rem; font-weight:700;
+            background:#e5e7eb; color:#6b7280; flex-shrink:0; transition:all 0.3s;
+        }
+        .step-item.active .step-bubble { background:#22d3ee; color:#fff; }
+        .step-item.done   .step-bubble { background:#34d399; color:#fff; }
+        .step-arrow { color:#d1d5db; font-size:0.7rem; margin:0 5px; flex-shrink:0; }
+
+        /* Layout */
+        .page-grid { display:grid; grid-template-columns:1fr 310px; gap:22px; align-items:start; }
+        @media(max-width:900px){ .page-grid{ grid-template-columns:1fr; } }
+
+        /* Section Cards */
+        .s-card { background:#fff; border-radius:14px; border:1px solid #e5e7eb; overflow:hidden; margin-bottom:18px; box-shadow:0 1px 5px rgba(0,0,0,0.04); }
+        .s-head { display:flex; align-items:center; gap:12px; padding:16px 22px; border-bottom:1px solid #f3f4f6; }
+        .s-head-icon { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; flex-shrink:0; }
+        .s-head-title { font-size:0.97rem; font-weight:600; color:#1f2937; margin:0; }
+        .s-head-sub   { font-size:0.78rem; color:#6b7280; margin:0; }
+        .s-body { padding:22px; }
+
+        /* Patient Dropdown */
+        .pd-wrap { position:relative; }
+        .pd-select {
+            width:100%; padding:11px 38px 11px 38px;
+            border:1.5px solid #e5e7eb; border-radius:10px;
+            font-size:0.89rem; font-family:'Poppins',sans-serif;
+            color:#1f2937; background:#fff; transition:all 0.25s;
+            box-sizing:border-box; cursor:pointer; appearance:none;
+            -webkit-appearance:none;
+        }
+        .pd-select:focus { outline:none; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,0.1); }
+        .pd-icon-left  { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#9ca3af; pointer-events:none; font-size:0.85rem; }
+        .pd-icon-right { position:absolute; right:13px; top:50%; transform:translateY(-50%); color:#9ca3af; pointer-events:none; font-size:0.8rem; }
+
+        /* Patient Chip */
+        .p-chip { display:none; align-items:center; gap:12px; padding:12px 15px; background:rgba(34,211,238,0.06); border:1.5px solid #22d3ee; border-radius:10px; margin-top:10px; }
+        .p-chip.show { display:flex; }
+        .p-chip-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#22d3ee,#06b6d4); color:#fff; font-weight:700; font-size:0.95rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .p-chip-info { flex:1; }
+        .p-chip-name   { font-weight:600; color:#1f2937; font-size:0.92rem; }
+        .p-chip-detail { font-size:0.78rem; color:#6b7280; }
+
+        /* Filter Row */
+        .filter-row { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+        .f-select,.f-text { padding:9px 13px; border:1.5px solid #e5e7eb; border-radius:9px; font-size:0.84rem; font-family:'Poppins',sans-serif; color:#374151; background:#fff; transition:border-color 0.2s; }
+        .f-select { min-width:155px; cursor:pointer; }
+        .f-text   { flex:1; min-width:150px; }
+        .f-select:focus,.f-text:focus { outline:none; border-color:#22d3ee; }
+
+        /* Tests Grid */
+        .tests-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; max-height:400px; overflow-y:auto; padding-right:2px; }
+        .tests-grid::-webkit-scrollbar { width:5px; }
+        .tests-grid::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:3px; }
+
+        .t-card { display:block; border:2px solid #e5e7eb; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.22s; position:relative; background:#fff; }
+        .t-card:hover { border-color:#a78bfa; box-shadow:0 3px 12px rgba(124,58,237,0.09); transform:translateY(-1px); }
+        .t-card.sel   { border-color:#7c3aed; background:rgba(124,58,237,0.035); box-shadow:0 0 0 3px rgba(124,58,237,0.1); }
+        .t-card input[type="radio"] { display:none; }
+        .t-tick { position:absolute; top:9px; right:9px; width:21px; height:21px; border-radius:50%; background:#7c3aed; color:#fff; font-size:0.62rem; display:none; align-items:center; justify-content:center; }
+        .t-card.sel .t-tick { display:flex; }
+
+        .t-tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.68rem; font-weight:600; margin-bottom:7px; }
+        .tag-b { background:#fee2e2; color:#991b1b; }
+        .tag-u { background:#fef3c7; color:#92400e; }
+        .tag-i { background:#dbeafe; color:#1e40af; }
+        .tag-s { background:#d1fae5; color:#065f46; }
+        .tag-g { background:#ede9fe; color:#5b21b6; }
+
+        .t-name   { font-weight:600; color:#1f2937; font-size:0.9rem; margin-bottom:5px; }
+        .t-meta   { display:flex; flex-wrap:wrap; gap:5px; font-size:0.74rem; color:#6b7280; margin-bottom:9px; }
+        .t-meta span { display:flex; align-items:center; gap:3px; }
+        .t-bottom { display:flex; align-items:center; justify-content:space-between; }
+        .t-price  { font-size:1.15rem; font-weight:700; color:#7c3aed; }
+        .t-home   { display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:20px; background:#d1fae5; color:#065f46; font-size:0.67rem; font-weight:600; }
+        .t-empty  { grid-column:1/-1; text-align:center; padding:40px; color:#9ca3af; }
+        .t-empty i{ font-size:2rem; display:block; margin-bottom:10px; }
+
+        /* Form Controls */
+        .f-row2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+        @media(max-width:600px){ .f-row2{ grid-template-columns:1fr; } }
+        .fg  { margin-bottom:0; }
+        .fl  { display:block; font-size:0.82rem; font-weight:600; color:#374151; margin-bottom:7px; }
+        .fl span { color:#ef4444; }
+        .fi  { width:100%; padding:10px 13px; border:1.5px solid #e5e7eb; border-radius:9px; font-size:0.88rem; font-family:'Poppins',sans-serif; color:#1f2937; background:#fff; transition:all 0.22s; box-sizing:border-box; }
+        .fi:focus { outline:none; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,0.1); }
+        .fi-info { padding:10px 13px; background:#f9fafb; border:1.5px solid #e5e7eb; border-radius:9px; font-size:0.88rem; color:#6b7280; min-height:42px; display:flex; align-items:center; }
+
+        /* Payment Method */
+        .pm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        @media(max-width:600px){ .pm-grid{ grid-template-columns:repeat(2,1fr); } }
+        .pm-card { display:block; border:2px solid #e5e7eb; border-radius:11px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.22s; }
+        .pm-card:hover { border-color:#a78bfa; background:rgba(124,58,237,0.025); }
+        .pm-card.sel   { border-color:#7c3aed; background:rgba(124,58,237,0.05); }
+        .pm-card input { display:none; }
+        .pm-ico { width:42px; height:42px; border-radius:50%; margin:0 auto 7px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; }
+        .pm-lbl { font-size:0.82rem; font-weight:600; color:#374151; }
+
+        /* Summary */
+        .sum-panel { background:#fff; border-radius:14px; border:1px solid #e5e7eb; overflow:hidden; box-shadow:0 1px 5px rgba(0,0,0,0.04); position:sticky; top:20px; }
+        .sum-head  { padding:15px 20px; background:linear-gradient(135deg,#7c3aed,#5b21b6); color:#fff; }
+        .sum-head h4 { font-size:0.93rem; font-weight:600; margin:0; }
+        .sum-body  { padding:18px; }
+        .sum-row   { display:flex; justify-content:space-between; align-items:flex-start; padding:9px 0; border-bottom:1px solid #f3f4f6; gap:8px; }
+        .sum-row:last-child { border-bottom:none; }
+        .sum-lbl { font-size:0.78rem; color:#6b7280; flex-shrink:0; }
+        .sum-val { font-size:0.83rem; font-weight:600; color:#1f2937; text-align:right; }
+        .sum-val.empty { color:#d1d5db; font-weight:400; font-style:italic; }
+        .sum-total { display:flex; justify-content:space-between; align-items:center; padding:13px 18px; background:#f9fafb; border-top:1px solid #e5e7eb; }
+        .sum-total-lbl { font-size:0.88rem; font-weight:600; color:#374151; }
+        .sum-total-amt { font-size:1.35rem; font-weight:700; color:#7c3aed; }
+        .submit-wrap { padding:18px; }
+        .submit-btn { width:100%; padding:13px; background:linear-gradient(135deg,#a78bfa,#7c3aed); color:#fff; border:none; border-radius:10px; font-size:0.93rem; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.3s; box-shadow:0 4px 14px rgba(124,58,237,0.22); }
+        .submit-btn:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(124,58,237,0.32); }
+        .secure-note { text-align:center; margin-top:9px; font-size:0.76rem; color:#9ca3af; }
+    </style>
+</head>
+<body>
+<div class="medical-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#g1)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#g1)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback" style="display:flex;">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background:linear-gradient(135deg,#f59e0b,#f97316);">Front Desk</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-home"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'frontdesk_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
+            </a>
+            <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item active">
+                <i class="fa-solid fa-flask"></i><span>Lab Tests</span>
+            </a>
+            <a href="{% url 'frontdesk_lab_bookings' %}" class="nav-item">
+                <i class="fa-solid fa-list-check"></i><span>All Bookings</span>
+            </a>
+            <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i><span>Patients</span>
+            </a>
+            <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item">
+                <i class="fa-solid fa-stethoscope"></i><span>Doctors</span>
+            </a>
+            <a href="{% url 'frontdesk_payments' %}" class="nav-item">
+                <i class="fa-solid fa-credit-card"></i><span>Payments</span>
+            </a>
+            <a href="{% url 'frontdesk_reports' %}" class="nav-item">
+                <i class="fa-solid fa-chart-bar"></i><span>Reports</span>
+            </a>
+            <a href="{% url 'frontdesk_settings' %}" class="nav-item">
+                <i class="fa-solid fa-gear"></i><span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Book Lab Test</h1>
+                <p class="page-subtitle">Schedule a diagnostic test for a patient</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'frontdesk_lab_bookings' %}" class="add-btn"
+                   style="text-decoration:none;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">
+                    <i class="fa-solid fa-list"></i><span>All Bookings</span>
+                </a>
+                <a href="{% url 'frontdesk_dashboard' %}" class="add-btn"
+                   style="text-decoration:none;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">
+                    <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Flash Messages -->
+            {% if messages %}
+            {% for msg in messages %}
+            <div style="padding:11px 16px;border-radius:9px;margin-bottom:14px;display:flex;align-items:center;gap:9px;
+                background:{% if msg.tags == 'success' %}#d1fae5{% elif msg.tags == 'warning' %}#fef3c7{% else %}#fee2e2{% endif %};
+                color:{% if msg.tags == 'success' %}#065f46{% elif msg.tags == 'warning' %}#92400e{% else %}#991b1b{% endif %};
+                border-left:4px solid {% if msg.tags == 'success' %}#10b981{% elif msg.tags == 'warning' %}#f59e0b{% else %}#ef4444{% endif %};">
+                <i class="fa-solid fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                {{ msg }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Step Indicator -->
+            <div class="step-track">
+                <div class="step-item active" id="si1"><div class="step-bubble">1</div><span>Patient</span></div>
+                <i class="fa-solid fa-chevron-right step-arrow"></i>
+                <div class="step-item" id="si2"><div class="step-bubble">2</div><span>Select Test</span></div>
+                <i class="fa-solid fa-chevron-right step-arrow"></i>
+                <div class="step-item" id="si3"><div class="step-bubble">3</div><span>Date</span></div>
+                <i class="fa-solid fa-chevron-right step-arrow"></i>
+                <div class="step-item" id="si4"><div class="step-bubble">4</div><span>Payment</span></div>
+            </div>
+
+            <!-- FORM -->
+            <form method="POST" action="{% url 'frontdesk_book_lab_test' %}" id="labForm">
+                {% csrf_token %}
+
+                <div class="page-grid">
+
+                    <!-- LEFT -->
+                    <div>
+
+                        <!-- Step 1: Patient Dropdown -->
+                        <div class="s-card">
+                            <div class="s-head">
+                                <div class="s-head-icon" style="background:linear-gradient(135deg,#22d3ee,#06b6d4);">
+                                    <i class="fa-solid fa-user-injured"></i>
+                                </div>
+                                <div>
+                                    <p class="s-head-title">Step 1 — Select Patient</p>
+                                    <p class="s-head-sub">Choose a patient from the list</p>
+                                </div>
+                            </div>
+                            <div class="s-body">
+                                <div class="pd-wrap">
+                                    <i class="fa-solid fa-user pd-icon-left"></i>
+                                    <select name="patient" id="patSelect" class="pd-select" required onchange="pickPat(this)">
+                                        <option value="">— Select a patient —</option>
+                                        {% for patient in patients %}
+                                        <option value="{{ patient.id }}"
+                                                data-name="{{ patient.full_name }}"
+                                                data-phone="{{ patient.phone }}"
+                                                data-email="{{ patient.email|default:'' }}">
+                                            {{ patient.full_name }} — {{ patient.phone }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down pd-icon-right"></i>
+                                </div>
+
+                                <!-- Patient chip shown after selection -->
+                                <div class="p-chip" id="patChip">
+                                    <div class="p-chip-av" id="chipAv">?</div>
+                                    <div class="p-chip-info">
+                                        <div class="p-chip-name"   id="chipName">—</div>
+                                        <div class="p-chip-detail" id="chipDetail">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Test -->
+                        <div class="s-card">
+                            <div class="s-head">
+                                <div class="s-head-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);">
+                                    <i class="fa-solid fa-flask"></i>
+                                </div>
+                                <div>
+                                    <p class="s-head-title">Step 2 — Choose Lab Test</p>
+                                    <p class="s-head-sub">Filter by lab, category, or search by name</p>
+                                </div>
+                            </div>
+                            <div class="s-body">
+                                <div class="filter-row">
+                                    <select class="f-select" id="labF" onchange="doFilter()">
+                                        <option value="">All Labs</option>
+                                        {% for lab in labs %}
+                                        <option value="{{ lab.id }}">{{ lab.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select class="f-select" id="catF" onchange="doFilter()">
+                                        <option value="">All Categories</option>
+                                        <option>Blood Tests</option>
+                                        <option>Urine Tests</option>
+                                        <option>Imaging</option>
+                                        <option>Screening</option>
+                                        <option>General</option>
+                                    </select>
+                                    <input class="f-text" id="nameF" placeholder="Search test name…" oninput="doFilter()">
+                                </div>
+
+                                <div class="tests-grid" id="testsGrid">
+                                    {% for test in tests %}
+                                    <label class="t-card"
+                                           id="tc{{ test.id }}"
+                                           for="tr{{ test.id }}"
+                                           data-lab="{{ test.lab.id }}"
+                                           data-cat="{{ test.category }}"
+                                           data-nm="{{ test.test_name|lower }}"
+                                           data-price="{{ test.price }}"
+                                           data-tname="{{ test.test_name }}"
+                                           data-lname="{{ test.lab.name }}"
+                                           data-dur="{{ test.result_duration }}"
+                                           data-samp="{{ test.sample_type }}"
+                                           data-home="{{ test.home_collection|yesno:'1,0' }}">
+                                        <input type="radio" name="test" id="tr{{ test.id }}"
+                                               value="{{ test.id }}" onchange="pickTest(this)">
+                                        <div class="t-tick"><i class="fa-solid fa-check"></i></div>
+
+                                        {% if test.category == "Blood Tests" %}<span class="t-tag tag-b">{{ test.category }}</span>
+                                        {% elif test.category == "Urine Tests" %}<span class="t-tag tag-u">{{ test.category }}</span>
+                                        {% elif test.category == "Imaging" %}<span class="t-tag tag-i">{{ test.category }}</span>
+                                        {% elif test.category == "Screening" %}<span class="t-tag tag-s">{{ test.category }}</span>
+                                        {% else %}<span class="t-tag tag-g">{{ test.category }}</span>{% endif %}
+
+                                        <div class="t-name">{{ test.test_name }}</div>
+                                        <div class="t-meta">
+                                            <span><i class="fa-solid fa-building" style="color:#7c3aed;"></i>{{ test.lab.name }}</span>
+                                            <span><i class="fa-solid fa-clock" style="color:#f59e0b;"></i>{{ test.result_duration }}</span>
+                                            <span><i class="fa-solid fa-vial" style="color:#06b6d4;"></i>{{ test.sample_type }}</span>
+                                        </div>
+                                        <div class="t-bottom">
+                                            <span class="t-price">₹{{ test.price }}</span>
+                                            {% if test.home_collection %}
+                                            <span class="t-home"><i class="fa-solid fa-house"></i>Home</span>
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                    {% empty %}
+                                    <div class="t-empty">
+                                        <i class="fa-solid fa-flask"></i>
+                                        No tests available. Add tests from the Lab panel first.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Date -->
+                        <div class="s-card">
+                            <div class="s-head">
+                                <div class="s-head-icon" style="background:linear-gradient(135deg,#34d399,#10b981);">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <p class="s-head-title">Step 3 — Booking Date</p>
+                                    <p class="s-head-sub">When should the test be conducted?</p>
+                                </div>
+                            </div>
+                            <div class="s-body">
+                                <div class="f-row2">
+                                    <div class="fg">
+                                        <label class="fl" for="bdate">Booking Date <span>*</span></label>
+                                        <input type="date" name="booking_date" id="bdate"
+                                               class="fi" min="{{ today }}" required
+                                               onchange="sumDate(this.value)">
+                                    </div>
+                                    <div class="fg">
+                                        <label class="fl">Sample Type</label>
+                                        <div class="fi-info" id="sampleDisp">Select a test first</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Payment -->
+                        <div class="s-card">
+                            <div class="s-head">
+                                <div class="s-head-icon" style="background:linear-gradient(135deg,#60a5fa,#3b82f6);">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div>
+                                    <p class="s-head-title">Step 4 — Collect Payment</p>
+                                    <p class="s-head-sub">Select how the patient will pay</p>
+                                </div>
+                            </div>
+                            <div class="s-body">
+                                <div class="pm-grid">
+                                    <label class="pm-card" for="pmCash" onclick="pickPM(this,'Cash')">
+                                        <input type="radio" name="payment_method" id="pmCash" value="Cash" required>
+                                        <div class="pm-ico" style="background:rgba(16,185,129,0.1);">
+                                            <i class="fa-solid fa-money-bill-wave" style="color:#10b981;"></i>
+                                        </div>
+                                        <div class="pm-lbl">Cash</div>
+                                    </label>
+                                    <label class="pm-card" for="pmUPI" onclick="pickPM(this,'UPI')">
+                                        <input type="radio" name="payment_method" id="pmUPI" value="UPI">
+                                        <div class="pm-ico" style="background:rgba(124,58,237,0.1);">
+                                            <i class="fa-solid fa-mobile-screen-button" style="color:#7c3aed;"></i>
+                                        </div>
+                                        <div class="pm-lbl">UPI</div>
+                                    </label>
+                                    <label class="pm-card" for="pmCard" onclick="pickPM(this,'Card')">
+                                        <input type="radio" name="payment_method" id="pmCard" value="Card">
+                                        <div class="pm-ico" style="background:rgba(59,130,246,0.1);">
+                                            <i class="fa-solid fa-credit-card" style="color:#3b82f6;"></i>
+                                        </div>
+                                        <div class="pm-lbl">Card</div>
+                                    </label>
+                                    <label class="pm-card" for="pmNet" onclick="pickPM(this,'NetBanking')">
+                                        <input type="radio" name="payment_method" id="pmNet" value="NetBanking">
+                                        <div class="pm-ico" style="background:rgba(245,158,11,0.1);">
+                                            <i class="fa-solid fa-building-columns" style="color:#f59e0b;"></i>
+                                        </div>
+                                        <div class="pm-lbl">Net Banking</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /left -->
+
+                    <!-- RIGHT: Summary -->
+                    <div>
+                        <div class="sum-panel">
+                            <div class="sum-head">
+                                <h4><i class="fa-solid fa-receipt" style="margin-right:8px;"></i>Booking Summary</h4>
+                            </div>
+                            <div class="sum-body">
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-user" style="color:#22d3ee;width:14px;margin-right:5px;"></i>Patient</span>
+                                    <span class="sum-val empty" id="sv-pat">Not selected</span>
+                                </div>
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-flask" style="color:#7c3aed;width:14px;margin-right:5px;"></i>Test</span>
+                                    <span class="sum-val empty" id="sv-test">Not selected</span>
+                                </div>
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-building" style="color:#f59e0b;width:14px;margin-right:5px;"></i>Lab</span>
+                                    <span class="sum-val empty" id="sv-lab">—</span>
+                                </div>
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-calendar" style="color:#34d399;width:14px;margin-right:5px;"></i>Date</span>
+                                    <span class="sum-val empty" id="sv-date">Not selected</span>
+                                </div>
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-clock" style="color:#06b6d4;width:14px;margin-right:5px;"></i>Results in</span>
+                                    <span class="sum-val empty" id="sv-dur">—</span>
+                                </div>
+                                <div class="sum-row">
+                                    <span class="sum-lbl"><i class="fa-solid fa-credit-card" style="color:#3b82f6;width:14px;margin-right:5px;"></i>Payment</span>
+                                    <span class="sum-val empty" id="sv-pm">Not selected</span>
+                                </div>
+                            </div>
+                            <div class="sum-total">
+                                <span class="sum-total-lbl">Total Amount</span>
+                                <span class="sum-total-amt" id="sv-amt">₹0</span>
+                            </div>
+                            <div class="submit-wrap">
+                                <button type="submit" class="submit-btn">
+                                    <i class="fa-solid fa-flask"></i>
+                                    Confirm &amp; Book Test
+                                </button>
+                                <div class="secure-note">
+                                    <i class="fa-solid fa-shield-halved" style="color:#10b981;margin-right:4px;"></i>
+                                    Payment marked as collected on confirmation
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /right -->
+
+                </div><!-- /page-grid -->
+            </form>
+
+        </div>
+    </main>
+</div>
+
+<script>
+/* ── Patient Dropdown ── */
+function pickPat(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (!sel.value) {
+        document.getElementById('patChip').classList.remove('show');
+        setSVE('sv-pat', 'Not selected');
+        stepSync();
+        return;
+    }
+    const name  = opt.dataset.name  || opt.text.split('—')[0].trim();
+    const phone = opt.dataset.phone || '';
+    const email = opt.dataset.email || '';
+
+    document.getElementById('chipAv').textContent     = name.charAt(0).toUpperCase();
+    document.getElementById('chipName').textContent   = name;
+    document.getElementById('chipDetail').textContent = phone + (email ? ' · ' + email : '');
+    document.getElementById('patChip').classList.add('show');
+    setSV('sv-pat', name);
+    stepSync();
+}
+
+/* ── Test Selection ── */
+function pickTest(radio) {
+    document.querySelectorAll('.t-card').forEach(c => c.classList.remove('sel'));
+    const lbl = radio.closest('.t-card');
+    lbl.classList.add('sel');
+    const { price, tname, lname, dur, samp } = lbl.dataset;
+    document.getElementById('sampleDisp').innerHTML =
+        `<i class="fa-solid fa-vial" style="color:#06b6d4;margin-right:6px;"></i>${samp}`;
+    document.getElementById('sampleDisp').style.color = '#1f2937';
+    setSV('sv-test', tname);
+    setSV('sv-lab',  lname);
+    setSV('sv-dur',  dur);
+    document.getElementById('sv-amt').textContent = '₹' + parseFloat(price).toLocaleString('en-IN');
+    stepSync();
+}
+
+/* ── Filters ── */
+function doFilter() {
+    const lv = document.getElementById('labF').value;
+    const cv = document.getElementById('catF').value;
+    const nv = document.getElementById('nameF').value.toLowerCase().trim();
+    let vis = 0;
+    document.querySelectorAll('.t-card').forEach(c => {
+        const ok = (!lv || c.dataset.lab === lv) && (!cv || c.dataset.cat === cv) && (!nv || c.dataset.nm.includes(nv));
+        c.style.display = ok ? 'block' : 'none';
+        if (ok) vis++;
+    });
+    const old = document.getElementById('noTMsg');
+    if (old) old.remove();
+    if (!vis) {
+        const d = document.createElement('div');
+        d.id = 'noTMsg'; d.className = 't-empty';
+        d.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>No tests match your filters.';
+        document.getElementById('testsGrid').appendChild(d);
+    }
+}
+
+/* ── Date ── */
+function sumDate(v) {
+    if (v) {
+        const d = new Date(v);
+        setSV('sv-date', d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}));
+    } else {
+        setSVE('sv-date', 'Not selected');
+    }
+    stepSync();
+}
+
+/* ── Payment Method ── */
+function pickPM(lbl, name) {
+    document.querySelectorAll('.pm-card').forEach(c => c.classList.remove('sel'));
+    lbl.classList.add('sel');
+    setSV('sv-pm', name);
+    stepSync();
+}
+
+/* ── Step Indicator Sync ── */
+function stepSync() {
+    const s1 = !!document.getElementById('patSelect').value;
+    const s2 = !!document.querySelector('input[name="test"]:checked');
+    const s3 = !!document.getElementById('bdate').value;
+    const s4 = !!document.querySelector('input[name="payment_method"]:checked');
+    setStep(1, !s1,               s1);
+    setStep(2, s1 && !s2,         s1 && s2);
+    setStep(3, s1 && s2 && !s3,   s1 && s2 && s3);
+    setStep(4, s1 && s2 && s3 && !s4, s1 && s2 && s3 && s4);
+}
+function setStep(n, active, done) {
+    const el = document.getElementById('si' + n);
+    el.classList.remove('active', 'done');
+    if (done)        el.classList.add('done');
+    else if (active) el.classList.add('active');
+}
+
+/* ── Summary helpers ── */
+function setSV(id, val) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.classList.remove('empty');
+}
+function setSVE(id, val) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.classList.add('empty');
+}
+
+/* ── Form Validation ── */
+document.getElementById('labForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('patSelect').value)
+        { e.preventDefault(); alert('Please select a patient.'); return; }
+    if (!document.querySelector('input[name="test"]:checked'))
+        { e.preventDefault(); alert('Please select a lab test.'); return; }
+    if (!document.getElementById('bdate').value)
+        { e.preventDefault(); alert('Please select a booking date.'); return; }
+    if (!document.querySelector('input[name="payment_method"]:checked'))
+        { e.preventDefault(); alert('Please choose a payment method.'); return; }
+});
+
+/* Set today's date by default */
+document.getElementById('bdate').value = '{{ today }}';
+sumDate('{{ today }}');
+</script>
+</body>
+</html>

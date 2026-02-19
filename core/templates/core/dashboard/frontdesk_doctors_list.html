@@ -1,0 +1,263 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctors | FrontDesk - BetaCare</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .doctor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22d3ee, #a78bfa);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .badge-special {
+            background: rgba(34, 211, 238, 0.1);
+            color: #06b6d4;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- Sidebar -->
+    <aside class="medical-sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback" style="display: flex;">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">Front Desk</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'frontdesk_book_appointment' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i>
+                <span>Appointments</span>
+            </a>
+
+            <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item">
+                <i class="fa-solid fa-flask"></i>
+                <span>Lab Tests</span>
+            </a>
+
+            <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Patients</span>
+            </a>
+
+            <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item active">
+                <i class="fa-solid fa-stethoscope"></i>
+                <span>Doctors</span>
+            </a>
+
+            <a href="{% url 'frontdesk_payments' %}" class="nav-item">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Payments</span>
+            </a>
+
+            <a href="{% url 'frontdesk_reports' %}" class="nav-item">
+                <i class="fa-solid fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="{% url 'frontdesk_settings' %}" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="medical-main">
+
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Doctors</h1>
+                <p class="page-subtitle">View all registered doctors in the hospital</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'frontdesk_dashboard' %}" class="add-btn" style="text-decoration:none;">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Filters -->
+            <div class="medical-table-card" style="margin-bottom: var(--space-6);">
+                <div class="info-header">
+                    <h3><i class="fa-solid fa-filter" style="margin-right:var(--space-2);"></i>Filters</h3>
+                </div>
+                <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+                    <input type="text" name="search" placeholder="Search by name or department..."
+                           value="{{ search_query }}"
+                           style="padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px;">
+
+                    <select name="department" style="padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px;">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept }}" {% if current_department == dept %}selected{% endif %}>{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit" class="add-btn">
+                        <i class="fa-solid fa-search"></i> Search
+                    </button>
+                </form>
+            </div>
+
+            <!-- Doctors Table -->
+            <div class="medical-table-card">
+                <div class="info-header">
+                    <h3><i class="fa-solid fa-stethoscope" style="margin-right:var(--space-2);"></i>All Doctors</h3>
+                    <span style="background: var(--gray-200); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                        Total: {{ doctors|length }}
+                    </span>
+                </div>
+
+                {% if doctors %}
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: var(--gray-50); border-bottom: 2px solid var(--gray-200);">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">ID</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Doctor</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Email</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Department</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Specialization</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Experience</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Fee</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doctor in doctors %}
+                            <tr style="border-bottom: 1px solid var(--gray-100);">
+
+                                <td style="padding: 12px; color: var(--gray-500); font-size: 0.85rem;">
+                                    D{{ doctor.id }}
+                                </td>
+
+                                <td style="padding: 12px;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="doctor-avatar">
+                                            {{ doctor.user.first_name|default:doctor.user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <strong>Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</strong>
+                                            <div style="font-size: 0.8rem; color: var(--gray-500);">
+                                                License: {{ doctor.license_number|default:"N/A" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td style="padding: 12px;">{{ doctor.user.email }}</td>
+
+                                <td style="padding: 12px;">
+                                    <span class="badge-special">{{ doctor.department }}</span>
+                                </td>
+
+                                <td style="padding: 12px;">
+                                    <span class="badge-special">{{ doctor.specialization }}</span>
+                                </td>
+
+                                <td style="padding: 12px;">{{ doctor.experience }} yrs</td>
+
+                                <td style="padding: 12px;">₹{{ doctor.consultation_fee }}</td>
+
+                                <td style="padding: 12px;">
+                                    {% if doctor.user.is_active %}
+                                        <span style="color: #10b981; font-weight: 600;">● Active</span>
+                                    {% else %}
+                                        <span style="color: #ef4444; font-weight: 600;">● Inactive</span>
+                                    {% endif %}
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div style="text-align: center; padding: var(--space-8) var(--space-4);">
+                    <i class="fa-solid fa-user-doctor" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--space-3);"></i>
+                    <p style="color: var(--gray-500);">No doctors found</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </main>
+</div>
+</body>
+</html>
