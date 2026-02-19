@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.db import models
 from django.contrib.auth.models import User
@@ -15,7 +17,31 @@ class PatientProfile(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True)
     status = models.CharField(max_length=20, default="Active")
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'), ('A-', 'A-'),
+        ('B+', 'B+'), ('B-', 'B-'),
+        ('AB+', 'AB+'), ('AB-', 'AB-'),
+        ('O+', 'O+'), ('O-', 'O-'),
+    ]
+    blood_group = models.CharField(
+        max_length=3,
+        choices=BLOOD_GROUP_CHOICES,
+        null=True,
+        blank=True
+    )
 
+
+    @property
+    def age(self):
+        if not self.dob:
+            return None
+        today = date.today()
+        return (
+            today.year
+            - self.dob.year
+            - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        )
+    
     def __str__(self):
         return self.full_name
 

@@ -195,8 +195,7 @@
                                                     <i class="fa-solid fa-save"></i> Save Result
                                                 </button>
                                                 {% endif %}
-                                                <a href="#" 
-                                                   onclick="viewBookingDetails({{ booking.id }}); return false;"
+                                                <a href="{% url 'lab_booking_detail' booking.id %}" 
                                                    style="padding:0.5rem 1rem; background:rgba(34,211,238,0.1); color:var(--medical-cyan); border-radius:var(--radius-md); text-decoration:none; font-size:0.85rem; font-weight:600; transition:var(--transition);"
                                                    onmouseover="this.style.background='var(--medical-cyan)'; this.style.color='white';"
                                                    onmouseout="this.style.background='rgba(34,211,238,0.1)'; this.style.color='var(--medical-cyan)';">
@@ -283,12 +282,6 @@
                 }
             });
         });
-
-        // View booking details
-        function viewBookingDetails(bookingId) {
-            alert('Viewing details for booking #' + bookingId + '\n\nThis would open a modal or navigate to a detail page.');
-            // Implement actual detail view functionality here
-        }
 
         // Confirm before saving
         document.querySelectorAll('button[name="save"]').forEach(button => {

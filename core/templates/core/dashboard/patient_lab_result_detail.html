@@ -1,0 +1,319 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Result Detail | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .detail-item {
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--medical-cyan);
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-2);
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .result-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+        }
+
+        .result-normal {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .result-abnormal {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        @media print {
+            .medical-sidebar,
+            .medical-header,
+            .no-print {
+                display: none !important;
+            }
+
+            .medical-main {
+                margin-left: 0 !important;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee" />
+                            <stop offset="100%" stop-color="#a78bfa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                <i class="fa-solid fa-calendar-plus"></i>
+                <span>Book Appointment</span>
+            </a>
+            <a href="{% url 'patient_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i>
+                <span>My Appointments</span>
+            </a>
+            <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item active">
+                <i class="fa-solid fa-flask"></i>
+                <span>Diagnostic Tests</span>
+            </a>
+            <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>Lab Results</span>
+            </a>
+            <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription"></i>
+                <span>Prescriptions</span>
+            </a>
+                
+            <a href="{% url 'payments' %}" class="nav-item">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Payments</span>
+            </a>
+            <a href="{% url 'patient_settings' %}" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="medical-main">
+
+        <!-- Header -->
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Lab Result Details</h1>
+                <p class="page-subtitle">{{ result.test_name }} - {{ result.test_date|date:"d M Y" }}</p>
+            </div>
+            <div class="header-actions no-print">
+                <button onclick="window.print()" class="btn-cancel" style="background: white; border: 1px solid var(--gray-300);">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+                <a href="{% url 'patient_lab_results' %}" class="btn-cancel" style="text-decoration: none;">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="medical-content">
+
+            <!-- Result Status Banner -->
+            <div style="padding: var(--space-5); border-radius: var(--radius-lg); margin-bottom: var(--space-6);
+                {% if result.result_status == 'Normal' %}
+                    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+                    border: 2px solid #10b981;
+                {% else %}
+                    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+                    border: 2px solid #f59e0b;
+                {% endif %}">
+                <div style="display: flex; align-items: center; gap: var(--space-4);">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                        {% if result.result_status == 'Normal' %}background: #10b981;{% else %}background: #f59e0b;{% endif %}">
+                        <i class="fa-solid fa-{% if result.result_status == 'Normal' %}check-circle{% else %}exclamation-triangle{% endif %}" style="font-size: 1.8rem; color: white;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: var(--space-2);
+                            {% if result.result_status == 'Normal' %}color: #10b981;{% else %}color: #f59e0b;{% endif %}">
+                            {{ result.result_status }} Result
+                        </h2>
+                        <p style="color: var(--gray-600); font-size: 0.95rem;">
+                            {% if result.result_status == 'Normal' %}
+                                Your test results are within the normal range.
+                            {% else %}
+                                Your test results show abnormal values. Please consult with your doctor.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Information -->
+            <div class="medical-table-card" style="margin-bottom: var(--space-6);">
+                <div class="info-header">
+                    <h3>
+                        <i class="fa-solid fa-flask" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                        Test Information
+                    </h3>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Test Name</div>
+                        <div class="detail-value">{{ result.test_name }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Test Date</div>
+                        <div class="detail-value">{{ result.test_date|date:"d M Y" }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Result Value</div>
+                        <div class="detail-value" style="font-size: 1.3rem; color: {% if result.result_status == 'Normal' %}#10b981{% else %}#f59e0b{% endif %};">
+                            {{ result.test_value }}
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Normal Range</div>
+                        <div class="detail-value">{{ result.normal_range|default:"Not specified" }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Ordered By</div>
+                        <div class="detail-value">Dr. {{ result.doctor.user.get_full_name }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Lab Technician</div>
+                        <div class="detail-value">{{ result.lab_technician.user.get_full_name }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remarks -->
+            {% if result.remarks %}
+            <div class="medical-table-card" style="margin-bottom: var(--space-6);">
+                <div class="info-header">
+                    <h3>
+                        <i class="fa-solid fa-notes-medical" style="color: var(--medical-purple); margin-right: var(--space-2);"></i>
+                        Remarks & Notes
+                    </h3>
+                </div>
+                <div style="padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); border-left: 3px solid var(--medical-purple);">
+                    <p style="color: var(--gray-700); line-height: 1.8; white-space: pre-wrap;">{{ result.remarks }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Patient Information -->
+            <div class="medical-table-card">
+                <div class="info-header">
+                    <h3>
+                        <i class="fa-solid fa-user" style="color: var(--medical-green); margin-right: var(--space-2);"></i>
+                        Patient Information
+                    </h3>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+                    <div>
+                        <div class="detail-label">Patient Name</div>
+                        <div class="detail-value">{{ result.patient.full_name }}</div>
+                    </div>
+
+                    <div>
+                        <div class="detail-label">Gender</div>
+                        <div class="detail-value">{{ result.patient.gender|default:"Not specified" }}</div>
+                    </div>
+
+                    <div>
+                        <div class="detail-label">Date of Birth</div>
+                        <div class="detail-value">{{ result.patient.dob|date:"d M Y"|default:"Not specified" }}</div>
+                    </div>
+
+                    <div>
+                        <div class="detail-label">Phone</div>
+                        <div class="detail-value">{{ result.patient.phone }}</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

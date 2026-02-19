@@ -160,7 +160,7 @@
                                     </td>
                                     <td style="padding:var(--space-4); text-align:center;">
                                         <div style="display:flex; gap:var(--space-2); justify-content:center;">
-                                            <a href="#" style="padding:0.5rem 1rem; background:rgba(34,211,238,0.1); color:var(--medical-cyan); border-radius:var(--radius-md); text-decoration:none; font-size:0.85rem; font-weight:600; transition:var(--transition);"
+                                            <a href="{% url 'lab_booking_detail' booking.id %}" style="padding:0.5rem 1rem; background:rgba(34,211,238,0.1); color:var(--medical-cyan); border-radius:var(--radius-md); text-decoration:none; font-size:0.85rem; font-weight:600; transition:var(--transition);"
                                                 onmouseover="this.style.background='var(--medical-cyan)'; this.style.color='white';"
                                                 onmouseout="this.style.background='rgba(34,211,238,0.1)'; this.style.color='var(--medical-cyan)';">
                                                 <i class="fa-solid fa-eye"></i> View

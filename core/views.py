@@ -4779,14 +4779,20 @@ def lab_booking_details(request, booking_id):
     
     # Get the booking
     booking = get_object_or_404(
-        TestBooking,
+        TestBooking.objects.select_related('patient'),
         id=booking_id,
         patient=patient
+        
     )
     
     context = {
         'booking': booking,
         'today': date.today(),
+        "patient": patient_profile,
+        "age": patient_profile.age,
+        "name": patient.full_name,
+        "email": patient.email,
+        "phone": patient.phone,
     }
     
     return render(request, 'core/dashboard/lab_booking_details.html', context)
@@ -8951,6 +8957,356 @@ def frontdesk_patients_list(request):
     return render(request, 'core/dashboard/frontdesk_patients_list.html', context)
 
 
+# Add these views to your core/views.py file
 
-#   path('frontdesk/patients/',              views.frontdesk_patients_list,   name='frontdesk_patients_list'),
-#   
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q
+from datetime import datetime, timedelta, date
+from django.utils import timezone
+
+from core.models import PatientProfile, LabResult
+
+
+@login_required
+def patient_lab_results(request):
+    """
+    View all lab test results for the patient
+    
+    Features:
+    - List all lab results
+    - Filter by status (Normal/Abnormal)
+    - Search by test name or doctor
+    - Show statistics
+    - Download/print results
+    
+    URL: /patient/lab-results/
+    Template: core/dashboard/patient_lab_results.html
+    """
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+    except PatientProfile.DoesNotExist:
+        messages.error(request, "Patient profile not found")
+        return redirect('patient_dashboard')
+    
+    # Get all lab results for this patient
+    results = LabResult.objects.filter(
+        patient=patient
+    ).select_related(
+        'doctor', 
+        'doctor__user', 
+        'lab_technician', 
+        'lab_technician__user'
+    ).order_by('-test_date', '-created_at')
+    
+    # Filter by result status if provided
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter:
+        results = results.filter(result_status=status_filter)
+    
+    # Search functionality
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        results = results.filter(
+            Q(test_name__icontains=search_query) |
+            Q(doctor__user__first_name__icontains=search_query) |
+            Q(doctor__user__last_name__icontains=search_query)
+        )
+    
+    # Calculate statistics
+    all_results = LabResult.objects.filter(patient=patient)
+    total_results = all_results.count()
+    normal_count = all_results.filter(result_status='Normal').count()
+    abnormal_count = all_results.filter(result_status='Abnormal').count()
+    
+    # Recent results (last 30 days)
+    thirty_days_ago = timezone.now().date() - timedelta(days=30)
+    recent_count = all_results.filter(test_date__gte=thirty_days_ago).count()
+    
+    context = {
+        'results': results,
+        'total_results': total_results,
+        'normal_count': normal_count,
+        'abnormal_count': abnormal_count,
+        'recent_count': recent_count,
+        'status_filter': status_filter,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'core/dashboard/patient_lab_results.html', context)
+
+
+@login_required
+def patient_lab_result_detail(request, result_id):
+    """
+    View detailed information about a specific lab result
+    
+    Features:
+    - Full result details
+    - Test information
+    - Normal range comparison
+    - Doctor remarks
+    - Print functionality
+    
+    URL: /patient/lab-result/<result_id>/
+    Template: core/dashboard/patient_lab_result_detail.html
+    """
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+    except PatientProfile.DoesNotExist:
+        messages.error(request, "Patient profile not found")
+        return redirect('patient_dashboard')
+    
+    # Get the lab result
+    result = get_object_or_404(
+        LabResult,
+        id=result_id,
+        patient=patient
+    )
+    
+    # Get related information
+    doctor = result.doctor
+    lab_technician = result.lab_technician
+    
+    context = {
+        'result': result,
+        'doctor': doctor,
+        'lab_technician': lab_technician,
+    }
+    
+    return render(request, 'core/dashboard/patient_lab_result_detail.html', context)
+
+
+@login_required
+def download_lab_result_pdf(request, result_id):
+    """
+    Download lab result as PDF
+    
+    URL: /patient/lab-result/<result_id>/download/
+    """
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+    except PatientProfile.DoesNotExist:
+        messages.error(request, "Patient profile not found")
+        return redirect('patient_dashboard')
+    
+    result = get_object_or_404(
+        LabResult,
+        id=result_id,
+        patient=patient
+    )
+    
+    # Generate PDF using reportlab
+    from io import BytesIO
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from django.http import FileResponse
+    
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Title
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#1a1a1a'),
+        spaceAfter=10,
+        alignment=1
+    )
+    
+    elements.append(Paragraph("LAB RESULT REPORT", title_style))
+    elements.append(Spacer(1, 20))
+    
+    # Patient Info
+    patient_info = [
+        ['Patient Name:', result.patient.full_name],
+        ['Gender:', result.patient.gender or 'N/A'],
+        ['Date of Birth:', str(result.patient.dob) if result.patient.dob else 'N/A'],
+        ['Phone:', result.patient.phone or 'N/A'],
+        ['Test Date:', result.test_date.strftime('%d-%m-%Y')],
+    ]
+    
+    patient_table = Table(patient_info, colWidths=[2*inch, 4*inch])
+    patient_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f4f8')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cccccc')),
+    ]))
+    elements.append(patient_table)
+    elements.append(Spacer(1, 20))
+    
+    # Test Results
+    elements.append(Paragraph("TEST RESULTS", styles['Heading2']))
+    elements.append(Spacer(1, 10))
+    
+    result_data = [
+        ['Test Name', 'Result Value', 'Normal Range', 'Status'],
+        [
+            result.test_name,
+            result.test_value,
+            result.normal_range,
+            result.result_status
+        ]
+    ]
+    
+    result_table = Table(result_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1*inch])
+    
+    # Color code the status
+    if result.result_status == 'Normal':
+        status_color = colors.HexColor('#10b981')
+    else:
+        status_color = colors.HexColor('#f59e0b')
+    
+    result_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cccccc')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white]),
+        ('TEXTCOLOR', (3, 1), (3, 1), status_color),
+        ('FONTNAME', (3, 1), (3, 1), 'Helvetica-Bold'),
+    ]))
+    elements.append(result_table)
+    elements.append(Spacer(1, 20))
+    
+    # Remarks
+    if result.remarks:
+        elements.append(Paragraph("REMARKS", styles['Heading2']))
+        elements.append(Spacer(1, 10))
+        elements.append(Paragraph(result.remarks, styles['Normal']))
+        elements.append(Spacer(1, 20))
+    
+    # Doctor Info
+    elements.append(Paragraph("AUTHORIZED BY", styles['Heading2']))
+    elements.append(Spacer(1, 10))
+    
+    doctor_info = [
+        ['Doctor:', f"Dr. {result.doctor.user.get_full_name()}"],
+        ['Specialization:', result.doctor.specialization],
+        ['Lab Technician:', result.lab_technician.user.get_full_name()],
+    ]
+    
+    doctor_table = Table(doctor_info, colWidths=[2*inch, 4*inch])
+    doctor_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(doctor_table)
+    
+    # Build PDF
+    doc.build(elements)
+    pdf_buffer.seek(0)
+    
+    response = FileResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="lab_result_{result.id}_{datetime.now().strftime("%Y%m%d")}.pdf"'
+    return response
+
+@login_required
+def lab_booking_detail(request, booking_id):
+    """
+    View detailed information about a test booking (for lab technicians)
+    
+    URL: /lab/booking/<booking_id>/
+    Template: core/dashboard/lab_booking_detail.html
+    """
+    try:
+        lab_technician = LabTechnicianProfile.objects.get(user=request.user)
+        assigned_lab = lab_technician.lab
+    except LabTechnicianProfile.DoesNotExist:
+        messages.error(request, "Lab technician profile not found")
+        return redirect('lab_dashboard')
+
+    if not assigned_lab:
+        messages.warning(request, "No lab assigned to your profile")
+        return redirect('lab_tests')
+
+    # Get the booking
+    booking = get_object_or_404(
+        TestBooking,
+        id=booking_id,
+        lab=assigned_lab
+    )
+
+    # Get payment info if exists
+    payment = Payment.objects.filter(test_booking=booking).first()
+
+    context = {
+        'booking': booking,
+        'payment': payment,
+        'assigned_lab': assigned_lab,
+    }
+
+    return render(request, 'core/dashboard/lab_booking_detail.html', context)
+
+
+@login_required
+def frontdesk_lab_bookings(request):
+    """View and manage all lab test bookings"""
+    frontdesk = get_frontdesk_profile(request.user)
+    if not frontdesk:
+        messages.error(request, "You don't have access to this page.")
+        return redirect('login')
+
+    # ── Handle cancel POST ──────────────────────────────────────
+    if request.method == 'POST':
+        cancel_id = request.POST.get('cancel_booking_id')
+        if cancel_id:
+            try:
+                booking = TestBooking.objects.get(id=cancel_id)
+                if booking.status == 'Booked':
+                    booking.status = 'Cancelled'
+                    booking.save()
+                    messages.success(
+                        request,
+                        f"Booking #{booking.id} for {booking.patient.full_name} cancelled."
+                    )
+                else:
+                    messages.warning(request, "Only 'Booked' bookings can be cancelled.")
+            except TestBooking.DoesNotExist:
+                messages.error(request, "Booking not found.")
+        return redirect('frontdesk_lab_bookings')
+
+    # ── GET — build queryset ────────────────────────────────────
+    bookings = TestBooking.objects.all().select_related(
+        'patient', 'test', 'lab'
+    ).order_by('-created_at')
+
+    # Filters
+    status_filter = request.GET.get('status', '')
+    search        = request.GET.get('search', '')
+    lab_filter    = request.GET.get('lab', '')
+
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+    if lab_filter:
+        bookings = bookings.filter(lab__id=lab_filter)
+    if search:
+        bookings = bookings.filter(
+            Q(patient__full_name__icontains=search) |
+            Q(test__test_name__icontains=search)
+        )
+
+    labs = Lab.objects.filter(status='Active')
+
+    context = {
+        'bookings':       bookings,
+        'status_filter':  status_filter,
+        'search_query':   search,
+        'lab_filter':     lab_filter,
+        'labs':           labs,
+        'total_count':    TestBooking.objects.count(),   # unfiltered total
+    }
+    return render(request, 'core/dashboard/frontdesk_lab_bookings.html', context)

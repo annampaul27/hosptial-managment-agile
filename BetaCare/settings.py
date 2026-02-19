@@ -23,9 +23,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-240%=#))&az@lm+=7fce)cl6a46hbm3*sdeezii2c%df0s_ett'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+#DEBUG = False
 
-ALLOWED_HOSTS = ["hospital-managment-agile.vercel.app"]
+#ALLOWED_HOSTS = ["hospital-managment-agile.vercel.app"]
+
+
+import os
+
+DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
+
+if DEBUG:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+else:
+    ALLOWED_HOSTS = ['hospital-managment-agile.vercel.app']
 
 
 # Application definition
