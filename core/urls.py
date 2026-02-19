@@ -330,4 +330,29 @@ urlpatterns = [
     path('frontdesk/patients/<int:patient_id>/',       views.frontdesk_patients_detail, name='frontdesk_patients_detail'),
     path('frontdesk/patients/<int:patient_id>/edit/',  views.frontdesk_patients_edit,   name='frontdesk_patients_edit'),
     
+    
+    path('patient/lab-results/', 
+     views.patient_lab_results, 
+     name='patient_lab_results'),
+
+    path('patient/lab-result/<int:result_id>/', 
+        views.patient_lab_result_detail, 
+        name='patient_lab_result_detail'),
+
+    path('patient/lab-result/<int:result_id>/download/', 
+        views.download_lab_result_pdf, 
+        name='download_lab_result_pdf'),
+    
+    path('lab/booking/<int:booking_id>/', views.lab_booking_detail, name='lab_booking_detail'),
+    path(
+        'frontdesk/lab-bookings/',
+        views.frontdesk_lab_bookings,
+        name='frontdesk_lab_bookings',
+    ),
+    path(
+        'frontdesk/lab-test-confirmation/<int:booking_id>/',
+        views.frontdesk_lab_test_confirmation,
+        name='frontdesk_lab_test_confirmation',
+    ),
+    
 ]
