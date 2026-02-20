@@ -1,0 +1,531 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Bookings | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <style>
+        .filter-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 160px;
+        }
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .filter-input, .filter-select {
+            padding: 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #06b6d4;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+        }
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(6,182,212,0.35);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+
+        /* Stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 18px 20px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.cyan   { background: rgba(6,182,212,0.12);  color: #06b6d4; }
+        .stat-icon.green  { background: rgba(16,185,129,0.12); color: #10b981; }
+        .stat-icon.amber  { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .stat-icon.purple { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1; }
+        .stat-label { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+
+        /* Table */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .table-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.15s;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #f9fafb; }
+        td {
+            padding: 14px 16px;
+            font-size: 0.9rem;
+            color: #374151;
+            vertical-align: middle;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .badge-booked    { background: rgba(59,130,246,0.1);  color: #2563eb; }
+        .badge-completed { background: rgba(16,185,129,0.1);  color: #059669; }
+        .badge-pending   { background: rgba(245,158,11,0.1);  color: #d97706; }
+        .badge-cancelled { background: rgba(239,68,68,0.1);   color: #dc2626; }
+
+        /* Avatar */
+        .patient-cell { display: flex; align-items: center; gap: 10px; }
+        .patient-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; color: white;
+            flex-shrink: 0;
+        }
+        .patient-name  { font-weight: 600; color: #111827; font-size: 0.88rem; }
+        .patient-phone { font-size: 0.78rem; color: #9ca3af; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+        .empty-state p { font-size: 1rem; }
+
+        /* Alert */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .alert-success { background: rgba(16,185,129,0.1); border: 1px solid #10b981; color: #065f46; }
+        .alert-error   { background: rgba(239,68,68,0.1);  border: 1px solid #ef4444;  color: #991b1b; }
+        .alert-info    { background: rgba(34,211,238,0.1); border: 1px solid #22d3ee;  color: #0369a1; }
+        .alert-warning { background: rgba(245,158,11,0.1); border: 1px solid #f59e0b;  color: #92400e; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filter-bar { flex-direction: column; }
+            .filter-group { min-width: 100%; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="medical-dashboard">
+
+    <!-- ─────────── Sidebar ─────────── -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg,#f59e0b,#f97316);">Front Desk</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'frontdesk_dashboard' %}"        class="nav-item"><i class="fa-solid fa-home"></i><span>Dashboard</span></a>
+            <a href="{% url 'frontdesk_appointments' %}"     class="nav-item"><i class="fa-solid fa-calendar"></i><span>Appointments</span></a>
+            <a href="{% url 'frontdesk_book_appointment' %}" class="nav-item"><i class="fa-solid fa-plus-circle"></i><span>Book Appointment</span></a>
+            <a href="{% url 'frontdesk_book_lab_test' %}"    class="nav-item"><i class="fa-solid fa-flask"></i><span>Book Lab Test</span></a>
+            <a href="{% url 'frontdesk_lab_bookings' %}"     class="nav-item active"><i class="fa-solid fa-vials"></i><span>Lab Bookings</span></a>
+            <a href="{% url 'frontdesk_patients_list' %}"    class="nav-item"><i class="fa-solid fa-users"></i><span>Patients</span></a>
+            <a href="{% url 'frontdesk_payments' %}"         class="nav-item"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ─────────── Main Content ─────────── -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Lab Bookings</h1>
+                <p class="page-subtitle">View and manage all diagnostic test bookings</p>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <a href="{% url 'frontdesk_book_lab_test' %}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> New Lab Booking
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }}">
+                        <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>{{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- ── Stats ── -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon cyan"><i class="fa-solid fa-vials"></i></div>
+                    <div>
+                        <div class="stat-value">{{ total_count }}</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-check-circle"></i></div>
+                    <div>
+                        <div class="stat-value">{{ bookings|dictsortreversed:"status"|length }}</div>
+                        <div class="stat-label">Booked</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber"><i class="fa-solid fa-clock"></i></div>
+                    <div>
+                        <div class="stat-value">
+                            {{ bookings|length }}
+                        </div>
+                        <div class="stat-label">Showing Now</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fa-solid fa-flask"></i></div>
+                    <div>
+                        <div class="stat-value">{{ labs|length }}</div>
+                        <div class="stat-label">Active Labs</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Filter Bar ── -->
+            <form method="GET" class="filter-bar">
+                <div class="filter-group" style="flex:2;min-width:200px;">
+                    <label class="filter-label">Search</label>
+                    <input
+                        type="text"
+                        name="search"
+                        class="filter-input"
+                        placeholder="Patient name or test…"
+                        value="{{ search_query|default:'' }}"
+                    >
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <select name="status" class="filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="Booked"          {% if status_filter == 'Booked' %}selected{% endif %}>Booked</option>
+                        <option value="Pending Payment" {% if status_filter == 'Pending Payment' %}selected{% endif %}>Pending Payment</option>
+                        <option value="Completed"       {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled"       {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Lab</label>
+                    <select name="lab" class="filter-select">
+                        <option value="">All Labs</option>
+                        {% for lab in labs %}
+                            <option value="{{ lab.id }}" {% if lab_filter == lab.id|stringformat:"s" %}selected{% endif %}>
+                                {{ lab.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:flex-end;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                    <a href="{% url 'frontdesk_lab_bookings' %}" class="btn btn-secondary">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </a>
+                </div>
+            </form>
+
+            <!-- ── Table ── -->
+            <div class="table-card">
+                <div class="table-header">
+                    <span class="table-title">
+                        <i class="fa-solid fa-list" style="color:#06b6d4;margin-right:8px;"></i>
+                        Bookings
+                        <span style="font-size:0.82rem;font-weight:500;color:#9ca3af;margin-left:8px;">
+                            ({{ total_count }} total{% if status_filter or search_query or lab_filter %}, filtered{% endif %})
+                        </span>
+                    </span>
+                </div>
+
+                {% if bookings %}
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Patient</th>
+                                <th>Test</th>
+                                <th>Lab</th>
+                                <th>Booking Date</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th style="text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <!-- # -->
+                                <td style="color:#9ca3af;font-size:0.82rem;">#{{ booking.id }}</td>
+
+                                <!-- Patient -->
+                                <td>
+                                    <div class="patient-cell">
+                                        <div class="patient-avatar">
+                                            {{ booking.patient.full_name|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="patient-name">{{ booking.patient.full_name }}</div>
+                                            <div class="patient-phone">{{ booking.patient.phone }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Test -->
+                                <td>
+                                    <div style="font-weight:600;color:#111827;">{{ booking.test.test_name }}</div>
+                                    <div style="font-size:0.78rem;color:#9ca3af;">
+                                        ₹{{ booking.test.price }}
+                                        {% if booking.test.result_duration %}
+                                            &bull; {{ booking.test.result_duration }}
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <!-- Lab -->
+                                <td>
+                                    <div style="font-weight:500;">{{ booking.lab.name }}</div>
+                                    <div style="font-size:0.78rem;color:#9ca3af;">{{ booking.lab.address|truncatechars:30 }}</div>
+                                </td>
+
+                                <!-- Booking Date -->
+                                <td>
+                                    <div style="font-weight:500;">{{ booking.booking_date }}</div>
+                                    <div style="font-size:0.78rem;color:#9ca3af;">
+                                        Booked {{ booking.created_at|timesince }} ago
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td>
+                                    {% if booking.status == 'Booked' %}
+                                        <span class="badge badge-booked"><i class="fa-solid fa-circle-check"></i> Booked</span>
+                                    {% elif booking.status == 'Completed' %}
+                                        <span class="badge badge-completed"><i class="fa-solid fa-check-double"></i> Completed</span>
+                                    {% elif booking.status == 'Cancelled' %}
+                                        <span class="badge badge-cancelled"><i class="fa-solid fa-xmark"></i> Cancelled</span>
+                                    {% else %}
+                                        <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> {{ booking.status }}</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Payment -->
+                                <td>
+                                    {% with booking.payment_set.first as pay %}
+                                        {% if pay %}
+                                            {% if pay.payment_status == 'Paid' %}
+                                                <span class="badge badge-completed"><i class="fa-solid fa-check"></i> Paid</span>
+                                            {% else %}
+                                                <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> {{ pay.payment_status }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span style="color:#9ca3af;font-size:0.82rem;">—</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+
+                                <!-- Actions -->
+                                <td style="text-align:center;">
+                                    <div style="display:flex;gap:6px;justify-content:center;">
+                                        <a
+                                            href="{% url 'frontdesk_lab_test_confirmation' booking.id %}"
+                                            class="btn btn-secondary btn-sm"
+                                            title="View Details"
+                                        >
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        {% if booking.status == 'Booked' %}
+                                        <form method="POST" action="{% url 'frontdesk_lab_bookings' %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="cancel_booking_id" value="{{ booking.id }}">
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm"
+                                                style="background:rgba(239,68,68,0.1);color:#dc2626;"
+                                                title="Cancel Booking"
+                                                onclick="return confirm('Cancel this booking for {{ booking.patient.full_name }}?')"
+                                            >
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <i class="fa-solid fa-vials"></i>
+                    <p style="font-weight:600;color:#374151;font-size:1.1rem;">No lab bookings found</p>
+                    <p style="margin-top:6px;">
+                        {% if status_filter or search_query or lab_filter %}
+                            Try adjusting your filters or
+                            <a href="{% url 'frontdesk_lab_bookings' %}" style="color:#06b6d4;">clear all filters</a>.
+                        {% else %}
+                            Start by <a href="{% url 'frontdesk_book_lab_test' %}" style="color:#06b6d4;">booking a lab test</a>.
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div><!-- /table-card -->
+
+        </div><!-- /medical-content -->
+    </main>
+</div><!-- /medical-dashboard -->
+</body>
+</html>

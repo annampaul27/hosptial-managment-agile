@@ -1,0 +1,370 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}Home | BetaCare - Premium Healthcare Portal{% endblock %}
+
+{% block content %}
+
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                2500+ Doctors Online
+            </div>
+
+            <h1 class="hero-title">
+                Premium Treatments for<br>
+                <span class="gradient-text">a Healthy Lifestyle</span>
+            </h1>
+
+            <p class="hero-description">
+                Seamlessly advanced scalable architectures with future-ready growth strategies.
+                Efficiently implement low-risk, high-return processes. Delivering exceptional healthcare
+                with cutting-edge technology and compassionate care.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#departments" class="btn-primary-large">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 2L2 7L10 12L18 7L10 2Z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 12L10 17L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    View Our Hospital
+                </a>
+
+                <button class="btn-search">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                        <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <div>
+                        <span class="search-label">Search the Medical</span>
+                        <span class="search-sublabel">With more Care Option</span>
+                    </div>
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">4600+</div>
+                    <div class="stat-label">Happy Patients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">200</div>
+                    <div class="stat-label">Hospital Rooms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Awards Win</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">20+</div>
+                    <div class="stat-label">Ambulances</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-image">
+            <div class="image-wrapper">
+                <img src="{% static 'core/images/doctor-hero.png' %}" alt="Professional Healthcare" />
+                <div class="floating-card doctors-online">
+                    <div class="online-indicator"></div>
+                    <span>2500+ Doctors Online</span>
+                </div>
+            </div>
+            <div class="decoration-circle circle-1"></div>
+            <div class="decoration-circle circle-2"></div>
+            <div class="decoration-circle circle-3"></div>
+        </div>
+    </div>
+</section>
+
+<section class="search-bar-section">
+    <div class="search-container">
+        <div class="search-filters">
+            <select class="filter-select">
+                <option>Select Department</option>
+                <option>Cardiology</option>
+                <option>Neurology</option>
+                <option>Orthopedics</option>
+                <option>Pediatrics</option>
+                <option>Radiology</option>
+            </select>
+
+            <select class="filter-select">
+                <option>Select Doctor</option>
+                <option>Dr. Sarah Johnson</option>
+                <option>Dr. Michael Chen</option>
+                <option>Dr. Emily Roberts</option>
+            </select>
+
+            <select class="filter-select">
+                <option>Select Date</option>
+                <option>Today</option>
+                <option>Tomorrow</option>
+                <option>This Week</option>
+            </select>
+
+            <select class="filter-select">
+                <option>Select Location</option>
+                <option>Main Campus</option>
+                <option>North Branch</option>
+                <option>South Branch</option>
+            </select>
+
+            <button class="btn-search-submit">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                    <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                Search
+            </button>
+        </div>
+    </div>
+</section>
+
+<section id="departments" class="departments-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">Department Category</h2>
+            <p class="section-subtitle">Browse by department for tailored services and expert solutions</p>
+        </div>
+
+        <div class="departments-grid">
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path
+                            d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
+                            stroke="#4A9FD8" stroke-width="2" />
+                        <ellipse cx="32" cy="20" rx="8" ry="12" stroke="#4A9FD8" stroke-width="2" />
+                        <ellipse cx="32" cy="44" rx="8" ry="12" stroke="#4A9FD8" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Urology</h3>
+            </div>
+
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path d="M32 12C20 12 12 20 12 32C12 44 20 52 32 52C44 52 52 44 52 32" stroke="#E57373"
+                            stroke-width="2" />
+                        <path d="M28 28C28 28 28 24 32 24C36 24 36 28 36 28C36 32 32 32 32 36" stroke="#E57373"
+                            stroke-width="2" />
+                        <circle cx="32" cy="42" r="2" fill="#E57373" />
+                    </svg>
+                </div>
+                <h3>Cardiology</h3>
+            </div>
+
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path d="M20 24C20 24 24 16 32 16C40 16 44 24 44 24V44C44 44 40 52 32 52C24 52 20 44 20 44V24Z"
+                            stroke="#81C784" stroke-width="2" />
+                        <path d="M20 24H44" stroke="#81C784" stroke-width="2" />
+                        <path d="M20 36H44" stroke="#81C784" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Pulmonology</h3>
+            </div>
+
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path d="M32 12V24M32 40V52M20 32H12M44 32H52" stroke="#9575CD" stroke-width="2" />
+                        <path
+                            d="M32 28C30.3431 28 29 29.3431 29 31C29 31.7956 29.3161 32.5587 29.8787 33.1213C30.4413 33.6839 31.2044 34 32 34C33.6569 34 35 32.6569 35 31C35 29.3431 33.6569 28 32 28Z"
+                            stroke="#9575CD" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Dental Care</h3>
+            </div>
+
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="24" r="8" stroke="#64B5F6" stroke-width="2" />
+                        <path d="M24 32C20 32 16 36 16 40C16 44 20 48 24 48H40C44 48 48 44 48 40C48 36 44 32 40 32"
+                            stroke="#64B5F6" stroke-width="2" />
+                        <path d="M28 40C28 38 30 36 32 36C34 36 36 38 36 40" stroke="#64B5F6" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Neurology</h3>
+            </div>
+
+            <div class="department-card">
+                <div class="department-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="16" stroke="#4DB6AC" stroke-width="2" />
+                        <path d="M32 20V32L38 38" stroke="#4DB6AC" stroke-width="2" />
+                        <circle cx="32" cy="12" r="2" fill="#4DB6AC" />
+                        <circle cx="32" cy="52" r="2" fill="#4DB6AC" />
+                        <circle cx="52" cy="32" r="2" fill="#4DB6AC" />
+                        <circle cx="12" cy="32" r="2" fill="#4DB6AC" />
+                    </svg>
+                </div>
+                <h3>Orthopedics</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="services" class="services-section">
+    <div class="services-container">
+        <div class="services-content">
+            <h2 class="services-title">
+                World-Class Healthcare<br>
+                Services for you and your<br>
+                loved ones
+            </h2>
+
+            <a href="#" class="btn-more-services">
+                More Services
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <rect x="8" y="12" width="32" height="28" rx="2" stroke="currentColor" stroke-width="2" />
+                        <path d="M16 20H32M16 26H32M16 32H24" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                        <path d="M20 12V8M28 12V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h3>Emergency Services</h3>
+                <p>24/7 immediate response can be critical for treating time-sensitive medical conditions. Equipped by
+                    our expert trauma team and state-of-the-art facilities.</p>
+            </div>
+
+            <div class="service-card highlighted">
+                <div class="service-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <rect x="12" y="8" width="24" height="32" rx="2" stroke="currentColor" stroke-width="2" />
+                        <circle cx="24" cy="20" r="4" stroke="currentColor" stroke-width="2" />
+                        <path d="M16 32C16 28 20 26 24 26C28 26 32 28 32 32" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Radiology & Imaging</h3>
+                <p>Advanced diagnostic imaging services including X-ray, CT scan, MRI, and ultrasound providing accurate
+                    and detailed medical images.</p>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <path d="M24 8L8 16V24C8 32 16 38 24 40C32 38 40 32 40 24V16L24 8Z" stroke="currentColor"
+                            stroke-width="2" />
+                        <path d="M18 24L22 28L30 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h3>Laboratory Services</h3>
+                <p>Comprehensive lab testing for blood, urine, and other samples supporting fa-solidt and precise medical
+                    diagnoses and treatment plans.</p>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <rect x="12" y="16" width="24" height="24" rx="2" stroke="currentColor" stroke-width="2" />
+                        <path d="M20 12V16M28 12V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="20" cy="26" r="2" fill="currentColor" />
+                        <circle cx="28" cy="26" r="2" fill="currentColor" />
+                        <path d="M20 32H28" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h3>Pharmacy</h3>
+                <p>In-house medication dispensing offering prescriptions and over-the-counter drugs. Easy-to-use
+                    medications and health essentials for your health.</p>
+            </div>
+        </div>
+
+        <div class="services-doctor-image">
+            <img src="{% static 'core/images/doctor-services.png' %}" alt="Healthcare Professional" />
+            <div class="heartbeat-decoration">
+                <svg width="200" height="60" viewBox="0 0 200 60" fill="none">
+                    <path d="M0 30 L40 30 L50 10 L60 50 L70 20 L80 40 L90 30 L200 30" stroke="#4A9FD8" stroke-width="2"
+                        fill="none" />
+                </svg>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="features-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">Why Choose BetaCare</h2>
+            <p class="section-subtitle">Experience healthcare excellence with our comprehensive medical solutions</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👨‍⚕️</div>
+                <h3>Expert Doctors</h3>
+                <p>Access to board-certified physicians across 20+ specializations with years of experience in their
+                    respective fields.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔬</div>
+                <h3>Advanced Labs</h3>
+                <p>State-of-the-art laboratory facilities with the latest diagnostic equipment and rapid result
+                    turnaround times.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📂</div>
+                <h3>Digital Records</h3>
+                <p>Secure electronic health records accessible anytime, anywhere. All your medical history in one place.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Easy Appointments</h3>
+                <p>Book appointments online instantly with your preferred doctor. No waiting, no hassle, just care.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💊</div>
+                <h3>E-Prescriptions</h3>
+                <p>Digital prescriptions sent directly to our pharmacy. Track medication history and get refill
+                    reminders.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3>Transparent Billing</h3>
+                <p>Clear, itemized billing with multiple payment options. Insurance claim support and financial
+                    assistance available.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="cta-section">
+    <div class="cta-container">
+        <div class="cta-content">
+            <h2>Ready to Experience Better Healthcare?</h2>
+            <p>Join thousands of satisfied patients who trust BetaCare for their health needs</p>
+            <div class="cta-buttons">
+                <a href="{% url 'register' %}" class="btn-primary-large">Get Started Today</a>
+                <a href="{% url 'login' %}" class="btn-secondary-large">Access Patient Portal</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,1238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical History | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Medical History Specific Styles */
+        .medical-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-5);
+            margin-bottom: var(--space-8);
+        }
+
+        .medical-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .medical-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .medical-card.stat {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(167, 139, 250, 0.08));
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--medical-cyan);
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .section-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-5);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .section-header h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .section-header i {
+            font-size: 1.25rem;
+        }
+
+        .add-record-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-5);
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .add-record-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 211, 238, 0.35);
+        }
+
+        .record-item {
+            background: var(--gray-50);
+            padding: var(--space-4);
+            margin-bottom: var(--space-3);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--medical-cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: var(--transition);
+        }
+
+        .record-item:hover {
+            background: var(--gray-100);
+        }
+
+        .record-content {
+            flex: 1;
+        }
+
+        .record-title {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-1);
+            font-size: 0.95rem;
+        }
+
+        .record-meta {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-3);
+        }
+
+        .record-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .record-meta-item i {
+            font-size: 0.7rem;
+            color: var(--medical-cyan);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .badge-mild {
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--medical-cyan);
+        }
+
+        .badge-moderate {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .badge-severe {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .badge-critical {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-10);
+            color: var(--gray-500);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            color: var(--gray-300);
+            margin-bottom: var(--space-4);
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .data-table thead th {
+            padding: var(--space-4);
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table tbody td {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .delete-btn {
+            padding: 4px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal-backdrop.active {
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h4 {
+            margin: 0;
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+        }
+
+        .modal-close:hover {
+            color: var(--gray-600);
+        }
+
+        .modal-body {
+            margin-bottom: var(--space-5);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: var(--space-3);
+        }
+
+        .btn-secondary {
+            padding: var(--space-3) var(--space-5);
+            background: var(--gray-200);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-primary {
+            padding: var(--space-3) var(--space-5);
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 211, 238, 0.35);
+        }
+
+        .sidebar-nav {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+            overflow: hidden;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: var(--space-3) var(--space-4);
+            color: var(--gray-600);
+            text-decoration: none;
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav a:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--gray-50);
+            color: var(--medical-cyan);
+            padding-left: calc(var(--space-4) + 4px);
+        }
+
+        .sidebar-nav a i {
+            margin-right: var(--space-2);
+            width: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .medical-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .add-record-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .record-item {
+                flex-direction: column;
+            }
+
+            .badge {
+                margin-left: 0;
+                margin-top: var(--space-2);
+            }
+
+            .modal {
+                width: 95%;
+            }
+
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="{% url 'medical_history' %}" class="nav-item active">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical History</span>
+                </a>
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title"><i class="fa-solid fa-notes-medical" style="margin-right: var(--space-3); color: var(--medical-cyan);"></i>Medical History</h1>
+                    <p class="page-subtitle">View and manage your complete medical records</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'download_medical_history' %}" class="add-btn" style="text-decoration: none;">
+                        <i class="fa-solid fa-download"></i> Download PDF
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="padding: var(--space-4); background: {% if message.tags == 'success' %}rgba(16, 185, 129, 0.1){% elif message.tags == 'error' %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}#10b981{% elif message.tags == 'error' %}#ef4444{% else %}#f59e0b{% endif %}; border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+                            <p style="margin: 0; color: {% if message.tags == 'success' %}#10b981{% elif message.tags == 'error' %}#ef4444{% else %}#f59e0b{% endif %}; font-weight: 500;">{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Statistics Grid -->
+                <div class="medical-grid">
+                    <div class="medical-card stat">
+                        <div class="stat-number">{{ allergies.count }}</div>
+                        <div class="stat-label">Allergies</div>
+                    </div>
+                    <div class="medical-card stat" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.08), rgba(68, 160, 141, 0.08)); border: 1px solid rgba(78, 205, 196, 0.2);">
+                        <div class="stat-number" style="color: #4ecdc4;">{{ medications.count }}</div>
+                        <div class="stat-label">Medications</div>
+                    </div>
+                    <div class="medical-card stat" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.08), rgba(245, 87, 108, 0.08)); border: 1px solid rgba(240, 147, 251, 0.2);">
+                        <div class="stat-number" style="color: #f093fb;">{{ conditions.count }}</div>
+                        <div class="stat-label">Conditions</div>
+                    </div>
+                    <div class="medical-card stat" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(96, 165, 250, 0.08)); border: 1px solid rgba(139, 92, 246, 0.2);">
+                        <div class="stat-number" style="color: #8b5cf6;">{{ surgeries.count }}</div>
+                        <div class="stat-label">Surgeries</div>
+                    </div>
+                </div>
+
+                <!-- Quick Navigation -->
+                <div style="margin-bottom: var(--space-6);">
+                    <div class="sidebar-nav">
+                        <a href="#allergies"><i class="fa-solid fa-exclamation-triangle"></i> Allergies</a>
+                        <a href="#medications"><i class="fa-solid fa-capsule"></i> Medications</a>
+                        <a href="#conditions"><i class="fa-solid fa-heart-pulse"></i> Conditions</a>
+                        <a href="#surgeries"><i class="fa-solid fa-hospital"></i> Surgeries</a>
+                        <a href="#family"><i class="fa-solid fa-people"></i> Family History</a>
+                        <a href="#immunizations"><i class="fa-solid fa-shield-check"></i> Immunizations</a>
+                        <a href="#vitals"><i class="fa-solid fa-heartbeat"></i> Vital Signs</a>
+                    </div>
+                </div>
+
+                <!-- Allergies Section -->
+                <div class="section-card" id="allergies">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-exclamation-triangle" style="color: #ef4444;"></i>Allergies</h3>
+                        <button class="add-record-btn" onclick="openModal('allergyModal')">
+                            <i class="fa-solid fa-plus"></i> Add Allergy
+                        </button>
+                    </div>
+                    {% if allergies %}
+                        {% for allergy in allergies %}
+                            <div class="record-item">
+                                <div class="record-content">
+                                    <div class="record-title">{{ allergy.name }}</div>
+                                    <div class="record-meta">
+                                        <div class="record-meta-item">
+                                            <i class="fa-solid fa-level-up-alt"></i> Severity
+                                        </div>
+                                        <span class="badge badge-{% if allergy.severity == 'Critical' %}critical{% elif allergy.severity == 'Severe' %}severe{% elif allergy.severity == 'Moderate' %}moderate{% else %}mild{% endif %}">
+                                            {{ allergy.severity }}
+                                        </span>
+                                    </div>
+                                    {% if allergy.reaction %}
+                                        <div class="record-meta" style="margin-top: var(--space-2);">
+                                            <div class="record-meta-item">Reaction: {{ allergy.reaction|truncatewords:10 }}</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'delete_allergy' allergy.id %}" class="delete-btn" onclick="return confirm('Delete this allergy?')">
+                                    <i class="fa-solid fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No allergies recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Medications Section -->
+                <div class="section-card" id="medications">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-capsule" style="color: #4ecdc4;"></i>Current Medications</h3>
+                        <button class="add-record-btn" onclick="openModal('medicationModal')">
+                            <i class="fa-solid fa-plus"></i> Add Medication
+                        </button>
+                    </div>
+                    {% if medications %}
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Medication Name</th>
+                                        <th>Dosage</th>
+                                        <th>Frequency</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for med in medications %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ med.name }}</strong>
+                                                {% if not med.is_active %}<span class="badge badge-moderate" style="margin-left: var(--space-2);">Inactive</span>{% endif %}
+                                            </td>
+                                            <td>{{ med.dosage }}</td>
+                                            <td>{{ med.frequency }}</td>
+                                            <td>
+                                                <a href="{% url 'delete_medication' med.id %}" class="delete-btn" onclick="return confirm('Delete this medication?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No medications recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Medical Conditions Section -->
+                <div class="section-card" id="conditions">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-heart-pulse" style="color: #ef4444;"></i>Medical Conditions</h3>
+                        <button class="add-record-btn" onclick="openModal('conditionModal')">
+                            <i class="fa-solid fa-plus"></i> Add Condition
+                        </button>
+                    </div>
+                    {% if conditions %}
+                        {% for condition in conditions %}
+                            <div class="record-item">
+                                <div class="record-content">
+                                    <div class="record-title">{{ condition.name }}</div>
+                                    <div class="record-meta">
+                                        <div class="record-meta-item">
+                                            <i class="fa-solid fa-calendar"></i> Diagnosed: {{ condition.diagnosis_date|date:"M d, Y" }}
+                                        </div>
+                                        {% if condition.status != 'Active' %}
+                                            <span class="badge badge-moderate" style="margin-left: 0;">{{ condition.status }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if condition.description %}
+                                        <div class="record-meta" style="margin-top: var(--space-2); color: var(--gray-700);">
+                                            {{ condition.description|truncatewords:15 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No medical conditions recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Surgeries Section -->
+                <div class="section-card" id="surgeries">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-hospital" style="color: #60a5fa;"></i>Surgeries & Procedures</h3>
+                        <button class="add-record-btn" onclick="openModal('surgeryModal')">
+                            <i class="fa-solid fa-plus"></i> Add Surgery
+                        </button>
+                    </div>
+                    {% if surgeries %}
+                        {% for surgery in surgeries %}
+                            <div class="record-item">
+                                <div class="record-content">
+                                    <div class="record-title">{{ surgery.name }}</div>
+                                    <div class="record-meta">
+                                        <div class="record-meta-item">
+                                            <i class="fa-solid fa-calendar"></i> {{ surgery.date|date:"M d, Y" }}
+                                        </div>
+                                        {% if surgery.hospital %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-hospital"></i> {{ surgery.hospital }}
+                                            </div>
+                                        {% endif %}
+                                        {% if surgery.surgeon %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-user-doctor"></i> Dr. {{ surgery.surgeon }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if surgery.notes %}
+                                        <div class="record-meta" style="margin-top: var(--space-2); color: var(--gray-700);">
+                                            {{ surgery.notes|truncatewords:15 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No surgeries recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Family History Section -->
+                <div class="section-card" id="family">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-people" style="color: #8b5cf6;"></i>Family History</h3>
+                        <button class="add-record-btn" onclick="openModal('familyModal')">
+                            <i class="fa-solid fa-plus"></i> Add Family History
+                        </button>
+                    </div>
+                    {% if family_history %}
+                        {% for item in family_history %}
+                            <div class="record-item">
+                                <div class="record-content">
+                                    <div class="record-title">{{ item.relation }} - {{ item.condition }}</div>
+                                    <div class="record-meta">
+                                        {% if item.age_of_onset %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-hourglass-start"></i> Age of onset: {{ item.age_of_onset }} years
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if item.notes %}
+                                        <div class="record-meta" style="margin-top: var(--space-2); color: var(--gray-700);">
+                                            {{ item.notes|truncatewords:15 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No family history recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Immunizations Section -->
+                <div class="section-card" id="immunizations">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-shield-check" style="color: #10b981;"></i>Immunizations</h3>
+                        <button class="add-record-btn" onclick="openModal('immunizationModal')">
+                            <i class="fa-solid fa-plus"></i> Add Immunization
+                        </button>
+                    </div>
+                    {% if immunizations %}
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vaccine</th>
+                                        <th>Date</th>
+                                        <th>Next Due</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for vaccine in immunizations %}
+                                        <tr>
+                                            <td><strong>{{ vaccine.name }}</strong></td>
+                                            <td>{{ vaccine.date|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if vaccine.next_due %}
+                                                    {% if vaccine.is_overdue %}
+                                                        <span class="badge badge-critical">Overdue: {{ vaccine.next_due|date:"M d, Y" }}</span>
+                                                    {% else %}
+                                                        {{ vaccine.next_due|date:"M d, Y" }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No immunizations recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Vital Signs Section -->
+                <div class="section-card" id="vitals">
+                    <div class="section-header">
+                        <h3><i class="fa-solid fa-heartbeat" style="color: #f59e0b;"></i>Vital Signs</h3>
+                        <button class="add-record-btn" onclick="openModal('vitalsModal')">
+                            <i class="fa-solid fa-plus"></i> Record Vital Signs
+                        </button>
+                    </div>
+                    {% if vital_signs %}
+                        {% for vital in vital_signs %}
+                            <div class="record-item">
+                                <div class="record-content">
+                                    <div class="record-title">{{ vital.date }} at {{ vital.time }}</div>
+                                    <div class="record-meta">
+                                        {% if vital.blood_pressure %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-heart"></i> BP: {{ vital.blood_pressure }} mmHg
+                                            </div>
+                                        {% endif %}
+                                        {% if vital.heart_rate %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-pulse"></i> HR: {{ vital.heart_rate }} bpm
+                                            </div>
+                                        {% endif %}
+                                        {% if vital.temperature %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-thermometer"></i> Temp: {{ vital.temperature }}°C
+                                            </div>
+                                        {% endif %}
+                                        {% if vital.weight %}
+                                            <div class="record-meta-item">
+                                                <i class="fa-solid fa-weight"></i> {{ vital.weight }} kg
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No vital signs recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Allergy Modal -->
+    <div class="modal-backdrop" id="allergyBackdrop" onclick="closeModal('allergyModal')"></div>
+    <div class="modal" id="allergyModal">
+        <div class="modal-header">
+            <h4>Add Allergy</h4>
+            <button class="modal-close" onclick="closeModal('allergyModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_allergy' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Allergy Name *</label>
+                    <input type="text" name="name" placeholder="e.g., Penicillin" required>
+                </div>
+                <div class="form-group">
+                    <label>Severity *</label>
+                    <select name="severity" required>
+                        <option value="">Select Severity</option>
+                        <option value="Mild">Mild</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Severe">Severe</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reaction Description</label>
+                    <textarea name="reaction" placeholder="Describe the allergic reaction..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('allergyModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Allergy</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Medication Modal -->
+    <div class="modal-backdrop" id="medicationBackdrop" onclick="closeModal('medicationModal')"></div>
+    <div class="modal" id="medicationModal">
+        <div class="modal-header">
+            <h4>Add Medication</h4>
+            <button class="modal-close" onclick="closeModal('medicationModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_medication' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Medication Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Dosage *</label>
+                    <input type="text" name="dosage" placeholder="e.g., 500mg" required>
+                </div>
+                <div class="form-group">
+                    <label>Frequency *</label>
+                    <input type="text" name="frequency" placeholder="e.g., Twice daily" required>
+                </div>
+                <div class="form-group">
+                    <label>Start Date *</label>
+                    <input type="date" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date (Optional)</label>
+                    <input type="date" name="end_date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('medicationModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Medication</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Condition Modal -->
+    <div class="modal-backdrop" id="conditionBackdrop" onclick="closeModal('conditionModal')"></div>
+    <div class="modal" id="conditionModal">
+        <div class="modal-header">
+            <h4>Add Medical Condition</h4>
+            <button class="modal-close" onclick="closeModal('conditionModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_condition' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Condition Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Diagnosis Date *</label>
+                    <input type="date" name="diagnosis_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('conditionModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Condition</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Surgery Modal -->
+    <div class="modal-backdrop" id="surgeryBackdrop" onclick="closeModal('surgeryModal')"></div>
+    <div class="modal" id="surgeryModal">
+        <div class="modal-header">
+            <h4>Add Surgery/Procedure</h4>
+            <button class="modal-close" onclick="closeModal('surgeryModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_surgery' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Surgery Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Hospital/Clinic</label>
+                    <input type="text" name="hospital">
+                </div>
+                <div class="form-group">
+                    <label>Surgeon Name</label>
+                    <input type="text" name="surgeon">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('surgeryModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Surgery</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Family History Modal -->
+    <div class="modal-backdrop" id="familyBackdrop" onclick="closeModal('familyModal')"></div>
+    <div class="modal" id="familyModal">
+        <div class="modal-header">
+            <h4>Add Family History</h4>
+            <button class="modal-close" onclick="closeModal('familyModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_family_history' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Relation *</label>
+                    <select name="relation" required>
+                        <option value="">Select Relation</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Aunt">Aunt</option>
+                        <option value="Uncle">Uncle</option>
+                        <option value="Cousin">Cousin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Condition *</label>
+                    <input type="text" name="condition" required>
+                </div>
+                <div class="form-group">
+                    <label>Age of Onset</label>
+                    <input type="number" name="age_of_onset" min="1" max="120">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('familyModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Family History</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Immunization Modal -->
+    <div class="modal-backdrop" id="immunizationBackdrop" onclick="closeModal('immunizationModal')"></div>
+    <div class="modal" id="immunizationModal">
+        <div class="modal-header">
+            <h4>Add Immunization</h4>
+            <button class="modal-close" onclick="closeModal('immunizationModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_immunization' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Vaccine Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Next Due Date</label>
+                    <input type="date" name="next_due">
+                </div>
+                <div class="form-group">
+                    <label>Vaccine Batch</label>
+                    <input type="text" name="vaccine_batch">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('immunizationModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Immunization</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Vital Signs Modal -->
+    <div class="modal-backdrop" id="vitalsBackdrop" onclick="closeModal('vitalsModal')"></div>
+    <div class="modal" id="vitalsModal">
+        <div class="modal-header">
+            <h4>Record Vital Signs</h4>
+            <button class="modal-close" onclick="closeModal('vitalsModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'add_vital_signs' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" name="time">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                    <div class="form-group">
+                        <label>BP Systolic (mmHg)</label>
+                        <input type="number" name="blood_pressure_systolic">
+                    </div>
+                    <div class="form-group">
+                        <label>BP Diastolic (mmHg)</label>
+                        <input type="number" name="blood_pressure_diastolic">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Heart Rate (BPM)</label>
+                    <input type="number" name="heart_rate">
+                </div>
+                <div class="form-group">
+                    <label>Temperature (°C)</label>
+                    <input type="number" step="0.1" name="temperature">
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" step="0.1" name="weight">
+                </div>
+                <div class="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" name="height">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('vitalsModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Record Vital Signs</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const backdrop = document.getElementById(modalId.replace('Modal', 'Backdrop'));
+            if (modal) modal.classList.add('active');
+            if (backdrop) backdrop.classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const backdrop = document.getElementById(modalId.replace('Modal', 'Backdrop'));
+            if (modal) modal.classList.remove('active');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.addEventListener('click', function() {
+                const modalId = this.id.replace('Backdrop', 'Modal');
+                closeModal(modalId);
+            });
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,533 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Front Desk Staff | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Form Styling */
+        .form-container {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .form-header h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .form-header h2 i {
+            color: var(--medical-cyan);
+            font-size: 1.5rem;
+        }
+
+        .form-header p {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .form-group label i {
+            color: var(--gray-400);
+            font-size: 0.85rem;
+        }
+
+        .required {
+            color: var(--error-red);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--gray-800);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+        }
+
+        /* Section Headers */
+        .form-section {
+            margin-bottom: var(--space-6);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .section-header h3 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(96, 165, 250, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--medical-cyan);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(96, 165, 250, 0.08));
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+        }
+
+        .info-box-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .info-box-header i {
+            color: var(--medical-cyan);
+        }
+
+        .info-box-header span {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        .info-box-value {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            color: var(--gray-800);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: var(--space-4);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn-cancel {
+            padding: var(--space-3) var(--space-6);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-cancel:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-submit {
+            padding: var(--space-3) var(--space-6);
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-blue));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 211, 238, 0.4);
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: var(--space-4) var(--space-5);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: 0.9rem;
+        }
+
+        .alert i {
+            font-size: 1.1rem;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                padding: var(--space-6);
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn-cancel,
+            .btn-submit {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' or request.resolver_match.url_name == 'admin_add_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Edit Front Desk Staff</h1>
+                    <p class="page-subtitle">Update staff information and account status</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Form Container -->
+                <div class="form-container">
+
+                    <!-- Form Header -->
+                    <div class="form-header">
+                        <h2>
+                            <i class="fa-solid fa-user-tie"></i>
+                            Edit Staff Member
+                        </h2>
+                        <p>Update the details for this front desk staff member</p>
+                    </div>
+
+                    <!-- Error Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {% if message.tags == 'error' %}
+                                    <i class="fa-solid fa-exclamation-circle"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="fa-solid fa-check-circle"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <!-- Account Information Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <h3>Account Information</h3>
+                            </div>
+
+                            <div class="form-grid">
+                                <!-- Username -->
+                                <div class="form-group">
+                                    <label>
+                                        <i class="fa-solid fa-at"></i>
+                                        Username <span class="required">*</span>
+                                    </label>
+                                    <input type="text" name="username" value="{{ profile.user.username }}" required>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="form-group">
+                                    <label>
+                                        <i class="fa-solid fa-envelope"></i>
+                                        Email Address <span class="required">*</span>
+                                    </label>
+                                    <input type="email" name="email" value="{{ profile.user.email }}" required>
+                                </div>
+
+                                <!-- Phone -->
+                                <div class="form-group">
+                                    <label>
+                                        <i class="fa-solid fa-phone"></i>
+                                        Phone Number <span class="required">*</span>
+                                    </label>
+                                    <input type="text" name="phone" value="{{ profile.phone }}" required>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="form-group">
+                                    <label>
+                                        <i class="fa-solid fa-toggle-on"></i>
+                                        Status <span class="required">*</span>
+                                    </label>
+                                    <select name="status" required>
+                                        <option value="Active" {% if profile.status == 'Active' %}selected{% endif %}>Active</option>
+                                        <option value="Inactive" {% if profile.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff ID Display -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <h3>Staff Information</h3>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <div class="info-box">
+                                        <div class="info-box-header">
+                                            <i class="fa-solid fa-hashtag"></i>
+                                            <span>Staff ID</span>
+                                        </div>
+                                        <div class="info-box-value">FD{{ profile.id }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <a href="{% url 'admin_frontdesk' %}" class="btn-cancel">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn-submit">
+                                <i class="fa-solid fa-check"></i>
+                                Update Staff
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

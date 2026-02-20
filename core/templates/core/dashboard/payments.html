@@ -1,0 +1,482 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .tab-nav {
+            display: flex;
+            gap: var(--space-2);
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+        }
+
+        .tab-btn {
+            padding: var(--space-3) var(--space-5);
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: var(--gray-800);
+        }
+
+        .tab-btn.active {
+            color: var(--medical-cyan);
+            border-bottom-color: var(--medical-cyan);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .payment-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px 120px 150px 120px;
+            align-items: center;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .payment-row:hover {
+            background: var(--gray-50);
+        }
+
+        .payment-row:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1024px) {
+            .payment-row {
+                grid-template-columns: 1fr;
+                gap: var(--space-3);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <span>Lab Results</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                
+                <a href="{% url 'payments' %}" class="nav-item active">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">Payments</h1>
+                    <p class="page-subtitle">Manage your medical bills and payment history</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        {% if pending_count > 0 %}
+                        <span class="notification-badge">{{ pending_count }}</span>
+                        {% endif %}
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Display Messages -->
+                {% if messages %}
+                <div style="margin-bottom: var(--space-6);">
+                    {% for message in messages %}
+                    <div style="padding: var(--space-4); background: {% if message.tags == 'success' %}rgba(16, 185, 129, 0.1){% elif message.tags == 'error' %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; border-radius: var(--radius-md); margin-bottom: var(--space-3);">
+                        <p style="color: {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; font-weight: 500;">
+                            {{ message }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <!-- Total Pending -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending Payments</p>
+                            <h3 class="stat-value">₹{{ total_pending }}</h3>
+                            <p class="stat-change" style="color: var(--warning-yellow);">
+                                <i class="fa-solid fa-exclamation-circle"></i>
+                                <span>{{ pending_count }} unpaid bill{{ pending_count|pluralize }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Total Paid -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Paid to Date</p>
+                            <h3 class="stat-value">₹{{ total_paid }}</h3>
+                            <p class="stat-change positive">
+                                <i class="fa-solid fa-check"></i>
+                                <span>{{ paid_count }} completed</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Total Transactions -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Transactions</p>
+                            <h3 class="stat-value">{{ all_payments.count }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-list"></i>
+                                <span>All time</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Table with Tabs -->
+                <div class="medical-table-card">
+                    <!-- Tab Navigation -->
+                    <div class="tab-nav">
+                        <button class="tab-btn active" onclick="switchTab('all')">
+                            <i class="fa-solid fa-list"></i> All Payments ({{ all_payments.count }})
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('pending')">
+                            <i class="fa-solid fa-clock"></i> Pending ({{ pending_count }})
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('paid')">
+                            <i class="fa-solid fa-check-circle"></i> Paid ({{ paid_count }})
+                        </button>
+                    </div>
+
+                    <!-- All Payments Tab -->
+                    <div id="tab-all" class="tab-content active">
+                        {% if all_payments %}
+                        <div>
+                            <!-- Header Row -->
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.85rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Doctor / Date</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Payment Method</div>
+                                <div>Action</div>
+                            </div>
+
+                            <!-- Payment Rows -->
+                            {% for payment in all_payments %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                        <td>
+                                        {% if payment.appointment %}
+                                            <div>
+                                                <strong>
+                                                    Dr. {{ payment.appointment.doctor.user.get_full_name }}
+                                                </strong>
+                                            </div>
+                                            <div style="font-size: 0.85rem; color: #666;">
+                                                <i class="fa-solid fa-calendar"></i>
+                                                {{ payment.appointment.appointment_date|date:"d M Y" }}
+                                            </div>
+
+                                        {% elif payment.test_booking %}
+                                            <div>
+                                                <strong>
+                                                    {{ payment.test_booking.lab.name }}
+                                                </strong>
+                                            </div>
+                                            <div style="font-size: 0.85rem; color: #666;">
+                                                <i class="fa-solid fa-calendar"></i>
+                                                {{ payment.test_booking.booking_date|date:"d M Y" }}
+                                            </div>
+                                        {% else %}
+                                            <span style="color:red;">No linked record</span>
+                                        {% endif %}
+                                    </td>
+                                </div>
+
+                                <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--gray-900);">
+                                    ₹{{ payment.amount }}
+                                </div>
+                                <div>
+                                    <span class="status-badge {% if payment.payment_status == 'Paid' %}status-active{% elif payment.payment_status == 'Pending' %}status-pending{% else %}status-inactive{% endif %}">
+                                        <i class="fa-solid fa-circle"></i>
+                                        {{ payment.payment_status }}
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-600);">
+                                    {% if payment.payment_method %}
+                                        <i class="fa-solid fa-{% if payment.payment_method == 'UPI' %}mobile-alt{% elif payment.payment_method == 'Card' %}credit-card{% elif payment.payment_method == 'Cash' %}money-bill{% else %}building-columns{% endif %}" style="margin-right:4px;"></i>
+                                        {{ payment.payment_method }}
+                                    {% else %}
+                                        <span style="color:var(--gray-400);">Not selected</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {% if payment.payment_status == 'Pending' %}
+                                    <a href="{% url 'process_payment' payment.id %}" class="add-btn-small" style="text-decoration:none;">
+                                        <i class="fa-solid fa-credit-card"></i> Pay Now
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'payment_detail' payment.id %}" class="action-btn view-btn" title="View Receipt">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-12);">
+                            <i class="fa-solid fa-receipt" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                            <p style="color:var(--gray-500); font-size:1.1rem;">No payments found</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pending Payments Tab -->
+                    <div id="tab-pending" class="tab-content">
+                        {% if pending_payments %}
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.85rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Doctor / Date</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Payment Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in pending_payments %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:4px;">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                                    <p style="font-size:0.82rem; color:var(--gray-600);">
+                                        <i class="fa-solid fa-calendar" style="margin-right:4px;"></i>
+                                        {{ payment.payment_date|date:"d M Y" }}
+                                    </p>
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--warning-yellow);">
+                                    ₹{{ payment.amount }}
+                                </div>
+                                <div>
+                                    <span class="status-badge status-pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Pending
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-400);">Not selected</div>
+                                <div>
+                                    <a href="{% url 'process_payment' payment.id %}" class="add-btn-small" style="text-decoration:none;">
+                                        <i class="fa-solid fa-credit-card"></i> Pay Now
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-12);">
+                            <i class="fa-solid fa-check-circle" style="font-size:4rem; color:var(--status-active); margin-bottom:var(--space-4);"></i>
+                            <p style="color:var(--gray-500); font-size:1.1rem;">No pending payments!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Paid Payments Tab -->
+                    <div id="tab-paid" class="tab-content">
+                        {% if paid_payments %}
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.85rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Doctor / Date</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Payment Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in paid_payments %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:4px;">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                                    <p style="font-size:0.82rem; color:var(--gray-600);">
+                                        <i class="fa-solid fa-calendar" style="margin-right:4px;"></i>
+                                        {{ payment.payment_date|date:"d M Y" }}
+                                    </p>
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--status-active);">
+                                    ₹{{ payment.amount }}
+                                </div>
+                                <div>
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Paid
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-600);">
+                                    <i class="fa-solid fa-{% if payment.payment_method == 'UPI' %}mobile-alt{% elif payment.payment_method == 'Card' %}credit-card{% elif payment.payment_method == 'Cash' %}money-bill{% else %}building-columns{% endif %}" style="margin-right:4px;"></i>
+                                    {{ payment.payment_method }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'payment_detail' payment.id %}" class="action-btn view-btn" title="View Receipt">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-12);">
+                            <i class="fa-solid fa-receipt" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                            <p style="color:var(--gray-500); font-size:1.1rem;">No completed payments yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript for Tabs -->
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>

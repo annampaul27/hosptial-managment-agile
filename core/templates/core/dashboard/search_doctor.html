@@ -1,0 +1,215 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Doctors | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <span>Lab Results</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search doctors...">
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'book_appointment' %}" class="add-btn" style="text-decoration:none;">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Book Appointment</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Filter -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Search Doctors</h1>
+                        <p class="page-subtitle">Find specialists by area of expertise</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <!-- Specialization Filter -->
+                        <form method="get" class="inline-search-form">
+                            <div class="inline-search-box">
+                                <i class="fa-solid fa-filter"></i>
+                                <select name="specialization" class="form-input" onchange="this.form.submit()" style="padding-left:2.5rem; appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%2364748b\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center;">
+                                    <option value="">All Specializations</option>
+                                    {% for spec in specializations %}
+                                    <option value="{{ spec }}" {% if spec == selected_specialization %}selected{% endif %}>{{ spec }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Doctors Grid -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(350px, 1fr)); gap:var(--space-6);">
+                    {% for doctor in doctors %}
+                    <div class="medical-table-card">
+                        <div style="display:flex; align-items:start; gap:var(--space-4); margin-bottom:var(--space-4);">
+                            <div class="patient-avatar" style="width:64px; height:64px; background:linear-gradient(135deg, #60a5fa, #8b5cf6);">
+                                <i class="fa-solid fa-user-doctor" style="font-size:1.5rem;"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <h3 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:600; color:var(--gray-900); margin-bottom:4px;">
+                                    Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                                </h3>
+                                <p style="font-size:0.85rem; color:var(--text-medium); margin-bottom:8px;">
+                                    <i class="fa-solid fa-stethoscope" style="color:var(--medical-purple); margin-right:4px;"></i>
+                                    {{ doctor.specialization }}
+                                </p>
+                                <p style="font-size:0.82rem; color:var(--gray-600);">
+                                    <i class="fa-solid fa-hospital" style="color:var(--medical-cyan); margin-right:4px;"></i>
+                                    {{ doctor.department }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:var(--space-4);">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); margin-bottom:var(--space-3);">
+                                <div>
+                                    <p style="font-size:0.75rem; color:var(--text-medium); margin-bottom:4px;">Experience</p>
+                                    <p style="font-weight:600; color:var(--gray-800);">
+                                        <i class="fa-solid fa-medal" style="color:var(--warning-yellow); margin-right:4px;"></i>
+                                        {{ doctor.experience }} years
+                                    </p>
+                                </div>
+                                <div>
+                                    <p style="font-size:0.75rem; color:var(--text-medium); margin-bottom:4px;">Consultation Fee</p>
+                                    <p style="font-weight:600; color:var(--medical-green);">
+                                        <i class="fa-solid fa-indian-rupee-sign" style="margin-right:4px;"></i>
+                                        ₹{{ doctor.consultation_fee }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% if doctor.bio %}
+                            <p style="font-size:0.82rem; color:var(--gray-600); line-height:1.5; border-top:1px solid var(--gray-200); padding-top:var(--space-3);">
+                                {{ doctor.bio|truncatewords:20 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <a href="{% url 'book_appointment' %}" class="add-btn" style="text-decoration:none; width:100%; justify-content:center;">
+                            <i class="fa-solid fa-calendar-plus"></i> Book Appointment
+                        </a>
+                    </div>
+                    {% empty %}
+                    <div style="grid-column:1/-1; text-align:center; padding:var(--space-12);">
+                        <i class="fa-solid fa-user-slash" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                        <p style="font-size:1.1rem; color:var(--gray-500);">No doctors found</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

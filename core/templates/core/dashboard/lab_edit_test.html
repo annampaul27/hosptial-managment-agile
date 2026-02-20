@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Test | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+<style>
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input[readonly] {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Checkbox Container */
+        .checkbox-group {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 2rem;
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        /* Action Buttons Container */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* Required Field Indicator */
+        .required {
+            color: #ef4444;
+        }
+
+        /* Grid Layout for Two Columns */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="medical-dashboard">
+
+    {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+    <main class="medical-main">
+
+        <!-- HEADER -->
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Edit Test</h1>
+                <p class="page-subtitle">Update test details and pricing</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'lab_prices' %}"
+                   style="padding:0.75rem 1.5rem; background:var(--gray-100); color:var(--gray-700);
+                          border-radius:var(--radius-md); text-decoration:none; font-weight:600;">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Prices
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <div class="medical-table-card" style="max-width:900px; margin:0 auto;">
+
+                <div style="margin-bottom:var(--space-6);">
+                    <h3>
+                        <i class="fa-solid fa-flask" style="color:var(--medical-blue); margin-right:8px;"></i>
+                        Test Information
+                    </h3>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- NAME & CODE -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-vial" style="color:var(--medical-cyan); margin-right:6px;"></i>
+                                Test Name *
+                            </label>
+                            <input type="text" name="test_name" value="{{ test.test_name }}" required>
+                        </div>
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-tag" style="color:var(--medical-purple); margin-right:6px;"></i>
+                                Test Code
+                            </label>
+                            <input type="text" value="{{ test.test_code }}" readonly
+                                   style="background:#f3f4f6; cursor:not-allowed;">
+                        </div>
+                    </div>
+
+                    <!-- CATEGORY & PRICE -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-list" style="color:var(--medical-blue); margin-right:6px;"></i>
+                                Category
+                            </label>
+                            <select name="category">
+                                {% for key, value in test.CATEGORY_CHOICES %}
+                                <option value="{{ key }}" {% if test.category == key %}selected{% endif %}>
+                                    {{ value }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-indian-rupee-sign" style="color:var(--medical-green); margin-right:6px;"></i>
+                                Price (₹) *
+                            </label>
+                            <input type="number" name="price" value="{{ test.price }}" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <!-- DURATION & SAMPLE -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-clock" style="color:var(--medical-cyan); margin-right:6px;"></i>
+                                Result Duration
+                            </label>
+                            <input type="text" name="result_duration" value="{{ test.result_duration }}">
+                        </div>
+
+                        <div>
+                            <label>
+                                <i class="fa-solid fa-droplet" style="color:var(--medical-purple); margin-right:6px;"></i>
+                                Sample Type
+                            </label>
+                            <select name="sample_type">
+                                {% for key, value in test.SAMPLE_TYPE_CHOICES %}
+                                <option value="{{ key }}" {% if test.sample_type == key %}selected{% endif %}>
+                                    {{ value }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div style="margin-bottom:var(--space-5);">
+                        <label>
+                            <i class="fa-solid fa-align-left" style="color:var(--medical-blue); margin-right:6px;"></i>
+                            Description
+                        </label>
+                        <textarea name="description" rows="4">{{ test.description }}</textarea>
+                    </div>
+
+                    <!-- PREPARATION -->
+                    <div style="margin-bottom:var(--space-6);">
+                        <label>
+                            <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); margin-right:6px;"></i>
+                            Preparation Instructions
+                        </label>
+                        <textarea name="preparation_instructions" rows="3">{{ test.preparation_instructions }}</textarea>
+                    </div>
+
+                    <!-- CHECKBOXES -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-6);">
+
+                        <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);">
+                            <label style="display:flex; gap:var(--space-3); cursor:pointer;">
+                                <input type="checkbox" name="is_active" {% if test.is_active %}checked{% endif %}>
+                                <div>
+                                    <p style="font-weight:600;">Active Status</p>
+                                    <p style="font-size:0.85rem; color:var(--gray-500);">Available for booking</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);">
+                            <label style="display:flex; gap:var(--space-3); cursor:pointer;">
+                                <input type="checkbox" name="home_collection" {% if test.home_collection %}checked{% endif %}>
+                                <div>
+                                    <p style="font-weight:600;">Home Collection</p>
+                                    <p style="font-size:0.85rem; color:var(--gray-500);">Sample collected at home</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div style="display:flex; justify-content:flex-end; gap:var(--space-3); padding-top:var(--space-5); border-top:2px solid var(--gray-200);">
+                        <a href="{% url 'lab_prices' %}" class="btn-secondary">
+                            <i class="fa-solid fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-save"></i> Update Test
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

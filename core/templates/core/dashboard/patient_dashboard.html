@@ -1,0 +1,405 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}"
+                    class="nav-item active">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Book Appointment</span>
+                </a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>My Appointments</span>
+                </a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Diagnostic Tests</span>
+                </a>
+                <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <span>Lab Results</span>
+                </a>
+                <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                    <i class="fa-solid fa-prescription"></i>
+                    <span>Prescriptions</span>
+                </a>
+                
+                <a href="{% url 'payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Welcome Back, {{ request.user.first_name|default:"Patient" }}!</h1>
+                    <p class="page-subtitle">Here's what's happening with your health today</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <a href="{% url 'patient_book_appointment' %}" class="add-btn" style="text-decoration:none;">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Book Appointment</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <!-- Upcoming Appointments -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Upcoming Appointments</p>
+                            <h3 class="stat-value">{{ upcoming_appointments_count|default:"0" }}</h3>
+                            <p class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i>
+                                <span>Next: {% if next_appointment %}{{ next_appointment.appointment_date }}{% else %}None{% endif %}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Active Prescriptions -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                            <i class="fa-solid fa-prescription"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Active Prescriptions</p>
+                            <h3 class="stat-value">{{ prescriptions_count|default:"0" }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-pills"></i>
+                                <span>Current medications</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pending Tests -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);">
+                            <i class="fa-solid fa-flask"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending Tests</p>
+                            <h3 class="stat-value">{{ pending_tests_count|default:"0" }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-vial"></i>
+                                <span>Lab tests</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Total Payments -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending Payments</p>
+                            <h3 class="stat-value">₹{{ pending_payment_amount|default:"0" }}</h3>
+                            <p class="stat-change negative">
+                                <i class="fa-solid fa-exclamation-circle"></i>
+                                <span>Needs attention</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="info-grid">
+
+                    <!-- Upcoming Appointments Card -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3><i class="fa-solid fa-calendar-check" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Upcoming Appointments</h3>
+                            <a href="{% url 'patient_book_appointment' %}" style="font-size:0.85rem; color:var(--medical-cyan); text-decoration:none; font-weight:600;">
+                                Book New <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                            </a>
+                        </div>
+
+                        {% if upcoming_appointments %}
+                        <div class="activity-list">
+                            {% for appointment in upcoming_appointments %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(34, 211, 238, 0.1);">
+                                    <i class="fa-solid fa-user-doctor" style="color: var(--medical-cyan);"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Dr. {{ appointment.doctor.user.get_full_name }}</p>
+                                    <p class="activity-time">
+                                        <i class="fa-solid fa-calendar" style="margin-right:4px;"></i>
+                                        {{ appointment.appointment_date|date:"d M Y" }} at {{ appointment.appointment_time }}
+                                    </p>
+                                </div>
+                                <span class="status-badge status-pending" style="font-size:0.75rem;">
+                                    {{ appointment.status }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                            <i class="fa-solid fa-calendar-xmark" style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3);"></i>
+                            <p style="color:var(--gray-500); margin-bottom:var(--space-4);">No upcoming appointments</p>
+                            <a href="{% url 'patient_book_appointment' %}" class="add-btn-small" style="text-decoration:none;">
+                                <i class="fa-solid fa-plus"></i> Book Appointment
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Diagnostic Tests Card -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3>
+                                <i class="fa-solid fa-flask" style="color:var(--medical-blue); margin-right:var(--space-2);"></i>
+                                Diagnostic Tests
+                            </h3>
+                            <a href="{% url 'patient_diagnostic_tests' %}" 
+                            style="font-size:0.85rem; color:var(--medical-blue); text-decoration:none; font-weight:600;">
+                                View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                            </a>
+                        </div>
+
+                        {% if diagnostic_bookings %}
+                        <div class="activity-list">
+                            {% for booking in diagnostic_bookings %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(96, 165, 250, 0.1);">
+                                    <i class="fa-solid fa-vial" style="color: var(--medical-blue);"></i>
+                                </div>
+
+                                <div class="activity-content">
+                                    <p class="activity-text">{{ booking.test.test_name }}</p>
+                                    <p class="activity-time">
+                                        <i class="fa-solid fa-calendar" style="margin-right:4px;"></i>
+                                        {{ booking.booking_date|date:"d M Y" }}
+                                        &nbsp;&middot;&nbsp;
+                                        {{ booking.lab.name }}
+                                    </p>
+                                </div>
+
+                                <div style="text-align:right;">
+                                    <span class="status-badge 
+                                        {% if booking.status == 'Completed' %}status-confirmed
+                                        {% elif booking.status == 'Pending Payment' %}status-pending
+                                        {% else %}status-scheduled{% endif %}"
+                                        style="font-size:0.75rem;">
+                                        {{ booking.status }}
+                                    </span>
+
+                                    {% if booking.status == "Completed" and booking.result_file %}
+                                    <div style="margin-top:6px;">
+                                        <a href="{{ booking.result_file.url }}" 
+                                        target="_blank"
+                                        style="font-size:0.75rem; color:var(--medical-green); text-decoration:none; font-weight:600;">
+                                            View Result
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                            <i class="fa-solid fa-flask-vial" 
+                            style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3);"></i>
+                            <p style="color:var(--gray-500);">No diagnostic tests booked</p>
+                            <a href="{% url 'patient_diagnostic_tests' %}" 
+                            class="add-btn-small" 
+                            style="text-decoration:none;">
+                                <i class="fa-solid fa-plus"></i> Book Test
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+
+                    <!-- Recent Prescriptions Card -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3><i class="fa-solid fa-prescription" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>Recent Prescriptions</h3>
+                            <a href="{% url 'patient_prescriptions' %}" style="font-size:0.85rem; color:var(--medical-purple); text-decoration:none; font-weight:600;">
+                                View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                            </a>
+                        </div>
+
+                        {% if recent_prescriptions %}
+                        <div class="activity-list">
+                            {% for prescription in recent_prescriptions %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(167, 139, 250, 0.1);">
+                                    <i class="fa-solid fa-pills" style="color: var(--medical-purple);"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">{{ prescription.medicine_name }}</p>
+                                    <p class="activity-time">
+                                        <i class="fa-solid fa-user-doctor" style="margin-right:4px;"></i>
+                                        Dr. {{ prescription.doctor.user.get_full_name }}
+                                        &nbsp;&middot;&nbsp;
+                                        {{ prescription.created_at|date:"d M Y" }}
+                                    </p>
+                                </div>
+                                <span class="status-badge" style="background:rgba(34,211,238,0.1); color:var(--medical-cyan); font-size:0.75rem;">
+                                    {{ prescription.dosage }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                            <i class="fa-solid fa-prescription-bottle" style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-3);"></i>
+                            <p style="color:var(--gray-500);">No prescriptions available</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="medical-table-card" style="margin-top:var(--space-6);">
+                    <div class="info-header" style="margin-bottom:var(--space-5);">
+                        <h3><i class="fa-solid fa-bolt" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Quick Actions</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4);">
+                        
+
+                        <a href="{% url 'patient_book_appointment' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-purple)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #a78bfa, #8b5cf6); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Book Appointment</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">Schedule visit</p>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'patient_diagnostic_tests' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-blue)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #60a5fa, #3b82f6); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-flask"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Lab Tests</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">Book diagnostics</p>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'payments' %}" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-4); padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md); transition:var(--transition); border:1px solid var(--gray-200);"
+                            onmouseover="this.style.background='var(--gray-100)'; this.style.borderColor='var(--medical-green)';"
+                            onmouseout="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)';">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, #34d399, #10b981); display:flex; align-items:center; justify-content:center; color:white;">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">Payments</p>
+                                <p style="font-size:0.8rem; color:var(--gray-500);">View bills</p>
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

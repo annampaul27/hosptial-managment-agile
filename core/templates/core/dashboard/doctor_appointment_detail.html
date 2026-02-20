@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Detail | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+<div class="medical-dashboard">
+    <!-- Sidebar -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee" />
+                            <stop offset="100%" stop-color="#a78bfa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">Doctor</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'doctor_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'doctor_appointments' %}" class="nav-item active">
+                <i class="fa-solid fa-calendar"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="{% url 'doctor_patients' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Patient Records</span>
+            </a>
+            <a href="{% url 'doctor_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription-bottle"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="{% url 'doctor_schedule' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i>
+                <span>Schedule</span>
+            </a>
+        </nav>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="medical-main">
+        <!-- Header -->
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Appointment Details</h1>
+                <p class="page-subtitle">View and manage appointment information</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'doctor_appointments' %}" class="btn btn-primary" style="text-decoration: none;">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Appointments
+                </a>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="medical-content">
+            <!-- Appointment Status Alert -->
+            {% if appointment.status == 'Scheduled' %}
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-3);">
+                <i class="fa-solid fa-check-circle" style="font-size: 1.5rem; color: #10b981;"></i>
+                <div>
+                    <p style="font-weight: 600; color: #10b981; margin-bottom: 2px;">Appointment Confirmed</p>
+                    <p style="font-size: 0.9rem; color: var(--gray-600);">This appointment has been confirmed and is ready.</p>
+                </div>
+            </div>
+            {% elif appointment.status == 'Pending Payment' %}
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-3);">
+                <i class="fa-solid fa-clock" style="font-size: 1.5rem; color: #f59e0b;"></i>
+                <div>
+                    <p style="font-weight: 600; color: #f59e0b; margin-bottom: 2px;">Payment Pending</p>
+                    <p style="font-size: 0.9rem; color: var(--gray-600);">Waiting for patient payment confirmation.</p>
+                </div>
+            </div>
+            {% elif appointment.status == 'Cancelled' %}
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-3);">
+                <i class="fa-solid fa-times-circle" style="font-size: 1.5rem; color: #ef4444;"></i>
+                <div>
+                    <p style="font-weight: 600; color: #ef4444; margin-bottom: 2px;">Appointment Cancelled</p>
+                    <p style="font-size: 0.9rem; color: var(--gray-600);">This appointment has been cancelled.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="info-grid" style="grid-template-columns: 2fr 1fr;">
+                <!-- Appointment Information -->
+                <div class="info-card">
+                    <div class="info-header" style="margin-bottom: var(--space-6);">
+                        <h3>
+                            <i class="fa-solid fa-calendar-check" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                            Appointment Information
+                        </h3>
+                        <span style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+                            {% if appointment.status == 'Scheduled' %}
+                                background: rgba(16, 185, 129, 0.1); color: #10b981;
+                            {% elif appointment.status == 'Completed' %}
+                                background: rgba(34, 211, 238, 0.1); color: #06b6d4;
+                            {% elif appointment.status == 'Pending Payment' %}
+                                background: rgba(245, 158, 11, 0.1); color: #f59e0b;
+                            {% elif appointment.status == 'Cancelled' %}
+                                background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                            {% else %}
+                                background: rgba(100, 116, 139, 0.1); color: #64748b;
+                            {% endif %}">
+                            {{ appointment.status }}
+                        </span>
+                    </div>
+
+                    <div style="display: grid; gap: var(--space-5);">
+                        <!-- Date & Time -->
+                        <div style="display: flex; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #22d3ee, #06b6d4); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                                <i class="fa-solid fa-calendar"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Date & Time</p>
+                                <p style="font-weight: 600; color: var(--text-dark);">{{ appointment.appointment_date|date:"l, F d, Y" }}</p>
+                                <p style="color: var(--medical-cyan); font-weight: 500;">{{ appointment.appointment_time|time:"g:i A" }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Reason -->
+                        <div style="display: flex; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #a78bfa, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                                <i class="fa-solid fa-stethoscope"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Reason for Visit</p>
+                                <p style="font-weight: 500; color: var(--text-dark);">{{ appointment.reason }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Payment -->
+                        <div style="display: flex; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #34d399, #10b981); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                                <i class="fa-solid fa-dollar-sign"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Payment Status</p>
+                                <p style="font-weight: 600; color: var(--text-dark);">₹{{ appointment.consultation_fee|default:"500" }}</p>
+                                <p style="font-size: 0.85rem; color: {% if appointment.payment_status == 'Paid' %}#10b981{% else %}#f59e0b{% endif %};">
+                                    {{ appointment.payment_status|default:"Pending" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Created Date -->
+                        <div style="display: flex; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: linear-gradient(135deg, #60a5fa, #3b82f6); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 4px;">Booked On</p>
+                                <p style="font-weight: 500; color: var(--text-dark);">{{ appointment.created_at|date:"F d, Y at g:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="margin-top: var(--space-6); display: flex; gap: var(--space-3); padding-top: var(--space-5); border-top: 1px solid var(--border-color);">
+                        {% if appointment.status == 'Scheduled' or appointment.status == 'Pending Payment' %}
+                        <a href="{% url 'doctor_confirm_appointment' appointment.id %}" 
+                        style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: var(--radius-md); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: var(--transition-fast); box-shadow: var(--shadow-sm);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16, 185, 129, 0.3)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+                            <i class="fa-solid fa-check"></i> Confirm Appointment
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'doctor_reschedule_appointment' appointment.id %}"
+                            style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: var(--gray-100); color: var(--text-dark); border: 1px solid var(--gray-200); border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition-fast); font-family: var(--font-sans); text-decoration: none;"
+                            onmouseover="this.style.background='var(--gray-200)'; this.style.transform='translateY(-2px)';"
+                            onmouseout="this.style.background='var(--gray-100)'; this.style.transform='translateY(0)';">
+                            <i class="fa-solid fa-edit"></i> Reschedule
+                        </a>
+
+    
+                        {% if appointment.status != 'Cancelled' %}
+                        <button type="button"
+                                style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition-fast); font-family: var(--font-sans);"
+                                onmouseover="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='translateY(0)';"
+                                onclick="if(confirm('Are you sure you want to cancel this appointment?')) { alert('Cancel functionality coming soon!'); }">
+                            <i class="fa-solid fa-times"></i> Cancel
+                        </button>
+                        {% endif %}
+                    
+                    </div>
+                </div>
+
+                <!-- Patient Information -->
+                <div class="info-card">
+                    <div class="info-header" style="margin-bottom: var(--space-5);">
+                        <h3>
+                            <i class="fa-solid fa-user" style="color: var(--medical-purple); margin-right: var(--space-2);"></i>
+                            Patient Details
+                        </h3>
+                    </div>
+
+                    <!-- Patient Avatar & Name -->
+                    <div style="text-align: center; margin-bottom: var(--space-5);">
+                        <div style="width: 80px; height: 80px; margin: 0 auto var(--space-3); border-radius: 50%; background: linear-gradient(135deg, #22d3ee, #a78bfa); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 2rem; box-shadow: var(--shadow-md);">
+                            {{ appointment.patient.full_name|slice:":1"|upper }}
+                        </div>
+                        <h4 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">
+                            {{ appointment.patient.full_name }}
+                        </h4>
+                        <p style="font-size: 0.9rem; color: var(--text-medium);">Patient ID: #{{ appointment.patient.id }}</p>
+                    </div>
+
+                    <!-- Patient Info Grid -->
+                    <div style="display: grid; gap: var(--space-4);">
+                        <div style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 4px;">
+                                <i class="fa-solid fa-envelope" style="margin-right: 6px;"></i> Email
+                            </p>
+                            <p style="font-weight: 500; color: var(--text-dark); word-break: break-word;">{{ appointment.patient.email }}</p>
+                        </div>
+
+                        <div style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 4px;">
+                                <i class="fa-solid fa-phone" style="margin-right: 6px;"></i> Phone
+                            </p>
+                            <p style="font-weight: 500; color: var(--text-dark);">{{ appointment.patient.phone|default:"Not provided" }}</p>
+                        </div>
+
+                        <div style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 4px;">
+                                <i class="fa-solid fa-birthday-cake" style="margin-right: 6px;"></i> Age
+                            </p>
+                            <p style="font-weight: 500; color: var(--text-dark);">{{ appointment.patient.date_of_birth|default:"Not provided" }}</p>
+                        </div>
+
+                        <div style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 4px;">
+                                <i class="fa-solid fa-map-marker-alt" style="margin-right: 6px;"></i> Address
+                            </p>
+                            <p style="font-weight: 500; color: var(--text-dark);">{{ appointment.patient.address|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div style="margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--border-color);">
+                        <a href="{% url 'doctor_patient_detail' appointment.patient.id %}" class="btn btn-primary" style="width: 100%; text-decoration: none; text-align: center; display: block;">
+                            <i class="fa-solid fa-folder-open"></i> View Full Record
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            {% if appointment.notes %}
+            <div class="medical-table-card" style="margin-top: var(--space-6);">
+                <div class="info-header" style="margin-bottom: var(--space-4);">
+                    <h3>
+                        <i class="fa-solid fa-notes-medical" style="color: var(--medical-green); margin-right: var(--space-2);"></i>
+                        Appointment Notes
+                    </h3>
+                </div>
+                <div style="padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); border-left: 4px solid var(--medical-green);">
+                    <p style="color: var(--text-dark); line-height: 1.6;">{{ appointment.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

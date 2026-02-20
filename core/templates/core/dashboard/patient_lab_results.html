@@ -1,0 +1,343 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Lab Results | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee" />
+                            <stop offset="100%" stop-color="#a78bfa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg, #34d399, #10b981);">Patient</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'patient_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'patient_book_appointment' %}" class="nav-item">
+                <i class="fa-solid fa-calendar-plus"></i>
+                <span>Book Appointment</span>
+            </a>
+            <a href="{% url 'patient_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-clock"></i>
+                <span>My Appointments</span>
+            </a>
+            <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item">
+                <i class="fa-solid fa-flask"></i>
+                <span>Diagnostic Tests</span>
+            </a>
+            <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>Lab Results</span>
+            </a>
+            <a href="{% url 'patient_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="{% url 'payments' %}" class="nav-item">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Payments</span>
+            </a>
+            <a href="{% url 'patient_settings' %}" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="medical-main">
+
+        <!-- Header -->
+        <header class="medical-header">
+            <div class="header-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="liveSearch" placeholder="Search by test name or doctor..." onkeyup="liveFilter()">
+            </div>
+            <div class="header-actions">
+                <button class="header-icon-btn" aria-label="Notifications">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                </button>
+                <button class="header-icon-btn" aria-label="Profile">
+                    <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="medical-content">
+
+            <!-- Page Title -->
+            <div class="content-header">
+                <div class="page-title-section">
+                    <h1 class="page-title">Lab Results</h1>
+                    <p class="page-subtitle">View all your diagnostic test results</p>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-3);
+                background: {% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
+                border-left: 4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
+                color: {% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};">
+                <i class="fa-solid fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                        <i class="fa-solid fa-file-medical"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Total Results</p>
+                        <h3 class="stat-value">{{ total_results }}</h3>
+                        <p class="stat-change" style="color: var(--text-medium);">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span>All time</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Normal Results</p>
+                        <h3 class="stat-value">{{ normal_count }}</h3>
+                        <p class="stat-change" style="color: #10b981;">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Healthy</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Abnormal Results</p>
+                        <h3 class="stat-value">{{ abnormal_count }}</h3>
+                        <p class="stat-change" style="color: {% if abnormal_count > 0 %}#f59e0b{% else %}var(--text-medium){% endif %};">
+                            <i class="fa-solid fa-{% if abnormal_count > 0 %}exclamation{% else %}check{% endif %}"></i>
+                            <span>{% if abnormal_count > 0 %}Needs attention{% else %}None{% endif %}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Recent Results</p>
+                        <h3 class="stat-value">{{ recent_count }}</h3>
+                        <p class="stat-change" style="color: var(--text-medium);">
+                            <i class="fa-solid fa-calendar"></i>
+                            <span>Last 30 days</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="medical-table-card" style="margin-top: var(--space-6);">
+                <div class="info-header" style="margin-bottom: var(--space-4);">
+                    <h3>
+                        <i class="fa-solid fa-file-medical" style="color: var(--medical-cyan); margin-right: var(--space-2);"></i>
+                        All Lab Results
+                    </h3>
+                    <!-- Filter tabs -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                        <a href="{% url 'patient_lab_results' %}"
+                           style="padding: .45rem 1.1rem; border-radius: 999px; font-size: .82rem; font-weight: 600; text-decoration: none;
+                                  {% if not status_filter %}background: linear-gradient(135deg,#22d3ee,#06b6d4); color: white;{% else %}background: #f3f4f6; color: #6b7280;{% endif %}">
+                            All
+                        </a>
+                        <a href="?status=Normal"
+                           style="padding: .45rem 1.1rem; border-radius: 999px; font-size: .82rem; font-weight: 600; text-decoration: none;
+                                  {% if status_filter == 'Normal' %}background: #22c55e; color: white;{% else %}background: #f3f4f6; color: #6b7280;{% endif %}">
+                            Normal
+                        </a>
+                        <a href="?status=Abnormal"
+                           style="padding: .45rem 1.1rem; border-radius: 999px; font-size: .82rem; font-weight: 600; text-decoration: none;
+                                  {% if status_filter == 'Abnormal' %}background: #f59e0b; color: white;{% else %}background: #f3f4f6; color: #6b7280;{% endif %}">
+                            Abnormal
+                        </a>
+                        <span style="font-size: .82rem; color: #9ca3af; margin-left: .5rem;">
+                            Showing <strong id="visibleCount">{{ results|length }}</strong>
+                        </span>
+                    </div>
+                </div>
+
+                {% if results %}
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--gray-50); border-bottom: 2px solid var(--gray-200);">
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Test Name</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Test Date</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Result Value</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Normal Range</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Status</th>
+                                    <th style="padding: var(--space-3); text-align: left; font-weight: 600; color: var(--gray-700);">Doctor</th>
+                                    <th style="padding: var(--space-3); text-align: center; font-weight: 600; color: var(--gray-700);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr class="result-row" data-search="{{ result.test_name|lower }} {{ result.doctor.user.get_full_name|lower }}"
+                                    style="border-bottom: 1px solid var(--gray-200);">
+
+                                    <!-- Test Name -->
+                                    <td style="padding: var(--space-3); color: var(--gray-800); font-weight: 500;">
+                                        <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                            <i class="fa-solid fa-flask" style="color: #22d3ee; font-size: 0.9rem;"></i>
+                                            <span>{{ result.test_name }}</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Test Date -->
+                                    <td style="padding: var(--space-3); color: var(--gray-600);">
+                                        {{ result.test_date|date:"d M Y" }}
+                                    </td>
+
+                                    <!-- Result Value -->
+                                    <td style="padding: var(--space-3);">
+                                        <span style="font-weight: 600; color: var(--gray-800);">{{ result.test_value }}</span>
+                                    </td>
+
+                                    <!-- Normal Range -->
+                                    <td style="padding: var(--space-3); color: var(--gray-600); font-size: 0.85rem;">
+                                        {{ result.normal_range|default:"N/A" }}
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td style="padding: var(--space-3);">
+                                        <span style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+                                            {% if result.result_status == 'Normal' %}
+                                                background: rgba(16, 185, 129, 0.1); color: #10b981;
+                                            {% elif result.result_status == 'Abnormal' %}
+                                                background: rgba(245, 158, 11, 0.1); color: #f59e0b;
+                                            {% else %}
+                                                background: rgba(100, 116, 139, 0.1); color: #64748b;
+                                            {% endif %}">
+                                            <i class="fa-solid fa-{% if result.result_status == 'Normal' %}check-circle{% elif result.result_status == 'Abnormal' %}exclamation-triangle{% else %}circle{% endif %}" style="font-size: 0.7rem; margin-right: 4px;"></i>
+                                            {{ result.result_status }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Doctor -->
+                                    <td style="padding: var(--space-3); color: var(--gray-600); font-size: 0.85rem;">
+                                        Dr. {{ result.doctor.user.get_full_name }}
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td style="padding: var(--space-3); text-align: center;">
+                                        <a href="{% url 'patient_lab_result_detail' result.id %}"
+                                            style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--medical-cyan); color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-eye"></i> View
+                                        </a>
+                                    </td>
+
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-10);">
+                        <i class="fa-solid fa-file-medical" style="font-size: 3.5rem; color: var(--gray-300); margin-bottom: var(--space-4);"></i>
+                        <p style="color: var(--gray-500); font-size: 1.1rem; margin-bottom: var(--space-4);">No lab results found</p>
+                        <a href="{% url 'patient_diagnostic_tests' %}" class="btn btn-primary" style="text-decoration: none;">
+                            <i class="fa-solid fa-flask"></i> Book Diagnostic Test
+                        </a>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function liveFilter() {
+        const q = document.getElementById('liveSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('.result-row');
+        let visible = 0;
+        rows.forEach(row => {
+            const match = (row.dataset.search || '').includes(q);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        document.getElementById('visibleCount').textContent = visible;
+    }
+</script>
+
+</body>
+</html>

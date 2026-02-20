@@ -1,0 +1,443 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Labs | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Modal input styling to match dashboard theme */
+        .modal-body input,
+        .modal-body textarea,
+        .modal-body select {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--gray-800);
+            transition: var(--transition);
+            margin-bottom: var(--space-4);
+        }
+
+        .modal-body input:focus,
+        .modal-body textarea:focus,
+        .modal-body select:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .modal-body textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .modal-body label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .modal-body .form-group {
+            margin-bottom: var(--space-2);
+        }
+
+        .modal-body .required {
+            color: var(--error-red);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <!-- New: Lab Technicians -->
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <!-- New: Front Desk Staff -->
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="headerSearchInput" placeholder="Search labs..." value="{{ request.GET.q }}">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Actions -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Manage Labs</h1>
+                        <p class="page-subtitle">View and manage all diagnostic laboratories</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <!-- Search Form -->
+                        <form method="get" class="inline-search-form">
+                            <div class="inline-search-box">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" name="q" placeholder="Search labs..." value="{{ request.GET.q }}">
+                            </div>
+                        </form>
+
+                        <!-- Add Lab Button -->
+                        <button class="add-btn" onclick="openAddModal()">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Lab</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Labs Table Card -->
+                <div class="medical-table-card">
+                    <table class="medical-table">
+                        <thead>
+                            <tr>
+                                <th class="cell-id">ID</th>
+                                <th class="cell-patient">Lab Name</th>
+                                <th class="cell-email">Address</th>
+                                <th class="cell-phone">Phone</th>
+                                <th class="cell-phone">Tests</th>
+                                <th class="cell-status">Status</th>
+                                <th class="cell-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lab in labs %}
+                            <tr>
+                                <!-- ID -->
+                                <td class="cell-id">L{{ lab.id }}</td>
+
+                                <!-- Lab Name with icon -->
+                                <td class="cell-patient">
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background: linear-gradient(135deg, #34d399, #06b6d4);">
+                                            <i class="fa-solid fa-flask" style="font-size:1rem;"></i>
+                                        </div>
+                                        <div class="patient-details">
+                                            <div class="patient-name">{{ lab.name }}</div>
+                                            <div class="patient-id">ID: L{{ lab.id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Address -->
+                                <td class="cell-email" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ lab.address }}">
+                                    {{ lab.address }}
+                                </td>
+
+                                <!-- Phone -->
+                                <td class="cell-phone">{{ lab.phone }}</td>
+
+                                <!-- Test Count -->
+                                <td class="cell-phone">
+                                    <span class="status-badge" style="background: rgba(167, 139, 250, 0.1); color: var(--medical-purple);">
+                                        <i class="fa-solid fa-vial"></i>
+                                        {{ lab.diagnostictest_set.count }}
+                                    </span>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="cell-status">
+                                    {% if lab.status == 'Active' %}
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="cell-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'admin_edit_lab' lab.id %}" class="action-btn edit-btn" title="Edit Lab">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <button class="action-btn delete-btn"
+                                            onclick="openDeleteModal({{ lab.id }}, '{{ lab.name }}')"
+                                            title="Delete Lab">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="empty-row">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-flask"></i>
+                                        <p>No labs found</p>
+                                        <button class="add-btn-small" onclick="openAddModal()" style="border:none; cursor:pointer;">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add First Lab
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if labs %}
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            Showing <strong>1-{{ labs|length }}</strong> of <strong>{{ labs|length }}</strong> labs
+                        </div>
+                        <div class="pagination-controls">
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                            <span class="page-current">Page 1 of 1</span>
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== ADD LAB MODAL ==================== -->
+    <div class="modal" id="addLabModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-flask" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Add New Lab</h3>
+                <button class="modal-close" onclick="closeAddModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="addLabForm" action="{% url 'admin_add_lab' %}">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>Lab Name <span class="required">*</span></label>
+                        <input type="text" name="name" placeholder="e.g. Apollo Diagnostics" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number <span class="required">*</span></label>
+                        <input type="text" name="phone" placeholder="e.g. 9876543210" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address <span class="required">*</span></label>
+                        <textarea name="address" placeholder="Full address of the lab" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="add-btn" onclick="document.getElementById('addLabForm').submit();" style="border:none; cursor:pointer;">
+                    <i class="fa-solid fa-plus"></i> Add Lab
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="labName"></strong>?</p>
+                <p class="warning-text">This action cannot be undone and will remove all associated diagnostic tests.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <form id="deleteLabForm" method="POST" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">
+                        <i class="fa-solid fa-trash"></i> Delete Lab
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ===== ADD MODAL =====
+        function openAddModal() {
+            document.getElementById('addLabModal').classList.add('active');
+        }
+        function closeAddModal() {
+            document.getElementById('addLabModal').classList.remove('active');
+        }
+
+        // ===== DELETE MODAL =====
+        function openDeleteModal(labId, labName) {
+            document.getElementById('labName').textContent = labName;
+            document.getElementById('deleteLabForm').action = "{% url 'admin_delete_lab' 0 %}".replace('0', labId);
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        // ===== CLOSE MODALS ON BACKDROP CLICK =====
+        document.getElementById('addLabModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        // ===== CLOSE MODALS ON ESCAPE =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        // ===== HEADER SEARCH REDIRECT =====
+        document.getElementById('headerSearchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.location.href = "{% url 'admin_labs' %}?q=" + encodeURIComponent(this.value);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

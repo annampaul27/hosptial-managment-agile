@@ -1,0 +1,580 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Tests | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* ── Modal Overlay ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem; right: 1rem;
+            background: none; border: none;
+            font-size: 1.4rem; cursor: pointer;
+            color: #6b7280;
+        }
+        .modal-close:hover { color: #111; }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+        .modal-title i { margin-right: .5rem; color: #22d3ee; }
+
+        /* ── Test Cards ── */
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .test-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .test-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-color: #22d3ee;
+        }
+
+        .test-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: .75rem;
+        }
+
+        .test-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .badge {
+            font-size: .72rem;
+            font-weight: 600;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+        }
+        .badge-booked  { background: #fef3c7; color: #92400e; }
+        .badge-available { background: #d1fae5; color: #065f46; }
+
+        .test-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: .5rem;
+        }
+
+        .test-meta {
+            display: flex;
+            flex-direction: column;
+            gap: .3rem;
+            font-size: .85rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+        .test-meta i { width: 16px; color: #9ca3af; margin-right: .3rem; }
+
+        .test-desc {
+            font-size: .85rem;
+            color: #6b7280;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: .75rem;
+        }
+
+        .btn-book {
+            flex: 1;
+            background: linear-gradient(135deg, #22d3ee, #818cf8);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: .6rem 1rem;
+            font-weight: 600;
+            font-size: .85rem;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+        .btn-book:hover { opacity: .88; }
+        .btn-book:disabled {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-details {
+            padding: .6rem 1rem;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: .85rem;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .2s;
+        }
+        .btn-details:hover { background: #e5e7eb; }
+
+        /* ── Filter bar ── */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+        .filter-bar select,
+        .filter-bar input[type="text"] {
+            padding: .55rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: .9rem;
+            background: #fff;
+            outline: none;
+        }
+        .filter-bar select:focus,
+        .filter-bar input[type="text"]:focus {
+            border-color: #22d3ee;
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+        .empty-state h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .5rem; }
+
+        /* ── Date input ── */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: .9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: .4rem;
+        }
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: .65rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: .95rem;
+            outline: none;
+        }
+        .form-group input[type="date"]:focus { border-color: #22d3ee; }
+
+        .modal-actions {
+            display: flex;
+            gap: .75rem;
+            margin-top: 1.5rem;
+        }
+        .btn-cancel-modal {
+            flex: 1;
+            padding: .65rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-weight: 600;
+            cursor: pointer;
+            color: #374151;
+        }
+        .btn-confirm {
+            flex: 2;
+            padding: .65rem;
+            background: linear-gradient(135deg, #22d3ee, #818cf8);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-confirm:hover { opacity: .88; }
+
+        /* ── Detail modal ── */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .6rem 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: .9rem;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #6b7280; font-weight: 500; }
+        .detail-value { color: #1f2937; font-weight: 600; }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#g1)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#g1)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback" style="display:flex;">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background: linear-gradient(135deg,#34d399,#10b981);">Patient</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'patient_dashboard' %}" class="nav-item"><i class="fa-solid fa-home"></i><span>Dashboard</span></a>
+            <a href="{% url 'patient_book_appointment' %}" class="nav-item"><i class="fa-solid fa-calendar-plus"></i><span>Book Appointment</span></a>
+            <a href="{% url 'patient_appointments' %}" class="nav-item"><i class="fa-solid fa-clock"></i><span>My Appointments</span></a>
+            <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item active"><i class="fa-solid fa-flask"></i><span>Diagnostic Tests</span></a>
+            <a href="{% url 'patient_lab_results' %}" class="nav-item"><i class="fa-solid fa-file-medical"></i><span>Lab Results</span></a>
+            <a href="{% url 'patient_prescriptions' %}" class="nav-item"><i class="fa-solid fa-prescription"></i><span>Prescriptions</span></a>
+            <a href="{% url 'payments' %}" class="nav-item"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
+            <a href="{% url 'patient_settings' %}" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="medical-main">
+
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title" style="font-size:1.75rem;">Diagnostic Tests</h1>
+                <p class="page-subtitle">Browse and book diagnostic tests from our partner laboratories</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'patient_dashboard' %}" class="btn-cancel" style="text-decoration:none;">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Flash messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="margin-bottom:1rem; padding:.75rem 1rem; border-radius:8px;
+                    background:{% if 'error' in message.tags %}#fee2e2{% elif 'success' in message.tags %}#d1fae5{% else %}#e0f2fe{% endif %};
+                    color:{% if 'error' in message.tags %}#b91c1c{% elif 'success' in message.tags %}#065f46{% else %}#0369a1{% endif %};">
+                    <i class="fa-solid fa-{% if 'error' in message.tags %}circle-exclamation{% elif 'success' in message.tags %}circle-check{% else %}circle-info{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Filter Bar -->
+            <form method="GET" class="filter-bar">
+                <div>
+                    <label style="font-size:.8rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Filter by Lab</label>
+                    <select name="lab" onchange="this.form.submit()">
+                        <option value="">All Laboratories</option>
+                        {% for lab in labs %}
+                        <option value="{{ lab.id }}" {% if lab_filter == lab.id|stringformat:"s" %}selected{% endif %}>{{ lab.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size:.8rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Search</label>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search test or lab…">
+                </div>
+
+                <button type="submit" class="btn-book" style="padding:.55rem 1.25rem;flex:none;">
+                    <i class="fa-solid fa-search"></i> Search
+                </button>
+
+                {% if search_query or lab_filter %}
+                <a href="{% url 'patient_diagnostic_tests' %}" class="btn-details" style="padding:.55rem 1.25rem;">
+                    <i class="fa-solid fa-times"></i> Clear
+                </a>
+                {% endif %}
+            </form>
+
+            <!-- Section header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h2 style="font-size:1rem;font-weight:700;color:#1f2937;">
+                    Available Tests
+                    <span style="background:#f3f4f6;padding:.1rem .6rem;border-radius:999px;font-size:.8rem;margin-left:.4rem;">{{ tests|length }}</span>
+                </h2>
+                <a href="{% url 'patient_booked_tests' %}" style="font-size:.88rem;color:#22d3ee;font-weight:600;text-decoration:none;">
+                    <i class="fa-solid fa-list"></i> My Booked Tests
+                </a>
+            </div>
+
+            <!-- Tests Grid -->
+            {% if tests %}
+            <div class="tests-grid">
+                {% for test in tests %}
+                <div class="test-card">
+                    <div class="test-card-header">
+                        <h3 class="test-name">{{ test.test_name }}</h3>
+                        {% if test.id in user_bookings %}
+                            <span class="badge badge-booked">Already Booked</span>
+                        {% else %}
+                            <span class="badge badge-available">Available</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="test-price">₹{{ test.price }}</div>
+
+                    <div class="test-meta">
+                        <span><i class="fa-solid fa-building"></i>{{ test.lab.name }}</span>
+                        <span><i class="fa-solid fa-location-dot"></i>{{ test.lab.address|truncatechars:35 }}</span>
+                        <span><i class="fa-solid fa-phone"></i>{{ test.lab.phone }}</span>
+                    </div>
+
+                    <p class="test-desc">
+                        Get your {{ test.test_name }} done at {{ test.lab.name }}. Quick and reliable results.
+                    </p>
+
+                    <div class="card-actions">
+                        {% if test.id not in user_bookings %}
+                        <button class="btn-book"
+                                onclick="openBookingModal({{ test.id }}, '{{ test.test_name|escapejs }}', '{{ test.price }}')">
+                            <i class="fa-solid fa-calendar-check"></i> Book Test
+                        </button>
+                        {% else %}
+                        <button class="btn-book" disabled>
+                            <i class="fa-solid fa-check"></i> Already Booked
+                        </button>
+                        {% endif %}
+
+                        <button class="btn-details"
+                                onclick="openDetailsModal({{ test.id }}, '{{ test.test_name|escapejs }}', '{{ test.price }}', '{{ test.lab.name|escapejs }}', '{{ test.lab.address|escapejs }}', '{{ test.lab.phone|escapejs }}')">
+                            Details
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="empty-state">
+                <i class="fa-solid fa-flask"></i>
+                <h3>No Tests Found</h3>
+                <p>{% if search_query or lab_filter %}No tests match your search criteria.{% else %}No diagnostic tests available at the moment.{% endif %}</p>
+                {% if search_query or lab_filter %}
+                <a href="{% url 'patient_diagnostic_tests' %}" class="btn-book" style="display:inline-block;margin-top:1rem;padding:.65rem 1.5rem;text-decoration:none;">
+                    Clear Filters
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Help Banner -->
+            <div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:12px;padding:1.5rem;margin-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h4 style="margin:0 0 .3rem;font-size:.95rem;font-weight:700;color:#1e40af;">Need Help Booking a Test?</h4>
+                    <p style="margin:0;font-size:.85rem;color:#3b82f6;">Our front desk team is available to assist you with bookings.</p>
+                </div>
+                <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+                    <a href="{% url 'patient_book_appointment' %}" class="btn-book" style="text-decoration:none;padding:.6rem 1.25rem;font-size:.85rem;">
+                        <i class="fa-solid fa-calendar-plus"></i> Book Doctor Appointment
+                    </a>
+                    <span class="btn-details" style="padding:.6rem 1.25rem;font-size:.85rem;cursor:default;">
+                        <i class="fa-solid fa-phone"></i> +91 XXX-XXX-XXXX
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+
+<!-- ==================== BOOKING MODAL ==================== -->
+<div class="modal-overlay" id="bookingModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeBookingModal()" title="Close">&times;</button>
+        <h3 class="modal-title"><i class="fa-solid fa-calendar-check"></i> Book Test</h3>
+
+        <!-- The action URL is set dynamically by JS using the test ID -->
+        <form id="bookingForm" method="POST" action="">
+            {% csrf_token %}
+
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1rem;margin-bottom:1.25rem;">
+                <p style="margin:0;font-size:.9rem;color:#065f46;">
+                    <strong id="modalTestName"></strong><br>
+                    <span style="color:#6b7280;">Price: </span><strong id="modalTestPrice" style="color:#10b981;"></strong>
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="booking_date">
+                    <i class="fa-solid fa-calendar" style="color:#22d3ee;margin-right:.3rem;"></i>
+                    Select Date for Test
+                </label>
+                <input type="date"
+                       id="booking_date"
+                       name="booking_date"
+                       min="{{ today }}"
+                       required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel-modal" onclick="closeBookingModal()">
+                    <i class="fa-solid fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn-confirm">
+                    <i class="fa-solid fa-check-circle"></i> Confirm Booking
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ==================== DETAILS MODAL ==================== -->
+<div class="modal-overlay" id="detailsModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeDetailsModal()" title="Close">&times;</button>
+        <h3 class="modal-title"><i class="fa-solid fa-flask"></i> Test Details</h3>
+
+        <div id="detailsContent"></div>
+
+        <div style="margin-top:1.5rem;text-align:right;">
+            <button class="btn-cancel-modal" onclick="closeDetailsModal()" style="max-width:120px;">
+                <i class="fa-solid fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+    // ── URL template: Django injects a sample URL, JS replaces the ID ──
+    // We build the URL pattern by using test id=0 as placeholder and
+    // replacing it in JS. This avoids hardcoding the URL structure.
+    const bookTestUrlTemplate = "{% url 'book_diagnostic_tests' test_id=0 %}";
+
+    function openBookingModal(testId, testName, testPrice) {
+        // Set the form action to the correct URL for this test
+        const url = bookTestUrlTemplate.replace('/0/', '/' + testId + '/');
+        document.getElementById('bookingForm').action = url;
+
+        // Populate summary info
+        document.getElementById('modalTestName').textContent = testName;
+        document.getElementById('modalTestPrice').textContent = '₹' + testPrice;
+
+        // Reset date input
+        document.getElementById('booking_date').value = '';
+
+        // Show modal
+        document.getElementById('bookingModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBookingModal() {
+        document.getElementById('bookingModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function openDetailsModal(testId, testName, testPrice, labName, labAddress, labPhone) {
+        const html = `
+            <div class="detail-row"><span class="detail-label">Test Name</span><span class="detail-value">${testName}</span></div>
+            <div class="detail-row"><span class="detail-label">Price</span><span class="detail-value" style="color:#10b981;">₹${testPrice}</span></div>
+            <div class="detail-row"><span class="detail-label">Laboratory</span><span class="detail-value">${labName}</span></div>
+            <div class="detail-row"><span class="detail-label">Address</span><span class="detail-value">${labAddress}</span></div>
+            <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${labPhone}</span></div>
+        `;
+        document.getElementById('detailsContent').innerHTML = html;
+        document.getElementById('detailsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('detailsModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close modals when clicking overlay
+    document.getElementById('bookingModal').addEventListener('click', function(e) {
+        if (e.target === this) closeBookingModal();
+    });
+    document.getElementById('detailsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDetailsModal();
+    });
+
+    // Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeBookingModal();
+            closeDetailsModal();
+        }
+    });
+</script>
+
+</body>
+</html>

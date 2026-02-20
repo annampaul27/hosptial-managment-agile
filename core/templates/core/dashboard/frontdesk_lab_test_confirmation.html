@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Success Page Styles */
+        .success-wrap {
+            display:flex; align-items:center; justify-content:center;
+            min-height:calc(100vh - 80px); padding:30px 20px;
+        }
+        .success-card {
+            background:#fff; border-radius:20px; border:1px solid #e5e7eb;
+            box-shadow:0 4px 24px rgba(0,0,0,0.07); width:100%; max-width:560px;
+            overflow:hidden;
+        }
+
+        /* Animated check header */
+        .sc-header {
+            background:linear-gradient(135deg,#10b981,#059669);
+            padding:40px 30px 32px; text-align:center; position:relative; overflow:hidden;
+        }
+        .sc-header::before {
+            content:''; position:absolute; top:-40px; right:-40px;
+            width:160px; height:160px; border-radius:50%;
+            background:rgba(255,255,255,0.06);
+        }
+        .sc-header::after {
+            content:''; position:absolute; bottom:-30px; left:-30px;
+            width:120px; height:120px; border-radius:50%;
+            background:rgba(255,255,255,0.06);
+        }
+        .check-circle {
+            width:80px; height:80px; border-radius:50%;
+            background:rgba(255,255,255,0.2); border:3px solid rgba(255,255,255,0.5);
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 18px; font-size:2.2rem; color:#fff;
+            animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;
+        }
+        @keyframes popIn {
+            0%   { transform:scale(0); opacity:0; }
+            100% { transform:scale(1); opacity:1; }
+        }
+        .sc-title {
+            font-size:1.55rem; font-weight:700; color:#fff; margin:0 0 6px;
+            animation:slideUp 0.4s 0.2s ease both;
+        }
+        .sc-sub {
+            font-size:0.88rem; color:rgba(255,255,255,0.8); margin:0;
+            animation:slideUp 0.4s 0.3s ease both;
+        }
+        @keyframes slideUp {
+            0%   { transform:translateY(14px); opacity:0; }
+            100% { transform:translateY(0);    opacity:1; }
+        }
+
+        /* Transaction badge */
+        .txn-badge {
+            display:inline-flex; align-items:center; gap:7px;
+            background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+            padding:5px 14px; border-radius:20px; margin-top:12px;
+            font-size:0.79rem; color:#fff; font-family:monospace;
+            animation:slideUp 0.4s 0.4s ease both;
+        }
+
+        /* Body */
+        .sc-body { padding:28px 30px; }
+
+        /* Details grid */
+        .det-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:0;
+            border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; margin-bottom:22px;
+        }
+        .det-cell {
+            padding:13px 16px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;
+        }
+        .det-cell:nth-child(even) { border-right:none; }
+        .det-cell:nth-last-child(-n+2) { border-bottom:none; }
+        .det-lbl {
+            font-size:0.72rem; font-weight:600; color:#9ca3af;
+            text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;
+            display:flex; align-items:center; gap:5px;
+        }
+        .det-val { font-size:0.9rem; font-weight:600; color:#1f2937; }
+        .det-val.amount { font-size:1.1rem; color:#10b981; }
+        .det-val.txn    { font-family:monospace; font-size:0.82rem; color:#6b7280; }
+
+        /* Status pill */
+        .status-pill {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:3px 10px; border-radius:20px;
+            background:#d1fae5; color:#065f46; font-size:0.78rem; font-weight:600;
+        }
+        .status-dot { width:7px; height:7px; border-radius:50%; background:#10b981; }
+
+        /* Amount highlight */
+        .amt-banner {
+            background:linear-gradient(135deg,rgba(16,185,129,0.07),rgba(5,150,105,0.05));
+            border:1.5px solid rgba(16,185,129,0.2); border-radius:12px;
+            padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:22px;
+        }
+        .amt-label { font-size:0.85rem; color:#374151; font-weight:500; }
+        .amt-value { font-size:1.6rem; font-weight:700; color:#059669; }
+
+        /* Action buttons */
+        .action-row { display:flex; gap:10px; }
+        .btn-primary-g {
+            flex:1; padding:12px; background:linear-gradient(135deg,#a78bfa,#7c3aed);
+            color:#fff; border:none; border-radius:10px; font-size:0.88rem; font-weight:600;
+            font-family:'Poppins',sans-serif; cursor:pointer; text-decoration:none;
+            display:flex; align-items:center; justify-content:center; gap:7px;
+            transition:all 0.3s; box-shadow:0 4px 14px rgba(124,58,237,0.22);
+        }
+        .btn-primary-g:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(124,58,237,0.32); }
+        .btn-outline-g {
+            flex:1; padding:12px; background:#fff; color:#374151;
+            border:1.5px solid #e5e7eb; border-radius:10px; font-size:0.88rem; font-weight:600;
+            font-family:'Poppins',sans-serif; cursor:pointer; text-decoration:none;
+            display:flex; align-items:center; justify-content:center; gap:7px;
+            transition:all 0.22s;
+        }
+        .btn-outline-g:hover { border-color:#a78bfa; color:#7c3aed; background:rgba(124,58,237,0.03); }
+
+        /* Print */
+        .print-row { text-align:center; margin-top:14px; }
+        .print-btn {
+            background:none; border:none; color:#9ca3af; font-size:0.8rem;
+            font-family:'Poppins',sans-serif; cursor:pointer; display:inline-flex;
+            align-items:center; gap:5px; transition:color 0.2s;
+        }
+        .print-btn:hover { color:#374151; }
+
+        @media print {
+            .action-row, .print-row, .medical-sidebar, .medical-header { display:none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="medical-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#g1)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#g1)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback" style="display:flex;">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background:linear-gradient(135deg,#f59e0b,#f97316);">Front Desk</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-home"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'frontdesk_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
+            </a>
+            <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item active">
+                <i class="fa-solid fa-flask"></i><span>Lab Tests</span>
+            </a>
+            <a href="{% url 'frontdesk_lab_bookings' %}" class="nav-item">
+                <i class="fa-solid fa-list-check"></i><span>All Bookings</span>
+            </a>
+            <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i><span>Patients</span>
+            </a>
+            <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item">
+                <i class="fa-solid fa-stethoscope"></i><span>Doctors</span>
+            </a>
+            <a href="{% url 'frontdesk_payments' %}" class="nav-item">
+                <i class="fa-solid fa-credit-card"></i><span>Payments</span>
+            </a>
+            <a href="{% url 'frontdesk_reports' %}" class="nav-item">
+                <i class="fa-solid fa-chart-bar"></i><span>Reports</span>
+            </a>
+            <a href="{% url 'frontdesk_settings' %}" class="nav-item">
+                <i class="fa-solid fa-gear"></i><span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Payment Successful</h1>
+                <p class="page-subtitle">Lab test booking confirmed</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'frontdesk_lab_bookings' %}" class="add-btn"
+                   style="text-decoration:none;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">
+                    <i class="fa-solid fa-list"></i><span>All Bookings</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+            <div class="success-wrap">
+                <div class="success-card">
+
+                    <!-- Green header with animated check -->
+                    <div class="sc-header">
+                        <div class="check-circle">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <h2 class="sc-title">Payment Successful!</h2>
+                        <p class="sc-sub">The lab test has been booked and payment collected.</p>
+                        <div class="txn-badge">
+                            <i class="fa-solid fa-hashtag" style="font-size:0.72rem;"></i>
+                            TXN: {{ payment.transaction_id }}
+                        </div>
+                    </div>
+
+                    <!-- Card body -->
+                    <div class="sc-body">
+
+                        <!-- Amount banner -->
+                        <div class="amt-banner">
+                            <div>
+                                <div class="amt-label">Amount Collected</div>
+                                <div style="font-size:0.78rem;color:#6b7280;margin-top:2px;">
+                                    via {{ payment.payment_method }}
+                                </div>
+                            </div>
+                            <div class="amt-value">₹{{ payment.amount }}</div>
+                        </div>
+
+                        <!-- Details grid -->
+                        <div class="det-grid">
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-user" style="color:#22d3ee;"></i>Patient</div>
+                                <div class="det-val">{{ booking.patient.full_name }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-circle-dot" style="color:#10b981;"></i>Status</div>
+                                <div class="det-val">
+                                    <span class="status-pill"><span class="status-dot"></span>Booked</span>
+                                </div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-flask" style="color:#7c3aed;"></i>Test</div>
+                                <div class="det-val">{{ booking.test.test_name }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-building" style="color:#f59e0b;"></i>Lab</div>
+                                <div class="det-val">{{ booking.lab.name }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-calendar" style="color:#34d399;"></i>Booking Date</div>
+                                <div class="det-val">{{ booking.booking_date }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-clock" style="color:#06b6d4;"></i>Results In</div>
+                                <div class="det-val">{{ booking.test.result_duration }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-vial" style="color:#a78bfa;"></i>Sample Type</div>
+                                <div class="det-val">{{ booking.test.sample_type }}</div>
+                            </div>
+                            <div class="det-cell">
+                                <div class="det-lbl"><i class="fa-solid fa-credit-card" style="color:#3b82f6;"></i>Payment Method</div>
+                                <div class="det-val">{{ payment.payment_method }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="action-row">
+                            <a href="{% url 'frontdesk_book_lab_test' %}" class="btn-primary-g">
+                                <i class="fa-solid fa-plus"></i> Book Another Test
+                            </a>
+                            <a href="{% url 'frontdesk_lab_bookings' %}" class="btn-outline-g">
+                                <i class="fa-solid fa-list-check"></i> View All Bookings
+                            </a>
+                        </div>
+
+                        <!-- Print -->
+                        <div class="print-row">
+                            <button class="print-btn" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> Print Receipt
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

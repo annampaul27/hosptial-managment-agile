@@ -1,0 +1,379 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard - Beta Care{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    {% block content %}
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile -->
+            <div class="profile-section">
+                <div class="profile-avatar">
+                    <div class="avatar-placeholder">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p>{{ request.user.email }}</p>
+                    <span class="role-badge">Admin</span>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                
+                
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <!-- New: Lab Technicians -->
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <!-- New: Front Desk Staff -->
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-btn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1 class="page-title">Admin Overview</h1>
+                    <p class="page-subtitle">Welcome back, {{ request.user.first_name|default:request.user.username }}!
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Appointments</div>
+                            <div class="stat-value">{{ total_appointments|default:0 }}</div>
+                            <div class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i> 12% from last month
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);">
+                            <i class="fa-solid fa-rupee-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-value">₹{{ total_revenue|default:0 }}</div>
+                            <div class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i> 8% from last month
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Active Doctors</div>
+                            <div class="stat-value">{{ active_doctors|default:21 }}</div>
+                            <div class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i> 2 new this month
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%);">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Patients</div>
+                            <div class="stat-value">{{ total_patients|default:41 }}</div>
+                            <div class="stat-change positive">
+                                <i class="fa-solid fa-arrow-up"></i> 15 new this month
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <!-- Appointments Trend Chart -->
+                    <div class="chart-card large">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Appointments Trend</h3>
+                                <p class="chart-subtitle">Monthly appointment statistics</p>
+                            </div>
+                            <div class="chart-controls">
+                                <select class="year-select">
+                                    <option value="2024">2024</option>
+                                    <option value="2025" selected>2025</option>
+                                    <option value="2026">2026</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="appointmentsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Revenue Chart -->
+                    <div class="chart-card small">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Monthly Revenue</h3>
+                                <p class="chart-subtitle">Revenue breakdown</p>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Stats Row -->
+                <div class="info-grid">
+                    <!-- Recent Activity -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3>Recent Activity</h3>
+                            <button class="icon-btn small">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                        </div>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: #dbeafe;">
+                                    <i class="fa-solid fa-user-plus" style="color: #3b82f6;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">New doctor registered</p>
+                                    <span class="activity-time">2 hours ago</span>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: #fce7f3;">
+                                    <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">15 appointments scheduled</p>
+                                    <span class="activity-time">5 hours ago</span>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: #dcfce7;">
+                                    <i class="fa-solid fa-money-bill" style="color: #22c55e;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Payment received ₹5,000</p>
+                                    <span class="activity-time">1 day ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h3>Quick Stats</h3>
+                        </div>
+                        <div class="quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Today's Appointments</div>
+                                <div class="quick-stat-value">24</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Pending Payments</div>
+                                <div class="quick-stat-value">₹12,500</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Lab Reports Pending</div>
+                                <div class="quick-stat-value">8</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Active Users</div>
+                                <div class="quick-stat-value">127</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ================= APPOINTMENTS TREND =================
+        const appointmentsCtx = document.getElementById('appointmentsChart').getContext('2d');
+
+        new Chart(appointmentsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ appointments_labels| safe }},
+            datasets: [{
+                label: 'Appointments',
+                data: {{ appointments_data| safe }},
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34, 211, 238, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#22d3ee',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 7
+            }]
+        },
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+        // ================= MONTHLY REVENUE =================
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ revenue_labels| safe }},
+            datasets: [{
+                label: 'Revenue',
+                data: {{ revenue_data| safe }},
+            backgroundColor: 'rgba(34, 211, 238, 0.8)',
+            borderRadius: 8
+            }]
+        },
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => '₹' + value
+                    }
+                }
+            }
+        }
+    });
+    </script>
+
+
+    {% endblock %}
+
+</body>
+
+</html>

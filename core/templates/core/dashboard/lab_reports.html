@@ -1,0 +1,550 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Reports & Analytics</h1>
+                    <p class="page-subtitle">Lab performance insights and statistics</p>
+                </div>
+                <div class="header-actions">
+                    <select id="dateRange" style="padding:0.75rem 1.5rem; border:1px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.9rem; font-weight:600; cursor:pointer;">
+                        <option value="this_month">This Month</option>
+                        <option value="last_month">Last Month</option>
+                        <option value="last_3_months">Last 3 Months</option>
+                        <option value="this_year">This Year</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                    <button class="add-btn" style="background:linear-gradient(135deg, #34d399, #10b981);" onclick="exportReport()">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Export Report</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Custom Date Range (Hidden by default) -->
+            <div id="customDateRange" style="display:none; padding:var(--space-5); background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom:var(--space-6);">
+                <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:var(--space-3); align-items:end;">
+                    <div>
+                        <label style="display:block; margin-bottom:var(--space-2); font-weight:600; color:var(--gray-700);">Start Date</label>
+                        <input type="date" id="startDate" style="width:100%; padding:0.75rem; border:1px solid var(--gray-300); border-radius:var(--radius-md);">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:var(--space-2); font-weight:600; color:var(--gray-700);">End Date</label>
+                        <input type="date" id="endDate" style="width:100%; padding:0.75rem; border:1px solid var(--gray-300); border-radius:var(--radius-md);">
+                    </div>
+                    <button onclick="applyCustomRange()" style="padding:0.75rem 1.5rem; background:var(--medical-cyan); color:white; border:none; border-radius:var(--radius-md); font-weight:600; cursor:pointer;">Apply</button>
+                </div>
+            </div>
+
+            <!-- Error Message Container -->
+            <div id="errorMessage" style="display:none; padding:var(--space-4); background:#fee2e2; border:1px solid #fca5a5; border-radius:var(--radius-md); margin-bottom:var(--space-6); color:#991b1b;">
+                <p style="margin:0;"><i class="fa-solid fa-exclamation-circle"></i> <strong>Error:</strong> <span id="errorText"></span></p>
+            </div>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Key Metrics -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:var(--space-5); margin-bottom:var(--space-6);">
+                    
+                    <!-- Total Tests -->
+                    <div style="padding:var(--space-5); background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); border-left:4px solid var(--medical-cyan);">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-3);">
+                            <div>
+                                <p style="color:var(--gray-500); font-size:0.85rem; margin-bottom:var(--space-2);">Total Tests</p>
+                                <h3 style="color:var(--gray-800); font-size:2rem; font-weight:700;" id="totalTests">0</h3>
+                            </div>
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, rgba(34,211,238,0.1), rgba(6,182,212,0.05)); display:flex; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-vials" style="color:var(--medical-cyan); font-size:1.25rem;"></i>
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--medical-green);">
+                            <i class="fa-solid fa-arrow-up"></i> <span id="testsTrend">0</span>% from previous period
+                        </p>
+                    </div>
+
+                    <!-- Completed Tests -->
+                    <div style="padding:var(--space-5); background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); border-left:4px solid var(--medical-purple);">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-3);">
+                            <div>
+                                <p style="color:var(--gray-500); font-size:0.85rem; margin-bottom:var(--space-2);">Completed</p>
+                                <h3 style="color:var(--gray-800); font-size:2rem; font-weight:700;" id="completedTests">0</h3>
+                            </div>
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, rgba(167,139,250,0.1), rgba(139,92,246,0.05)); display:flex; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-check-circle" style="color:var(--medical-purple); font-size:1.25rem;"></i>
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--medical-green);">
+                            <i class="fa-solid fa-arrow-up"></i> <span id="completionRate">0</span>% completion rate
+                        </p>
+                    </div>
+
+                    <!-- Total Revenue -->
+                    <div style="padding:var(--space-5); background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); border-left:4px solid var(--medical-blue);">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-3);">
+                            <div>
+                                <p style="color:var(--gray-500); font-size:0.85rem; margin-bottom:var(--space-2);">Revenue</p>
+                                <h3 style="color:var(--gray-800); font-size:2rem; font-weight:700;">₹<span id="totalRevenue">0</span></h3>
+                            </div>
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, rgba(96,165,250,0.1), rgba(59,130,246,0.05)); display:flex; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-indian-rupee-sign" style="color:var(--medical-blue); font-size:1.25rem;"></i>
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--medical-green);">
+                            <i class="fa-solid fa-arrow-up"></i> <span id="revenueTrend">0</span>% growth
+                        </p>
+                    </div>
+
+                    <!-- Pending Tests -->
+                    <div style="padding:var(--space-5); background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); border-left:4px solid var(--medical-green);">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-3);">
+                            <div>
+                                <p style="color:var(--gray-500); font-size:0.85rem; margin-bottom:var(--space-2);">Pending Tests</p>
+                                <h3 style="color:var(--gray-800); font-size:2rem; font-weight:700;" id="pendingTests">0</h3>
+                            </div>
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.05)); display:flex; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-clock" style="color:var(--medical-green); font-size:1.25rem;"></i>
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--medical-orange);">
+                            <i class="fa-solid fa-exclamation-circle"></i> <span id="pendingPercent">0</span>% awaiting results
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Charts Section -->
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--space-6); margin-bottom:var(--space-6);">
+                    
+                    <!-- Test Volume Chart -->
+                    <div class="medical-table-card">
+                        <div class="info-header" style="margin-bottom:var(--space-5);">
+                            <h3><i class="fa-solid fa-chart-line" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Test Volume Trend</h3>
+                        </div>
+                        <div style="height:300px; position:relative;">
+                            <canvas id="testVolumeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Test Category Distribution -->
+                    <div class="medical-table-card">
+                        <div class="info-header" style="margin-bottom:var(--space-5);">
+                            <h3><i class="fa-solid fa-chart-pie" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>By Category</h3>
+                        </div>
+                        
+                        <div id="categoryDistribution"></div>
+                    </div>
+
+                </div>
+
+                <!-- Popular Tests & Revenue -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+                    
+                    <!-- Most Popular Tests -->
+                    <div class="medical-table-card">
+                        <div class="info-header" style="margin-bottom:var(--space-5);">
+                            <h3><i class="fa-solid fa-star" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Most Popular Tests</h3>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; padding:var(--space-3);">Test Name</th>
+                                        <th style="text-align:center; padding:var(--space-3);">Bookings</th>
+                                        <th style="text-align:right; padding:var(--space-3);">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="popularTestsTable">
+                                    <tr>
+                                        <td colspan="3" style="text-align:center; padding:var(--space-3); color:var(--gray-500);">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Daily Revenue -->
+                    <div class="medical-table-card">
+                        <div class="info-header" style="margin-bottom:var(--space-5);">
+                            <h3><i class="fa-solid fa-coins" style="color:var(--medical-green); margin-right:var(--space-2);"></i>Daily Revenue (Last 7 Days)</h3>
+                        </div>
+                        
+                        <div id="dailyRevenueList" style="display:flex; flex-direction:column; gap:var(--space-3);">
+                            <p style="color:var(--gray-500); text-align:center;">Loading...</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize data on page load
+        let currentPeriodData = null;
+        let previousPeriodData = null;
+        let testVolumeChart = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, starting data fetch...');
+            loadReportsData('this_month');
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const dateRange = document.getElementById('dateRange');
+            dateRange.addEventListener('change', function(e) {
+                if (e.target.value === 'custom') {
+                    document.getElementById('customDateRange').style.display = 'block';
+                } else {
+                    document.getElementById('customDateRange').style.display = 'none';
+                    loadReportsData(e.target.value);
+                }
+            });
+        }
+
+        function loadReportsData(period) {
+            const params = getDateRange(period);
+            const url = `/api/lab-reports-data/?start_date=${params.start}&end_date=${params.end}`;
+            
+            console.log('Fetching from:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received:', data);
+                    hideErrorMessage();
+                    updateMetrics(data);
+                    updateCharts(data);
+                    updateTables(data);
+                })
+                .catch(error => {
+                    console.error('Error loading reports:', error);
+                    showErrorMessage('Failed to load reports data. Please check the browser console for details.');
+                });
+        }
+
+        function getDateRange(period) {
+            const today = new Date();
+            let start, end;
+            end = today;
+
+            switch(period) {
+                case 'this_month':
+                    start = new Date(today.getFullYear(), today.getMonth(), 1);
+                    break;
+                case 'last_month':
+                    start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    end = new Date(today.getFullYear(), today.getMonth(), 0);
+                    break;
+                case 'last_3_months':
+                    start = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+                    break;
+                case 'this_year':
+                    start = new Date(today.getFullYear(), 0, 1);
+                    break;
+                default:
+                    start = new Date(today.getFullYear(), today.getMonth(), 1);
+            }
+
+            return {
+                start: formatDate(start),
+                end: formatDate(end)
+            };
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function applyCustomRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                showErrorMessage('Please select both start and end dates');
+                return;
+            }
+
+            const url = `/api/lab-reports-data/?start_date=${startDate}&end_date=${endDate}`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideErrorMessage();
+                    updateMetrics(data);
+                    updateCharts(data);
+                    updateTables(data);
+                })
+                .catch(error => {
+                    console.error('Error loading reports:', error);
+                    showErrorMessage('Failed to load reports data. ' + error.message);
+                });
+        }
+
+        function updateMetrics(data) {
+            // Update card metrics
+            document.getElementById('totalTests').textContent = data.metrics.total_tests;
+            document.getElementById('completedTests').textContent = data.metrics.completed_tests;
+            document.getElementById('totalRevenue').textContent = formatCurrency(data.metrics.total_revenue);
+            document.getElementById('pendingTests').textContent = data.metrics.pending_tests;
+            
+            // Calculate rates
+            const completionRate = data.metrics.total_tests > 0 
+                ? Math.round((data.metrics.completed_tests / data.metrics.total_tests) * 100) 
+                : 0;
+            const pendingPercent = data.metrics.total_tests > 0
+                ? Math.round((data.metrics.pending_tests / data.metrics.total_tests) * 100)
+                : 0;
+            
+            document.getElementById('completionRate').textContent = completionRate;
+            document.getElementById('pendingPercent').textContent = pendingPercent;
+            
+            // Calculate trends
+            const testsTrend = data.metrics.tests_trend || 12;
+            const revenueTrend = data.metrics.revenue_trend || 15;
+            document.getElementById('testsTrend').textContent = testsTrend;
+            document.getElementById('revenueTrend').textContent = revenueTrend;
+        }
+
+        function updateCharts(data) {
+            // Test Volume Chart
+            if (data.charts && data.charts.tests_per_month) {
+                updateTestVolumeChart(data.charts.tests_per_month);
+            }
+            
+            // Category Distribution
+            if (data.charts && data.charts.test_types) {
+                updateCategoryDistribution(data.charts.test_types);
+            }
+        }
+
+        function updateTestVolumeChart(chartData) {
+            const ctx = document.getElementById('testVolumeChart');
+            if (!ctx) return;
+            
+            const canvasCtx = ctx.getContext('2d');
+            
+            if (testVolumeChart !== null && testVolumeChart !== undefined) {
+                testVolumeChart.destroy();
+            }
+
+            testVolumeChart = new Chart(canvasCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels || [],
+                    datasets: [{
+                        label: 'Tests Completed',
+                        data: chartData.data || [],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#06b6d4',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryDistribution(testTypes) {
+            const container = document.getElementById('categoryDistribution');
+            if (!container) return;
+            
+            let html = '';
+
+            if (!testTypes || testTypes.length === 0) {
+                html = '<p style="color:var(--gray-500); text-align:center;">No category data available</p>';
+            } else {
+                testTypes.forEach((item, index) => {
+                    const colors = ['#22d3ee', '#a78bfa', '#60a5fa', '#34d399'];
+                    const color = colors[index % colors.length];
+                    const percentage = item.percentage || 0;
+
+                    html += `
+                        <div style="margin-bottom:var(--space-4);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+                                <span style="font-size:0.9rem; color:var(--gray-700); font-weight:600;">${item.name || 'Unknown'}</span>
+                                <span style="font-size:0.9rem; color:var(--gray-800); font-weight:700;">${percentage}%</span>
+                            </div>
+                            <div style="height:8px; background:var(--gray-200); border-radius:4px; overflow:hidden;">
+                                <div style="width:${percentage}%; height:100%; background:linear-gradient(135deg, ${color}, ${color});"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateTables(data) {
+            if (data.popular_tests) {
+                updatePopularTestsTable(data.popular_tests);
+            }
+            if (data.daily_revenue) {
+                updateDailyRevenueList(data.daily_revenue);
+            }
+        }
+
+        function updatePopularTestsTable(tests) {
+            const tbody = document.getElementById('popularTestsTable');
+            if (!tbody) return;
+            
+            if (!tests || tests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:var(--space-3); color:var(--gray-500);">No test data available</td></tr>';
+                return;
+            }
+
+            let html = '';
+            const colors = ['#22d3ee', '#a78bfa', '#60a5fa', '#34d399'];
+
+            tests.forEach((test, index) => {
+                const color = colors[index % colors.length];
+                html += `
+                    <tr style="border-bottom:1px solid var(--gray-100);">
+                        <td style="padding:var(--space-3);">
+                            <p style="font-weight:600; color:var(--gray-800);">${test.name || 'Unknown'}</p>
+                        </td>
+                        <td style="padding:var(--space-3); text-align:center;">
+                            <span style="padding:0.4rem 0.9rem; background:rgba(34,211,238,0.1); color:${color}; border-radius:var(--radius-full); font-weight:600;">${test.bookings || 0}</span>
+                        </td>
+                        <td style="padding:var(--space-3); text-align:right; font-weight:700; color:var(--gray-800);">₹${formatCurrency(test.revenue || 0)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function updateDailyRevenueList(dailyRevenue) {
+            const container = document.getElementById('dailyRevenueList');
+            if (!container) return;
+            
+            if (!dailyRevenue || dailyRevenue.length === 0) {
+                container.innerHTML = '<p style="color:var(--gray-500); text-align:center;">No revenue data available</p>';
+                return;
+            }
+
+            let html = '';
+            dailyRevenue.forEach(day => {
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-3); background:var(--gray-50); border-radius:var(--radius-md);">
+                        <div>
+                            <p style="font-size:0.85rem; color:var(--gray-500); margin-bottom:4px;">${day.day_label || 'N/A'}</p>
+                            <p style="font-weight:600; color:var(--gray-800);">${day.date || 'N/A'}</p>
+                        </div>
+                        <p style="font-weight:700; color:var(--medical-green); font-size:1.1rem;">₹${formatCurrency(day.revenue || 0)}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function formatCurrency(amount) {
+            try {
+                return new Intl.NumberFormat('en-IN', {
+                    maximumFractionDigits: 0
+                }).format(amount);
+            } catch (e) {
+                return amount;
+            }
+        }
+
+        function exportReport() {
+            const dateRange = document.getElementById('dateRange').value;
+            const params = getDateRange(dateRange);
+            window.location.href = `/export-lab-report/?start_date=${params.start}&end_date=${params.end}&format=pdf`;
+        }
+
+        function showErrorMessage(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            if (errorDiv && errorText) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            console.error('Error:', message);
+        }
+
+        function hideErrorMessage() {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>

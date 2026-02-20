@@ -1,0 +1,303 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Results | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">Update Test Results</h1>
+                    <p class="page-subtitle">Enter and manage patient test results</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn" onclick="document.getElementById('searchInput').focus()">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                    <button class="header-icon-btn" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Success/Error Messages -->
+            {% if messages %}
+            <div style="margin-bottom:var(--space-4);">
+                {% for message in messages %}
+                <div style="padding:var(--space-3) var(--space-4); background:{% if message.tags == 'success' %}#d1fae5{% elif message.tags == 'error' %}#fee2e2{% else %}#dbeafe{% endif %}; color:{% if message.tags == 'success' %}#065f46{% elif message.tags == 'error' %}#991b1b{% else %}#1e40af{% endif %}; border-radius:var(--radius-md); margin-bottom:var(--space-2); display:flex; align-items:center; gap:var(--space-2);">
+                    <i class="fa-solid {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Filter Tabs -->
+                <div style="display:flex; gap:var(--space-3); margin-bottom:var(--space-6); border-bottom:2px solid var(--gray-200); padding-bottom:var(--space-2);">
+                    <a href="{% url 'lab_results' %}?status=Pending" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if status_filter == 'Pending' %}var(--medical-purple){% else %}var(--gray-500){% endif %}; font-weight:{% if status_filter == 'Pending' %}600{% else %}500{% endif %}; border-bottom:{% if status_filter == 'Pending' %}3px solid var(--medical-purple){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        Pending Results
+                        {% if pending_count > 0 %}
+                            <span style="background:{% if status_filter == 'Pending' %}var(--medical-purple){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ pending_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'lab_results' %}?status=Completed" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if status_filter == 'Completed' %}var(--medical-purple){% else %}var(--gray-500){% endif %}; font-weight:{% if status_filter == 'Completed' %}600{% else %}500{% endif %}; border-bottom:{% if status_filter == 'Completed' %}3px solid var(--medical-purple){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        Completed
+                        {% if completed_count > 0 %}
+                            <span style="background:{% if status_filter == 'Completed' %}var(--medical-purple){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ completed_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'lab_results' %}" 
+                       style="padding:var(--space-2) var(--space-4); border:none; background:none; color:{% if not status_filter %}var(--medical-purple){% else %}var(--gray-500){% endif %}; font-weight:{% if not status_filter %}600{% else %}500{% endif %}; border-bottom:{% if not status_filter %}3px solid var(--medical-purple){% else %}none{% endif %}; cursor:pointer; font-size:0.95rem; text-decoration:none;">
+                        All Results
+                        {% if total_count > 0 %}
+                            <span style="background:{% if not status_filter %}var(--medical-purple){% else %}var(--gray-400){% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:6px;">{{ total_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+
+                <!-- Results Table -->
+                <div class="medical-table-card">
+                    <div class="info-header" style="margin-bottom:var(--space-5);">
+                        <h3>
+                            <i class="fa-solid fa-file-medical" style="color:var(--medical-purple); margin-right:var(--space-2);"></i>
+                            Test Results
+                            {% if status_filter %}
+                                <span style="color:var(--gray-500); font-weight:400; font-size:0.9rem;">- {{ status_filter }}</span>
+                            {% endif %}
+                        </h3>
+                        <div style="display:flex; gap:var(--space-3); align-items:center;">
+                            <input type="text" id="searchInput" placeholder="Search results..." style="padding:0.5rem 1rem; border:1px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.9rem; width:250px;">
+                        </div>
+                    </div>
+
+                    {% if bookings %}
+                    <form method="POST" action="{% url 'lab_results' %}">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-user" style="margin-right:6px; color:var(--gray-400);"></i>Patient
+                                        </th>
+                                        <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-flask" style="margin-right:6px; color:var(--gray-400);"></i>Test
+                                        </th>
+                                        <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-calendar" style="margin-right:6px; color:var(--gray-400);"></i>Booking Date
+                                        </th>
+                                        <th style="text-align:left; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-clipboard-check" style="margin-right:6px; color:var(--gray-400);"></i>Result
+                                        </th>
+                                        <th style="text-align:center; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-info-circle" style="margin-right:6px; color:var(--gray-400);"></i>Status
+                                        </th>
+                                        <th style="text-align:center; padding:var(--space-3) var(--space-4);">
+                                            <i class="fa-solid fa-cog" style="margin-right:6px; color:var(--gray-400);"></i>Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody">
+                                    {% for booking in bookings %}
+                                    <tr style="border-bottom:1px solid var(--gray-100);" class="result-row" data-booking-id="{{ booking.id }}">
+                                        <td style="padding:var(--space-4);">
+                                            <div style="display:flex; align-items:center; gap:var(--space-3);">
+                                                <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #a78bfa, #8b5cf6); display:flex; align-items:center; justify-content:center; color:white; font-weight:600;">
+                                                    {{ booking.patient.user.first_name|default:booking.patient.user.username|slice:":1"|upper }}
+                                                </div>
+                                                <div>
+                                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;" class="patient-name">
+                                                        {{ booking.patient.user.get_full_name|default:booking.patient.user.username }}
+                                                    </p>
+                                                    <p style="font-size:0.8rem; color:var(--gray-500);">
+                                                        ID: #{{ booking.patient.id }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="padding:var(--space-4);">
+                                            <div>
+                                                <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;" class="test-name">{{ booking.test.test_name }}</p>
+                                                <p style="font-size:0.8rem; color:var(--gray-500);">
+                                                    <i class="fa-solid fa-vial" style="font-size:0.7rem;"></i> Lab: {{ booking.lab.name }}
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td style="padding:var(--space-4);">
+                                            <p style="color:var(--gray-700);">{{ booking.booking_date|date:"d M Y" }}</p>
+                                            <p style="font-size:0.8rem; color:var(--gray-500);">Created: {{ booking.created_at|date:"h:i A" }}</p>
+                                        </td>
+                                        <td style="padding:var(--space-4);">
+                                            {% if booking.status == 'Completed' %}
+                                                <span style="color:var(--success-green); font-weight:600;">
+                                                    <i class="fa-solid fa-check-circle"></i> Result Submitted
+                                                </span>
+                                            {% else %}
+                                                <input type="text" 
+                                                       name="result_{{ booking.id }}" 
+                                                       placeholder="Enter result value"
+                                                       style="padding:0.5rem; border:1px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.85rem; width:100%;"
+                                                       {% if booking.status == 'Completed' %}disabled{% endif %}>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding:var(--space-4); text-align:center;">
+                                            {% if booking.status == 'Completed' %}
+                                                <span class="status-badge status-approved">
+                                                    Completed
+                                                </span>
+                                            {% else %}
+                                                <select name="status_{{ booking.id }}" 
+                                                        style="padding:0.5rem; border:1px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.85rem; font-weight:600; cursor:pointer;">
+                                                    <option value="Booked" {% if booking.status == 'Booked' %}selected{% endif %}>Pending</option>
+                                                    <option value="In Progress" {% if booking.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                                    <option value="Completed">Mark as Completed</option>
+                                                </select>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding:var(--space-4); text-align:center;">
+                                            <div style="display:flex; gap:var(--space-2); justify-content:center;">
+                                                {% if booking.status != 'Completed' %}
+                                                <button type="submit" 
+                                                        name="save" 
+                                                        value="{{ booking.id }}"
+                                                        style="padding:0.5rem 1rem; background:rgba(167,139,250,0.1); color:var(--medical-purple); border:none; border-radius:var(--radius-md); font-size:0.85rem; font-weight:600; cursor:pointer; transition:var(--transition);"
+                                                        onmouseover="this.style.background='var(--medical-purple)'; this.style.color='white';"
+                                                        onmouseout="this.style.background='rgba(167,139,250,0.1)'; this.style.color='var(--medical-purple)';">
+                                                    <i class="fa-solid fa-save"></i> Save Result
+                                                </button>
+                                                {% endif %}
+                                                <a href="{% url 'lab_booking_detail' booking.id %}" 
+                                                   style="padding:0.5rem 1rem; background:rgba(34,211,238,0.1); color:var(--medical-cyan); border-radius:var(--radius-md); text-decoration:none; font-size:0.85rem; font-weight:600; transition:var(--transition);"
+                                                   onmouseover="this.style.background='var(--medical-cyan)'; this.style.color='white';"
+                                                   onmouseout="this.style.background='rgba(34,211,238,0.1)'; this.style.color='var(--medical-cyan)';">
+                                                    <i class="fa-solid fa-eye"></i> View
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div style="text-align:center; padding:var(--space-8) var(--space-4);">
+                        <i class="fa-solid fa-check-double" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                        <h3 style="color:var(--gray-600); margin-bottom:var(--space-2);">
+                            {% if status_filter %}
+                                No {{ status_filter|lower }} results found
+                            {% else %}
+                                All results up to date!
+                            {% endif %}
+                        </h3>
+                        <p style="color:var(--gray-500);">
+                            {% if status_filter %}
+                                There are no {{ status_filter|lower }} test results at the moment.
+                            {% else %}
+                                There are no pending test results to update.
+                            {% endif %}
+                        </p>
+                        {% if status_filter %}
+                        <a href="{% url 'lab_results' %}" style="display:inline-block; margin-top:var(--space-4); padding:var(--space-2) var(--space-4); background:var(--medical-purple); color:white; border-radius:var(--radius-md); text-decoration:none; font-weight:600;">
+                            <i class="fa-solid fa-list"></i> View All Results
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Stats Section -->
+                {% if bookings %}
+                <div class="medical-table-card" style="margin-top:var(--space-6);">
+                    <div class="info-header" style="margin-bottom:var(--space-5);">
+                        <h3><i class="fa-solid fa-chart-bar" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>Quick Statistics</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:var(--space-4); padding:var(--space-4);">
+                        <div style="padding:var(--space-4); background:linear-gradient(135deg, rgba(167,139,250,0.1), rgba(139,92,246,0.1)); border-radius:var(--radius-lg); text-align:center;">
+                            <i class="fa-solid fa-hourglass-half" style="font-size:2rem; color:var(--medical-purple); margin-bottom:var(--space-2);"></i>
+                            <h4 style="font-size:2rem; font-weight:700; color:var(--gray-800); margin-bottom:var(--space-1);">{{ pending_count }}</h4>
+                            <p style="color:var(--gray-600); font-size:0.9rem;">Pending Results</p>
+                        </div>
+                        <div style="padding:var(--space-4); background:linear-gradient(135deg, rgba(34,211,238,0.1), rgba(6,182,212,0.1)); border-radius:var(--radius-lg); text-align:center;">
+                            <i class="fa-solid fa-check-double" style="font-size:2rem; color:var(--medical-cyan); margin-bottom:var(--space-2);"></i>
+                            <h4 style="font-size:2rem; font-weight:700; color:var(--gray-800); margin-bottom:var(--space-1);">{{ completed_count }}</h4>
+                            <p style="color:var(--gray-600); font-size:0.9rem;">Completed</p>
+                        </div>
+                        <div style="padding:var(--space-4); background:linear-gradient(135deg, rgba(251,146,60,0.1), rgba(249,115,22,0.1)); border-radius:var(--radius-lg); text-align:center;">
+                            <i class="fa-solid fa-flask" style="font-size:2rem; color:#f97316; margin-bottom:var(--space-2);"></i>
+                            <h4 style="font-size:2rem; font-weight:700; color:var(--gray-800); margin-bottom:var(--space-1);">{{ total_count }}</h4>
+                            <p style="color:var(--gray-600); font-size:0.9rem;">Total Tests</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.result-row');
+            
+            rows.forEach(row => {
+                const patientName = row.querySelector('.patient-name').textContent.toLowerCase();
+                const testName = row.querySelector('.test-name').textContent.toLowerCase();
+                
+                if (patientName.includes(searchValue) || testName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Confirm before saving
+        document.querySelectorAll('button[name="save"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const bookingId = this.value;
+                const resultInput = document.querySelector(`input[name="result_${bookingId}"]`);
+                const statusSelect = document.querySelector(`select[name="status_${bookingId}"]`);
+                
+                if (!resultInput || !resultInput.value.trim()) {
+                    if (!confirm('No result value entered. Continue anyway?')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

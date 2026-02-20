@@ -1,0 +1,589 @@
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments | Front Desk - BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .tab-nav {
+            display: flex;
+            gap: var(--space-2);
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: var(--space-3) var(--space-5);
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover { color: var(--gray-800); }
+        .tab-btn.active {
+            color: var(--medical-cyan);
+            border-bottom-color: var(--medical-cyan);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .payment-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 160px 130px 150px 130px 110px;
+            align-items: center;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .payment-row:hover { background: var(--gray-50); }
+        .payment-row:last-child { border-bottom: none; }
+
+        .search-filter-bar {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .search-input-wrap i {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+
+        .search-input-wrap input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4) var(--space-3) 2.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            background: var(--white);
+            color: var(--gray-800);
+        }
+
+        .search-input-wrap input:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .filter-select {
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            background: var(--white);
+            color: var(--gray-800);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+        }
+
+        @media (max-width: 1024px) {
+            .payment-row { grid-template-columns: 1fr; gap: var(--space-3); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">Front Desk</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'frontdesk_book_appointment' %}" class="nav-item">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i><span>Lab Tests</span>
+                </a>
+                <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item">
+                    <i class="fa-solid fa-stethoscope"></i>
+                    <span>Doctors</span>
+                </a>
+                <a href="{% url 'frontdesk_payments' %}" class="nav-item active">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'frontdesk_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'frontdesk_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title" style="font-size:1.75rem;">Payments</h1>
+                    <p class="page-subtitle">View and manage all patient payments across the hospital</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Messages -->
+                {% if messages %}
+                <div style="margin-bottom: var(--space-6);">
+                    {% for message in messages %}
+                    <div style="padding: var(--space-4); background: {% if message.tags == 'success' %}rgba(16, 185, 129, 0.1){% elif message.tags == 'error' %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; border-radius: var(--radius-md); margin-bottom: var(--space-3);">
+                        <p style="color: {% if message.tags == 'success' %}var(--status-active){% elif message.tags == 'error' %}var(--status-inactive){% else %}var(--status-pending){% endif %}; font-weight: 500;">
+                            {{ message }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: var(--space-6);">
+                    <!-- Total Revenue -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Revenue</p>
+                            <h3 class="stat-value">₹{{ total_payments }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-list"></i>
+                                <span>All transactions</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Paid -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #34d399, #10b981);">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Amount Collected</p>
+                            <h3 class="stat-value">₹{{ paid_payments }}</h3>
+                            <p class="stat-change positive">
+                                <i class="fa-solid fa-check"></i>
+                                <span>Paid payments</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pending -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending Amount</p>
+                            <h3 class="stat-value">₹{{ pending_payments }}</h3>
+                            <p class="stat-change" style="color: var(--warning-yellow);">
+                                <i class="fa-solid fa-exclamation-circle"></i>
+                                <span>Awaiting payment</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Total Count -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Transactions</p>
+                            <h3 class="stat-value">{{ payments.count }}</h3>
+                            <p class="stat-change" style="color: var(--text-medium);">
+                                <i class="fa-solid fa-database"></i>
+                                <span>All records</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search & Filter Bar -->
+                <div class="medical-table-card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+                    <form method="GET" action="">
+                        <div class="search-filter-bar">
+                            <div class="search-input-wrap">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" name="search" placeholder="Search by patient name or email..."
+                                    value="{{ search_query|default:'' }}">
+                            </div>
+                            <select name="status" class="filter-select" onchange="this.form.submit()">
+                                <option value="">All Statuses</option>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="add-btn-small">
+                                <i class="fa-solid fa-search"></i> Search
+                            </button>
+                            {% if search_query or current_status %}
+                            <a href="{% url 'frontdesk_payments' %}" class="action-btn" style="text-decoration:none; padding: var(--space-2) var(--space-4); display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-times"></i> Clear
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Payments Table with Tabs -->
+                <div class="medical-table-card">
+                    <div class="tab-nav">
+                        <button class="tab-btn active" onclick="switchTab('all', event)">
+                            <i class="fa-solid fa-list"></i> All Payments
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('pending', event)">
+                            <i class="fa-solid fa-clock"></i> Pending
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('paid', event)">
+                            <i class="fa-solid fa-check-circle"></i> Paid
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('failed', event)">
+                            <i class="fa-solid fa-times-circle"></i> Failed
+                        </button>
+                    </div>
+
+                    <!-- All Payments Tab -->
+                    <div id="tab-all" class="tab-content active">
+                        {% if payments %}
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.82rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Patient</div>
+                                <div>Doctor / Lab</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in payments %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                        {{ payment.patient.user.get_full_name|default:payment.patient.user.username }}
+                                    </p>
+                                    <p style="font-size:0.8rem; color:var(--gray-500);">
+                                        {{ payment.payment_date|date:"d M Y" }}
+                                    </p>
+                                </div>
+                                <div>
+                                    {% if payment.appointment %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                            Dr. {{ payment.appointment.doctor.user.get_full_name }}
+                                        </p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);">
+                                            <i class="fa-solid fa-calendar" style="margin-right:4px;"></i>
+                                            {{ payment.appointment.appointment_date|date:"d M Y" }}
+                                        </p>
+                                    {% elif payment.test_booking %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                            {{ payment.test_booking.lab.name }}
+                                        </p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);">
+                                            <i class="fa-solid fa-flask" style="margin-right:4px;"></i>
+                                            Lab Test
+                                        </p>
+                                    {% else %}
+                                        <span style="color:var(--gray-400); font-size:0.85rem;">—</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--gray-900);">
+                                    ₹{{ payment.amount }}
+                                </div>
+                                <div>
+                                    <span class="status-badge {% if payment.payment_status == 'Paid' %}status-active{% elif payment.payment_status == 'Pending' %}status-pending{% else %}status-inactive{% endif %}">
+                                        <i class="fa-solid fa-circle"></i>
+                                        {{ payment.payment_status }}
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-600);">
+                                    {% if payment.payment_method %}
+                                        <i class="fa-solid fa-{% if payment.payment_method == 'UPI' %}mobile-alt{% elif payment.payment_method == 'Card' %}credit-card{% elif payment.payment_method == 'Cash' %}money-bill{% else %}building-columns{% endif %}" style="margin-right:4px;"></i>
+                                        {{ payment.payment_method }}
+                                    {% else %}
+                                        <span style="color:var(--gray-400);">—</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'frontdesk_payment_detail' payment.id %}" class="action-btn view-btn" title="View / Update">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding:var(--space-12);">
+                            <i class="fa-solid fa-receipt" style="font-size:4rem; color:var(--gray-300); margin-bottom:var(--space-4);"></i>
+                            <p style="color:var(--gray-500); font-size:1.1rem;">No payments found</p>
+                            {% if search_query or current_status %}
+                            <a href="{% url 'frontdesk_payments' %}" style="color:var(--medical-cyan); text-decoration:none; font-weight:500;">Clear filters</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pending Tab -->
+                    <div id="tab-pending" class="tab-content">
+                        {% with pending=payments|dictsort:"payment_date" %}
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.82rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Patient</div>
+                                <div>Doctor / Lab</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in payments %}
+                            {% if payment.payment_status == 'Pending' %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                        {{ payment.patient.user.get_full_name|default:payment.patient.user.username }}
+                                    </p>
+                                    <p style="font-size:0.8rem; color:var(--gray-500);">{{ payment.payment_date|date:"d M Y" }}</p>
+                                </div>
+                                <div>
+                                    {% if payment.appointment %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-calendar" style="margin-right:4px;"></i>{{ payment.appointment.appointment_date|date:"d M Y" }}</p>
+                                    {% elif payment.test_booking %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">{{ payment.test_booking.lab.name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-flask" style="margin-right:4px;"></i>Lab Test</p>
+                                    {% endif %}
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.05rem; font-weight:700; color:#d97706;">₹{{ payment.amount }}</div>
+                                <div>
+                                    <span class="status-badge status-pending">
+                                        <i class="fa-solid fa-circle"></i> Pending
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-400);">Not selected</div>
+                                <div>
+                                    <a href="{% url 'frontdesk_payment_detail' payment.id %}" class="action-btn view-btn" title="Update Payment">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endwith %}
+                    </div>
+
+                    <!-- Paid Tab -->
+                    <div id="tab-paid" class="tab-content">
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.82rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Patient</div>
+                                <div>Doctor / Lab</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in payments %}
+                            {% if payment.payment_status == 'Paid' %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                        {{ payment.patient.user.get_full_name|default:payment.patient.user.username }}
+                                    </p>
+                                    <p style="font-size:0.8rem; color:var(--gray-500);">{{ payment.payment_date|date:"d M Y" }}</p>
+                                </div>
+                                <div>
+                                    {% if payment.appointment %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-calendar" style="margin-right:4px;"></i>{{ payment.appointment.appointment_date|date:"d M Y" }}</p>
+                                    {% elif payment.test_booking %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">{{ payment.test_booking.lab.name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-flask" style="margin-right:4px;"></i>Lab Test</p>
+                                    {% endif %}
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--status-active);">₹{{ payment.amount }}</div>
+                                <div>
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i> Paid
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-600);">
+                                    <i class="fa-solid fa-{% if payment.payment_method == 'UPI' %}mobile-alt{% elif payment.payment_method == 'Card' %}credit-card{% elif payment.payment_method == 'Cash' %}money-bill{% else %}building-columns{% endif %}" style="margin-right:4px;"></i>
+                                    {{ payment.payment_method }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'frontdesk_payment_detail' payment.id %}" class="action-btn view-btn" title="View Receipt">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Failed Tab -->
+                    <div id="tab-failed" class="tab-content">
+                        <div>
+                            <div class="payment-row" style="background:var(--gray-50); font-weight:600; font-size:0.82rem; color:var(--gray-600); text-transform:uppercase;">
+                                <div>Bill ID</div>
+                                <div>Patient</div>
+                                <div>Doctor / Lab</div>
+                                <div>Amount</div>
+                                <div>Status</div>
+                                <div>Method</div>
+                                <div>Action</div>
+                            </div>
+                            {% for payment in payments %}
+                            {% if payment.payment_status == 'Failed' %}
+                            <div class="payment-row">
+                                <div style="font-weight:600; color:var(--gray-500);">#{{ payment.id }}</div>
+                                <div>
+                                    <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">
+                                        {{ payment.patient.user.get_full_name|default:payment.patient.user.username }}
+                                    </p>
+                                    <p style="font-size:0.8rem; color:var(--gray-500);">{{ payment.payment_date|date:"d M Y" }}</p>
+                                </div>
+                                <div>
+                                    {% if payment.appointment %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">Dr. {{ payment.appointment.doctor.user.get_full_name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-calendar" style="margin-right:4px;"></i>{{ payment.appointment.appointment_date|date:"d M Y" }}</p>
+                                    {% elif payment.test_booking %}
+                                        <p style="font-weight:600; color:var(--gray-800); margin-bottom:3px;">{{ payment.test_booking.lab.name }}</p>
+                                        <p style="font-size:0.8rem; color:var(--gray-500);"><i class="fa-solid fa-flask" style="margin-right:4px;"></i>Lab Test</p>
+                                    {% endif %}
+                                </div>
+                                <div style="font-family:var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--status-inactive);">₹{{ payment.amount }}</div>
+                                <div>
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle"></i> Failed
+                                    </span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--gray-600);">
+                                    {% if payment.payment_method %}{{ payment.payment_method }}{% else %}<span style="color:var(--gray-400);">—</span>{% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'frontdesk_payment_detail' payment.id %}" class="action-btn view-btn" title="Update Payment">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

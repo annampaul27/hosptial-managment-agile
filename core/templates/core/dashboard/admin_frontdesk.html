@@ -1,0 +1,555 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Front Desk Staff | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* ===== WIDER MODAL ===== */
+        #addFrontdeskModal .modal-content {
+            max-width: 550px;
+        }
+
+        /* ===== MODAL FORM LAYOUT ===== */
+        .modal-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-form-grid .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ===== MODAL FORM GROUP ===== */
+        .modal-body .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+
+        .modal-body .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .modal-body .form-group label i {
+            color: var(--gray-400);
+            font-size: 0.78rem;
+            width: 14px;
+            text-align: center;
+        }
+
+        .modal-body .form-group .required {
+            color: var(--error-red);
+        }
+
+        /* ===== MODAL INPUTS — white backgrounds ===== */
+        .modal-body .form-group input,
+        .modal-body .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            background-color: #ffffff;
+            color: var(--gray-800);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 0;
+        }
+
+        .modal-body .form-group input:focus,
+        .modal-body .form-group select:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+        }
+
+        /* ===== SELECT ARROW ===== */
+        .modal-body .form-group select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-color: #ffffff;
+            padding-right: 36px;
+        }
+
+        /* ===== SECTION DIVIDER INSIDE MODAL ===== */
+        .modal-section-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+            grid-column: 1 / -1;
+        }
+
+        .modal-section-label .section-icon-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(96, 165, 250, 0.12));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--medical-cyan);
+            font-size: 0.75rem;
+        }
+
+        .modal-section-label span {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-family: var(--font-heading);
+        }
+
+        /* ===== HELP TEXT ===== */
+        .modal-help-text {
+            font-size: 0.76rem;
+            color: var(--gray-500);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .modal-help-text i {
+            color: var(--medical-cyan);
+            font-size: 0.7rem;
+        }
+
+        /* ===== STATUS BADGE ===== */
+        .frontdesk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--medical-cyan);
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .frontdesk-badge i {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' or request.resolver_match.url_name == 'admin_doctor_edit' or request.resolver_match.url_name == 'admin_doctor_detail' or request.resolver_match.url_name == 'admin_doctor_add' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' or request.resolver_match.url_name == 'admin_edit_lab' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <a href="{% url 'admin_lab_technicians' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_lab_technicians' or request.resolver_match.url_name == 'admin_edit_technician' %}active{% endif %}">
+                    <i class="fa-solid fa-user-nurse"></i>
+                    <span>Lab Technicians</span>
+                </a>
+                <a href="{% url 'admin_frontdesk' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_frontdesk' or request.resolver_match.url_name == 'admin_edit_frontdesk' %}active{% endif %}">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Front Desk</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="headerSearchInput" placeholder="Search front desk staff..." value="{{ request.GET.q }}">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title & Actions -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Front Desk Staff</h1>
+                        <p class="page-subtitle">View and manage all front desk personnel</p>
+                    </div>
+                    <div class="page-actions-section">
+                        <!-- Search Form -->
+                        <form method="get" class="inline-search-form">
+                            <div class="inline-search-box">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" name="q" placeholder="Search staff..." value="{{ request.GET.q }}">
+                            </div>
+                        </form>
+
+                        <!-- Add Staff Button -->
+                        <button class="add-btn" onclick="openAddModal()">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Staff</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Front Desk Table Card -->
+                <div class="medical-table-card">
+                    <table class="medical-table">
+                        <thead>
+                            <tr>
+                                <th class="cell-id">ID</th>
+                                <th class="cell-patient">Name</th>
+                                <th class="cell-email">Email</th>
+                                <th class="cell-phone">Phone</th>
+                                <th class="cell-status">Status</th>
+                                <th class="cell-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff in frontdesks %}
+                            <tr>
+                                <td class="cell-id">FD{{ staff.id }}</td>
+
+                                <td class="cell-patient">
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background: linear-gradient(135deg, #22d3ee, #60a5fa);">
+                                            {{ staff.user.first_name|default:staff.user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div class="patient-details">
+                                            <div class="patient-name">{{ staff.user.get_full_name|default:staff.user.username }}</div>
+                                            <div class="patient-id">@{{ staff.user.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="cell-email">{{ staff.user.email|default:"—" }}</td>
+                                <td class="cell-phone">{{ staff.phone|default:"—" }}</td>
+
+                                <td class="cell-status">
+                                    {% if staff.status == 'Active' %}
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="cell-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'admin_edit_frontdesk' staff.id %}" class="action-btn edit-btn" title="Edit Staff">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <button class="action-btn delete-btn"
+                                            onclick="openDeleteModal({{ staff.id }}, '{{ staff.user.get_full_name|default:staff.user.username }}')"
+                                            title="Delete Staff">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-row">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-user-tie"></i>
+                                        <p>No front desk staff found</p>
+                                        <button class="add-btn-small" onclick="openAddModal()" style="border:none; cursor:pointer;">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add First Staff Member
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if frontdesks %}
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            Showing <strong>1-{{ frontdesks|length }}</strong> of <strong>{{ frontdesks|length }}</strong> staff members
+                        </div>
+                        <div class="pagination-controls">
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                            <span class="page-current">Page 1 of 1</span>
+                            <a href="#" class="page-btn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== ADD FRONT DESK MODAL ==================== -->
+    <div class="modal" id="addFrontdeskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-tie" style="color:var(--medical-cyan); margin-right:8px;"></i>Add Front Desk Staff</h3>
+                <button class="modal-close" onclick="closeAddModal()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <form method="POST" id="addFrontdeskForm" action="{% url 'admin_add_frontdesk' %}">
+                    {% csrf_token %}
+
+                    <!-- Account Info Section -->
+                    <div class="modal-form-grid">
+                        <div class="modal-section-label">
+                            <div class="section-icon-sm"><i class="fa-solid fa-user"></i></div>
+                            <span>Account Information</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-at"></i> Username <span class="required">*</span></label>
+                            <input type="text" name="username" placeholder="e.g. jane_desk" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-envelope"></i> Email <span class="required">*</span></label>
+                            <input type="email" name="email" placeholder="e.g. jane@example.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-lock"></i> Password <span class="required">*</span></label>
+                            <input type="password" name="password" placeholder="Min 8 characters" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> Phone <span class="required">*</span></label>
+                            <input type="text" name="phone" placeholder="e.g. 9876543210" required>
+                        </div>
+                    </div>
+
+                    <!-- Status Section -->
+                    <div class="modal-form-grid" style="margin-top: 20px;">
+                        <div class="modal-section-label">
+                            <div class="section-icon-sm"><i class="fa-solid fa-toggle-on"></i></div>
+                            <span>Account Status</span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label><i class="fa-solid fa-circle-check"></i> Status <span class="required">*</span></label>
+                            <select name="status" required>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                            <div class="modal-help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                Set the initial account status for this staff member
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="add-btn" onclick="submitAddModal()" style="border:none; cursor:pointer;">
+                    <i class="fa-solid fa-plus"></i> Add Staff
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="staffName"></strong>?</p>
+                <p class="warning-text">This action cannot be undone and will remove the staff member's account and profile.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <form id="deleteFrontdeskForm" method="POST" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">
+                        <i class="fa-solid fa-trash"></i> Delete Staff
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ===== ADD MODAL =====
+        function openAddModal() {
+            document.getElementById('addFrontdeskModal').classList.add('active');
+        }
+        function closeAddModal() {
+            document.getElementById('addFrontdeskModal').classList.remove('active');
+        }
+        function submitAddModal() {
+            document.getElementById('addFrontdeskForm').submit();
+        }
+
+        // ===== DELETE MODAL =====
+        function openDeleteModal(staffId, staffName) {
+            document.getElementById('staffName').textContent = staffName;
+            document.getElementById('deleteFrontdeskForm').action = "{% url 'admin_delete_frontdesk' 0 %}".replace('0', staffId);
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        // ===== CLOSE MODALS ON BACKDROP CLICK =====
+        document.getElementById('addFrontdeskModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        // ===== CLOSE MODALS ON ESCAPE =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        // ===== HEADER SEARCH REDIRECT =====
+        document.getElementById('headerSearchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.location.href = "{% url 'admin_frontdesk' %}?q=" + encodeURIComponent(this.value);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

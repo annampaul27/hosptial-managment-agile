@@ -1,0 +1,932 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* Settings Page Specific Styles */
+        .settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: var(--space-6);
+        }
+
+        /* Settings Navigation */
+        .settings-nav {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            height: fit-content;
+            position: sticky;
+            top: calc(var(--space-8) + 80px);
+        }
+
+        .settings-nav-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .settings-nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            color: var(--gray-600);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: var(--space-1);
+            cursor: pointer;
+        }
+
+        .settings-nav-item i {
+            width: 20px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .settings-nav-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .settings-nav-item.active {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(167, 139, 250, 0.12));
+            color: var(--medical-cyan);
+            font-weight: 600;
+        }
+
+        /* Settings Content */
+        .settings-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+
+        .settings-section {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-6);
+            padding-bottom: var(--space-4);
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .section-title i {
+            color: var(--medical-cyan);
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--space-5);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            background: var(--white);
+            transition: var(--transition);
+            color: var(--gray-800);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-5);
+        }
+
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .toggle-info {
+            flex: 1;
+        }
+
+        .toggle-title {
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: 0.95rem;
+            margin-bottom: var(--space-1);
+        }
+
+        .toggle-description {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-300);
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+        }
+
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 211, 238, 0.35);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-danger {
+            background: var(--error-red);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        }
+
+        /* Stats Cards */
+        .stats-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-mini {
+            background: var(--gray-50);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .stat-mini-value {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-1);
+        }
+
+        .stat-mini-label {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        /* Alert Box */
+        .alert {
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: start;
+            gap: var(--space-3);
+        }
+
+        .alert-info {
+            background: rgba(34, 211, 238, 0.1);
+            border-left: 4px solid var(--medical-cyan);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning-yellow);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--error-red);
+        }
+
+        @media (max-width: 968px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-nav {
+                position: static;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-mini-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="medical-sidebar">
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: none;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Admin</span>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_users' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="{% url 'admin_doctors' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_doctors' %}active{% endif %}">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Manage Doctors</span>
+                </a>
+                
+                <a href="{% url 'admin_labs' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_labs' %}active{% endif %}">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Manage Labs</span>
+                </a>
+                <a href="{% url 'admin_payments' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{% url 'admin_settings' %}" class="nav-item active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search settings...">
+                </div>
+                <div class="header-actions">
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Page Title -->
+                <div class="content-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Settings</h1>
+                        <p class="page-subtitle">Manage your system preferences and configurations</p>
+                    </div>
+                </div>
+
+                <!-- Settings Container -->
+                <div class="settings-container">
+                    <div class="settings-grid">
+
+                        <!-- Settings Navigation -->
+                        <div class="settings-nav">
+                            <h3 class="settings-nav-title">Settings Menu</h3>
+                            <a class="settings-nav-item active" data-section="general">
+                                <i class="fa-solid fa-sliders"></i>
+                                <span>General</span>
+                            </a>
+                            <a class="settings-nav-item" data-section="profile">
+                                <i class="fa-solid fa-user"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                            <a class="settings-nav-item" data-section="security">
+                                <i class="fa-solid fa-shield-alt"></i>
+                                <span>Security</span>
+                            </a>
+                            <a class="settings-nav-item" data-section="notifications">
+                                <i class="fa-solid fa-bell"></i>
+                                <span>Notifications</span>
+                            </a>
+                            <a class="settings-nav-item" data-section="system">
+                                <i class="fa-solid fa-server"></i>
+                                <span>System</span>
+                            </a>
+                            <a class="settings-nav-item" data-section="backup">
+                                <i class="fa-solid fa-database"></i>
+                                <span>Backup & Restore</span>
+                            </a>
+                        </div>
+
+                        <!-- Settings Content -->
+                        <div class="settings-content">
+
+                            <!-- General Settings -->
+                            <div class="settings-section active" id="general">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-sliders"></i>
+                                            General Settings
+                                        </h2>
+                                        <p class="section-subtitle">Configure basic system settings</p>
+                                    </div>
+                                </div>
+
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">System Name</label>
+                                            <input type="text" class="form-input" value="BetaCare Medical System" placeholder="System Name">
+                                            <span class="form-hint">The name of your medical system</span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Time Zone</label>
+                                            <select class="form-select">
+                                                <option>UTC</option>
+                                                <option selected>Asia/Kolkata (IST)</option>
+                                                <option>America/New_York (EST)</option>
+                                                <option>Europe/London (GMT)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Date Format</label>
+                                            <select class="form-select">
+                                                <option>DD/MM/YYYY</option>
+                                                <option selected>MM/DD/YYYY</option>
+                                                <option>YYYY-MM-DD</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Language</label>
+                                            <select class="form-select">
+                                                <option selected>English (US)</option>
+                                                <option>English (UK)</option>
+                                                <option>Hindi</option>
+                                                <option>Spanish</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">System Email</label>
+                                        <input type="email" class="form-input" value="admin@betacare.com" placeholder="admin@example.com">
+                                        <span class="form-hint">Email address for system notifications</span>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-save"></i>
+                                        Save Changes
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Profile Settings -->
+                            <div class="settings-section" id="profile">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-user"></i>
+                                            Profile Settings
+                                        </h2>
+                                        <p class="section-subtitle">Manage your personal information</p>
+                                    </div>
+                                </div>
+
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">First Name</label>
+                                            <input type="text" class="form-input" value="{{ request.user.first_name }}" placeholder="First Name">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" class="form-input" value="{{ request.user.last_name }}" placeholder="Last Name">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" class="form-input" value="{{ request.user.email }}" placeholder="email@example.com">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-input" placeholder="+1 (555) 000-0000">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Bio</label>
+                                        <textarea class="form-textarea" placeholder="Tell us about yourself..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-save"></i>
+                                        Update Profile
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Security Settings -->
+                            <div class="settings-section" id="security">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-shield-alt"></i>
+                                            Security Settings
+                                        </h2>
+                                        <p class="section-subtitle">Keep your account secure</p>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="fa-solid fa-info-circle" style="color: var(--medical-cyan);"></i>
+                                    <div>
+                                        <strong>Security Tip:</strong> Use a strong password with at least 8 characters, including numbers and symbols.
+                                    </div>
+                                </div>
+
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Current Password</label>
+                                        <input type="password" class="form-input" placeholder="Enter current password">
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">New Password</label>
+                                            <input type="password" class="form-input" placeholder="Enter new password">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Confirm New Password</label>
+                                            <input type="password" class="form-input" placeholder="Confirm new password">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-key"></i>
+                                        Change Password
+                                    </button>
+                                </form>
+
+                                <hr style="margin: var(--space-8) 0; border: none; border-top: 2px solid var(--gray-100);">
+
+                                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-4);">Two-Factor Authentication</h3>
+                                
+                                <div class="toggle-group">
+                                    <div class="toggle-info">
+                                        <div class="toggle-title">Enable 2FA</div>
+                                        <div class="toggle-description">Add an extra layer of security to your account</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Notifications Settings -->
+                            <div class="settings-section" id="notifications">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-bell"></i>
+                                            Notification Settings
+                                        </h2>
+                                        <p class="section-subtitle">Manage how you receive notifications</p>
+                                    </div>
+                                </div>
+
+                                <form method="POST">
+                                    {% csrf_token %}
+
+                                    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-4);">Email Notifications</h3>
+                                    
+                                    <div class="toggle-group">
+                                        <div class="toggle-info">
+                                            <div class="toggle-title">New Patient Registration</div>
+                                            <div class="toggle-description">Get notified when a new patient registers</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-group">
+                                        <div class="toggle-info">
+                                            <div class="toggle-title">Appointment Bookings</div>
+                                            <div class="toggle-description">Get notified for new appointment bookings</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-group">
+                                        <div class="toggle-info">
+                                            <div class="toggle-title">Payment Notifications</div>
+                                            <div class="toggle-description">Get notified for successful payments</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-group">
+                                        <div class="toggle-info">
+                                            <div class="toggle-title">System Updates</div>
+                                            <div class="toggle-description">Get notified about system maintenance and updates</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-save"></i>
+                                        Save Preferences
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- System Settings -->
+                            <div class="settings-section" id="system">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-server"></i>
+                                            System Information
+                                        </h2>
+                                        <p class="section-subtitle">View system statistics and information</p>
+                                    </div>
+                                </div>
+
+                                <div class="stats-mini-grid">
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-value">v2.4.1</div>
+                                        <div class="stat-mini-label">System Version</div>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-value">99.8%</div>
+                                        <div class="stat-mini-label">Uptime</div>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-value">45 GB</div>
+                                        <div class="stat-mini-label">Storage Used</div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="fa-solid fa-info-circle" style="color: var(--medical-cyan);"></i>
+                                    <div>
+                                        System is running smoothly. Last backup: 2 hours ago.
+                                    </div>
+                                </div>
+
+                                <h3 style="font-size: 1.1rem; font-weight: 600; margin: var(--space-6) 0 var(--space-4);">System Maintenance</h3>
+                                
+                                <div class="toggle-group">
+                                    <div class="toggle-info">
+                                        <div class="toggle-title">Maintenance Mode</div>
+                                        <div class="toggle-description">Enable to restrict access during system updates</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <button class="btn-secondary" style="margin-top: var(--space-4);">
+                                    <i class="fa-solid fa-sync"></i>
+                                    Clear System Cache
+                                </button>
+                            </div>
+
+                            <!-- Backup & Restore -->
+                            <div class="settings-section" id="backup">
+                                <div class="section-header">
+                                    <div>
+                                        <h2 class="section-title">
+                                            <i class="fa-solid fa-database"></i>
+                                            Backup & Restore
+                                        </h2>
+                                        <p class="section-subtitle">Manage your system backups</p>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning">
+                                    <i class="fa-solid fa-exclamation-triangle" style="color: var(--warning-yellow);"></i>
+                                    <div>
+                                        <strong>Important:</strong> Regular backups ensure your data is safe. We recommend daily backups.
+                                    </div>
+                                </div>
+
+                                <div class="toggle-group">
+                                    <div class="toggle-info">
+                                        <div class="toggle-title">Automatic Backups</div>
+                                        <div class="toggle-description">Enable daily automatic database backups</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+                                    <button class="btn-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                        Create Backup Now
+                                    </button>
+                                    <button class="btn-secondary">
+                                        <i class="fa-solid fa-upload"></i>
+                                        Restore from Backup
+                                    </button>
+                                </div>
+
+                                <hr style="margin: var(--space-8) 0; border: none; border-top: 2px solid var(--gray-100);">
+
+                                <div class="alert alert-danger">
+                                    <i class="fa-solid fa-exclamation-circle" style="color: var(--error-red);"></i>
+                                    <div>
+                                        <strong>Danger Zone:</strong> The following actions are irreversible.
+                                    </div>
+                                </div>
+
+                                <button class="btn-secondary btn-danger">
+                                    <i class="fa-solid fa-trash"></i>
+                                    Delete All Data
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Settings Navigation
+        document.querySelectorAll('.settings-nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all nav items
+                document.querySelectorAll('.settings-nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+                
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Hide all sections
+                document.querySelectorAll('.settings-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show selected section
+                const sectionId = this.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

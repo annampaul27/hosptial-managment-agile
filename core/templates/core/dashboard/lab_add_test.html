@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Test | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+</head>
+
+<body>
+
+    <div class="medical-dashboard">
+
+        {% include 'core/dashboard/lab_dashboard_sidebar.html' %}
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="medical-main">
+
+            <!-- Top Header -->
+            <header class="medical-header">
+                <div class="header-left">
+                    <h1 class="page-title">{% if test %}Edit Test{% else %}Add New Test{% endif %}</h1>
+                    <p class="page-subtitle">{% if test %}Update test details and pricing{% else %}Add a new diagnostic test to your catalog{% endif %}</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'lab_prices' %}" style="padding:0.75rem 1.5rem; background:var(--gray-100); color:var(--gray-700); border-radius:var(--radius-md); text-decoration:none; font-weight:600; transition:var(--transition);">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Prices
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="medical-content">
+
+                <!-- Form Card -->
+                <div class="medical-table-card" style="max-width:900px; margin:0 auto;">
+                    <div class="info-header" style="margin-bottom:var(--space-6);">
+                        <h3><i class="fa-solid fa-flask" style="color:var(--medical-blue); margin-right:var(--space-2);"></i>Test Information</h3>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Test Basic Info -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-vial" style="color:var(--medical-cyan); margin-right:6px;"></i>Test Name *
+                                </label>
+                                <input type="text" name="name" value="{{ test.name|default:'' }}" required
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    placeholder="e.g., Complete Blood Count"
+                                    onfocus="this.style.borderColor='var(--medical-cyan)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                            </div>
+
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-tag" style="color:var(--medical-purple); margin-right:6px;"></i>Test Code
+                                </label>
+                                <input type="text" name="code" value="{{ test.code|default:'' }}"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    placeholder="e.g., CBC-001"
+                                    onfocus="this.style.borderColor='var(--medical-purple)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                            </div>
+                        </div>
+
+                        <!-- Category and Price -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-list" style="color:var(--medical-blue); margin-right:6px;"></i>Category *
+                                </label>
+                                <select name="category" required
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    onfocus="this.style.borderColor='var(--medical-blue)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                                    <option value="">Select Category</option>
+                                    <option value="Blood Tests" {% if test.category == "Blood Tests" %}selected{% endif %}>Blood Tests</option>
+                                    <option value="Imaging" {% if test.category == "Imaging" %}selected{% endif %}>Imaging</option>
+                                    <option value="Screening" {% if test.category == "Screening" %}selected{% endif %}>Screening</option>
+                                    <option value="Cardiology" {% if test.category == "Cardiology" %}selected{% endif %}>Cardiology</option>
+                                    <option value="Pathology" {% if test.category == "Pathology" %}selected{% endif %}>Pathology</option>
+                                    <option value="Radiology" {% if test.category == "Radiology" %}selected{% endif %}>Radiology</option>
+                                    <option value="Other" {% if test.category == "Other" %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-indian-rupee-sign" style="color:var(--medical-green); margin-right:6px;"></i>Price (₹) *
+                                </label>
+                                <input type="number" name="price" value="{{ test.price|default:'' }}" required min="0" step="0.01"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    placeholder="e.g., 500"
+                                    onfocus="this.style.borderColor='var(--medical-green)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                            </div>
+                        </div>
+
+                        <!-- Duration and Sample Type -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-clock" style="color:var(--medical-cyan); margin-right:6px;"></i>Result Duration
+                                </label>
+                                <input type="text" name="duration" value="{{ test.duration|default:'' }}"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    placeholder="e.g., 24 hours"
+                                    onfocus="this.style.borderColor='var(--medical-cyan)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                            </div>
+
+                            <div>
+                                <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                    <i class="fa-solid fa-droplet" style="color:var(--medical-purple); margin-right:6px;"></i>Sample Type
+                                </label>
+                                <select name="sample_type"
+                                    style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; transition:var(--transition);"
+                                    onfocus="this.style.borderColor='var(--medical-purple)';"
+                                    onblur="this.style.borderColor='var(--gray-300)';">
+                                    <option value="">Select Sample Type</option>
+                                    <option value="Blood" {% if test.sample_type == "Blood" %}selected{% endif %}>Blood</option>
+                                    <option value="Urine" {% if test.sample_type == "Urine" %}selected{% endif %}>Urine</option>
+                                    <option value="Saliva" {% if test.sample_type == "Saliva" %}selected{% endif %}>Saliva</option>
+                                    <option value="Tissue" {% if test.sample_type == "Tissue" %}selected{% endif %}>Tissue</option>
+                                    <option value="Swab" {% if test.sample_type == "Swab" %}selected{% endif %}>Swab</option>
+                                    <option value="Other" {% if test.sample_type == "Other" %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                <i class="fa-solid fa-align-left" style="color:var(--medical-blue); margin-right:6px;"></i>Description
+                            </label>
+                            <textarea name="description" rows="4"
+                                style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; font-family:inherit; resize:vertical; transition:var(--transition);"
+                                placeholder="Brief description of the test..."
+                                onfocus="this.style.borderColor='var(--medical-blue)';"
+                                onblur="this.style.borderColor='var(--gray-300)';">{{ test.description|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Preparation Instructions -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); margin-right:6px;"></i>Preparation Instructions
+                            </label>
+                            <textarea name="preparation" rows="3"
+                                style="width:100%; padding:0.75rem 1rem; border:2px solid var(--gray-300); border-radius:var(--radius-md); font-size:0.95rem; font-family:inherit; resize:vertical; transition:var(--transition);"
+                                placeholder="e.g., fa-solidting required for 8-12 hours before test"
+                                onfocus="this.style.borderColor='var(--medical-cyan)';"
+                                onblur="this.style.borderColor='var(--gray-300)';">{{ test.preparation|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Status and Home Collection -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-6);">
+                            <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);">
+                                <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+                                    <input type="checkbox" name="is_active" {% if test.is_active or not test %}checked{% endif %}
+                                        style="width:20px; height:20px; cursor:pointer;">
+                                    <div>
+                                        <p style="font-weight:600; color:var(--gray-800);">Active Status</p>
+                                        <p style="font-size:0.85rem; color:var(--gray-500);">Make this test available for booking</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="padding:var(--space-4); background:var(--gray-50); border-radius:var(--radius-md);">
+                                <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+                                    <input type="checkbox" name="home_collection" {% if test.home_collection %}checked{% endif %}
+                                        style="width:20px; height:20px; cursor:pointer;">
+                                    <div>
+                                        <p style="font-weight:600; color:var(--gray-800);">Home Collection</p>
+                                        <p style="font-size:0.85rem; color:var(--gray-500);">Sample can be collected at home</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex; gap:var(--space-3); justify-content:flex-end; padding-top:var(--space-5); border-top:2px solid var(--gray-200);">
+                            <a href="{% url 'lab_prices' %}" style="padding:0.75rem 2rem; background:var(--gray-100); color:var(--gray-700); border-radius:var(--radius-md); text-decoration:none; font-weight:600; transition:var(--transition);">
+                                <i class="fa-solid fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" style="padding:0.75rem 2rem; background:linear-gradient(135deg, #60a5fa, #3b82f6); color:white; border:none; border-radius:var(--radius-md); font-weight:600; cursor:pointer; transition:var(--transition);">
+                                <i class="fa-solid fa-save"></i> {% if test %}Update Test{% else %}Add Test{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,465 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Schedule | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        /* ── Extras not in admin.css ── */
+
+        /* Form inputs */
+        .schedule-input {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            color: var(--gray-800);
+            background: var(--gray-50);
+            font-family: var(--font-body);
+            transition: var(--transition);
+            outline: none;
+        }
+        .schedule-input:focus {
+            border-color: var(--medical-cyan);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(34,211,238,0.1);
+        }
+
+        /* Day-of-week toggle checkboxes */
+        .day-toggle-input { display: none; }
+        .day-toggle-label {
+            display: inline-block;
+            padding: 0.35rem 0.85rem;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--gray-200);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+        .day-toggle-input:checked + .day-toggle-label {
+            background: linear-gradient(135deg, var(--medical-cyan), var(--primary-blue));
+            border-color: var(--medical-cyan);
+            color: var(--white);
+        }
+        .day-toggle-label:hover {
+            border-color: var(--medical-cyan);
+            color: var(--medical-cyan);
+        }
+
+        /* Save / submit button */
+        .save-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, var(--medical-cyan), var(--primary-blue));
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+        .save-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34,211,238,0.3);
+        }
+
+        /* Appointment status badges (extending .status-badge) */
+        .status-confirmed  { background: rgba(16,185,129,0.1);  color: var(--status-active);  }
+        .status-scheduled  { background: rgba(96,165,250,0.1);  color: var(--medical-blue);   }
+        .status-ppayment   { background: rgba(245,158,11,0.1);  color: var(--status-pending); }
+        .status-cancelled  { background: rgba(239,68,68,0.1);   color: var(--status-inactive);}
+
+        /* Time-slot pills */
+        .slot-available { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .slot-booked    { background: #eff6ff; border: 1px solid #bfdbfe; }
+        .slot-break     { background: #fef9c3; border: 1px solid #fde68a; }
+        .slot-available .slot-status { color: #16a34a; }
+        .slot-booked    .slot-status { color: #2563eb; }
+        .slot-break     .slot-status { color: #ca8a04; }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">BetaCare</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge">Doctor</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'doctor_dashboard' %}" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'doctor_appointments' %}" class="nav-item">
+                <i class="fa-solid fa-calendar"></i><span>Appointments</span>
+            </a>
+            <a href="{% url 'doctor_patients' %}" class="nav-item">
+                <i class="fa-solid fa-users"></i><span>Patient Records</span>
+            </a>
+            <a href="{% url 'doctor_prescriptions' %}" class="nav-item">
+                <i class="fa-solid fa-prescription-bottle"></i><span>Prescriptions</span>
+            </a>
+            <a href="{% url 'doctor_schedule' %}" class="nav-item active">
+                <i class="fa-solid fa-clock"></i><span>Schedule</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form method="POST" action="{% url 'logout' %}" style="width:100%;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="width:100%; text-align:left; background:none; border:none; cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">My Schedule</h1>
+                <p class="page-subtitle">Manage your working hours and availability</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-icon-btn" aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if unread_notifications %}<span class="notification-badge">{{ unread_notifications }}</span>{% endif %}
+                </button>
+                <button class="header-icon-btn" aria-label="Messages">
+                    <i class="fa-solid fa-envelope"></i>
+                </button>
+                <button class="header-icon-btn" aria-label="Profile">
+                    <i class="fa-solid fa-user-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Flash Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div style="padding:var(--space-4); border-radius:var(--radius-md); margin-bottom:var(--space-4);
+                    background:{% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'success' %}#dcfce7{% else %}#dbeafe{% endif %};
+                    border-left:4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'success' %}#22c55e{% else %}#3b82f6{% endif %};
+                    color:{% if message.tags == 'error' %}#991b1b{% elif message.tags == 'success' %}#166534{% else %}#1e40af{% endif %};
+                    font-size:0.9rem;">
+                    <i class="fa-solid fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"
+                       style="margin-right:var(--space-2);"></i>{{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- ── STAT CARDS ── -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#22d3ee,#06b6d4);">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Working Hours</p>
+                        <h3 class="stat-value" style="font-size:1.25rem;">{{ working_hours }}</h3>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Working Days</p>
+                        <h3 class="stat-value" style="font-size:1.25rem;">{{ working_days }}</h3>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#34d399,#10b981);">
+                        <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Slot Duration</p>
+                        <h3 class="stat-value" style="font-size:1.25rem;">30 min</h3>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#fb923c,#f97316);">
+                        <i class="fa-solid fa-stethoscope"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Specialization</p>
+                        <h3 class="stat-value" style="font-size:1rem;">{{ doctor_profile.specialization|default:"—" }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TWO-COLUMN: FORM + OVERVIEW ── -->
+            <div class="info-grid" style="margin-top:var(--space-6);">
+
+                <!-- Update Schedule Form -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <h3>
+                            <i class="fa-solid fa-pen-to-square" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                            Update Schedule
+                        </h3>
+                    </div>
+
+                    <form method="POST" action="{% url 'doctor_schedule_update' %}">
+                        {% csrf_token %}
+
+                        <!-- Working Days -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">Working Days</label>
+                            <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+                                {% for day in all_days %}
+                                <label>
+                                    <input type="checkbox" name="working_days" value="{{ day.name }}"
+                                           {% if day.default_checked %}checked{% endif %}
+                                           class="day-toggle-input">
+                                    <span class="day-toggle-label">{{ day.abbr }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Working Hours -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">Working Hours</label>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+                                <div>
+                                    <label style="font-size:0.8rem; color:var(--gray-500); display:block; margin-bottom:4px;">Start Time</label>
+                                    <input type="time" name="start_time" value="09:00" class="schedule-input">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; color:var(--gray-500); display:block; margin-bottom:4px;">End Time</label>
+                                    <input type="time" name="end_time" value="17:00" class="schedule-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Break Time -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">Break / Lunch Time</label>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+                                <div>
+                                    <label style="font-size:0.8rem; color:var(--gray-500); display:block; margin-bottom:4px;">Break Start</label>
+                                    <input type="time" name="break_start" value="13:00" class="schedule-input">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; color:var(--gray-500); display:block; margin-bottom:4px;">Break End</label>
+                                    <input type="time" name="break_end" value="14:00" class="schedule-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slot Duration -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">Appointment Slot Duration</label>
+                            <select name="slot_duration" class="schedule-input">
+                                <option value="15">15 minutes</option>
+                                <option value="30" selected>30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60">60 minutes</option>
+                            </select>
+                        </div>
+
+                        <!-- Max Appointments -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">Max Appointments per Day</label>
+                            <input type="number" name="max_appointments" value="16" min="1" max="50" class="schedule-input">
+                        </div>
+
+                        <!-- Notes -->
+                        <div style="margin-bottom:var(--space-5);">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--gray-700); margin-bottom:var(--space-2);">
+                                Additional Notes <span style="color:var(--gray-400); font-weight:400;">(optional)</span>
+                            </label>
+                            <textarea name="notes" rows="3" class="schedule-input" style="resize:vertical;"
+                                placeholder="e.g. Available for emergency cases on weekends..."></textarea>
+                        </div>
+
+                        <button type="submit" class="save-btn">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Schedule
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Weekly Overview + Today's Slots -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <h3>
+                            <i class="fa-solid fa-calendar-week" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                            Weekly Overview
+                        </h3>
+                    </div>
+
+                    <!-- 7-day grid -->
+                    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:var(--space-2); margin-bottom:var(--space-6);">
+                        {% for day_info in week_schedule %}
+                        <div style="text-align:center; padding:var(--space-3) var(--space-1); border-radius:var(--radius-md);
+                                    border:1.5px solid {% if day_info.is_today %}var(--medical-cyan){% else %}var(--gray-200){% endif %};
+                                    background:{% if day_info.is_today %}rgba(34,211,238,0.06){% else %}var(--gray-50){% endif %};
+                                    opacity:{% if not day_info.is_working %}0.45{% else %}1{% endif %};">
+                            <p style="font-size:0.7rem; font-weight:700; margin-bottom:var(--space-2);
+                                      color:{% if day_info.is_today %}var(--medical-cyan){% else %}var(--gray-700){% endif %};">
+                                {{ day_info.day }}
+                            </p>
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; margin-bottom:4px;
+                                         background:{% if day_info.is_working %}#22c55e{% else %}var(--gray-300){% endif %};"></span>
+                            <p style="font-size:0.62rem; color:var(--gray-500); font-weight:500; margin-bottom:4px;">
+                                {% if day_info.is_working %}{{ day_info.hours }}{% else %}Off{% endif %}
+                            </p>
+                            <p style="font-size:0.6rem; color:var(--gray-400);">
+                                {% if day_info.appointments is not None %}{{ day_info.appointments }} appt{% if day_info.appointments != 1 %}s{% endif %}{% endif %}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Today's Slots -->
+                    <div style="border-top:1px solid var(--gray-200); padding-top:var(--space-5);">
+                        <div class="info-header" style="margin-bottom:var(--space-4);">
+                            <h3>
+                                <i class="fa-solid fa-list-ul" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                                Today's Time Slots
+                            </h3>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-2);
+                                    max-height:280px; overflow-y:auto; padding-right:4px;">
+                            {% for slot in todays_slots %}
+                            <div class="status-badge {% if slot.is_booked %}slot-booked{% elif slot.is_break %}slot-break{% else %}slot-available{% endif %}"
+                                 style="display:flex; justify-content:space-between; padding:var(--space-2) var(--space-3); border-radius:var(--radius-sm);">
+                                <span style="font-weight:700; color:var(--gray-700); font-size:0.75rem;">{{ slot.time }}</span>
+                                <span class="slot-status" style="font-size:0.7rem;">
+                                    {% if slot.is_booked %}{% if slot.patient_name %}{{ slot.patient_name|truncatechars:14 }}{% else %}Booked{% endif %}
+                                    {% elif slot.is_break %}Break
+                                    {% else %}Available{% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end info-grid -->
+
+            <!-- ── UPCOMING APPOINTMENTS TABLE ── -->
+            <div class="medical-table-card" style="margin-top:var(--space-6);">
+                <div class="info-header" style="margin-bottom:var(--space-5);">
+                    <h3>
+                        <i class="fa-solid fa-calendar-check" style="color:var(--medical-cyan); margin-right:var(--space-2);"></i>
+                        Upcoming Appointments
+                    </h3>
+                    <a href="{% url 'doctor_appointments' %}" style="font-size:0.85rem; color:var(--medical-cyan); text-decoration:none; font-weight:600;">
+                        View All <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:4px;"></i>
+                    </a>
+                </div>
+
+                {% if upcoming_appointments %}
+                <table class="medical-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in upcoming_appointments %}
+                        <tr>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-avatar">{{ appt.patient.full_name|slice:":1"|upper }}</div>
+                                    <div class="patient-details">
+                                        <span class="patient-name">{{ appt.patient.full_name }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ appt.appointment_date|date:"d M Y" }}</td>
+                            <td>{{ appt.appointment_time|time:"h:i A" }}</td>
+                            <td style="color:var(--gray-500); font-size:0.85rem;">{{ appt.reason|truncatechars:30 }}</td>
+                            <td>
+                                <span class="status-badge
+                                    {% if appt.status == 'Confirmed' %}status-confirmed
+                                    {% elif appt.status == 'Scheduled' %}status-scheduled
+                                    {% elif appt.status == 'Pending Payment' %}status-ppayment
+                                    {% else %}status-cancelled{% endif %}">
+                                    {{ appt.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'doctor_appointment_detail' appt.id %}" class="action-btn view-btn">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                {% else %}
+                <div class="empty-row">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                        <p>No upcoming appointments in the next 7 days.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div><!-- end .medical-content -->
+    </main>
+</div><!-- end .medical-dashboard -->
+</body>
+</html>

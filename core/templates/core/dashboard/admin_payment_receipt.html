@@ -1,0 +1,414 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt #{{ payment.id }} | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .receipt-header {
+            background: linear-gradient(135deg, #22d3ee, #a78bfa);
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+
+        .receipt-header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .receipt-header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        /* Body */
+        .receipt-body {
+            padding: 40px;
+        }
+
+        /* Receipt Info */
+        .receipt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .info-section h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .info-section p {
+            font-size: 0.95rem;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .info-section strong {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Receipt Number Badge */
+        .receipt-number {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(167, 139, 250, 0.1));
+            color: #22d3ee;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        /* Payment Details Table */
+        .payment-details {
+            margin-bottom: 40px;
+        }
+
+        .payment-details h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payment-details h3 i {
+            color: #22d3ee;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .details-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .details-table td {
+            padding: 16px 0;
+            font-size: 0.95rem;
+        }
+
+        .details-table td:first-child {
+            color: #64748b;
+            font-weight: 500;
+            width: 200px;
+        }
+
+        .details-table td:last-child {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .status-badge i {
+            font-size: 0.7rem;
+        }
+
+        /* Amount Highlight */
+        .amount-row td:last-child {
+            font-size: 1.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            color: #22d3ee;
+        }
+
+        /* Footer */
+        .receipt-footer {
+            background: #f8fafc;
+            padding: 30px 40px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .receipt-footer p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .receipt-footer .company-info {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+        }
+
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 211, 238, 0.4);
+        }
+
+        .btn-back {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-back:hover {
+            background: #e2e8f0;
+        }
+
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .receipt-container {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+
+            .action-buttons {
+                display: none;
+            }
+
+            .receipt-header {
+                background: #22d3ee !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .receipt-info {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .details-table td:first-child {
+                width: 140px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="receipt-container">
+        
+        <!-- Header -->
+        <div class="receipt-header">
+            <h1>Beta Care</h1>
+            <p>Healthcare Management System</p>
+        </div>
+
+        <!-- Body -->
+        <div class="receipt-body">
+            
+            <!-- Receipt Info -->
+            <div class="receipt-info">
+                <div class="info-section">
+                    <div class="receipt-number">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        Receipt #{{ payment.id }}
+                    </div>
+                    <p><strong>Date:</strong> {{ payment.payment_date|date:"F d, Y" }}</p>
+                    <p><strong>Time:</strong> {{ payment.payment_date|date:"h:i A" }}</p>
+                </div>
+
+                <div class="info-section" style="text-align: right;">
+                    <h3>Patient Information</h3>
+                    <p><strong>{{ payment.patient.full_name }}</strong></p>
+                    <p>Patient ID: {{ payment.patient.id }}</p>
+                    {% if payment.patient.phone %}
+                    <p>Phone: {{ payment.patient.phone }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="payment-details">
+                <h3>
+                    <i class="fa-solid fa-receipt"></i>
+                    Payment Details
+                </h3>
+                
+                <table class="details-table">
+                    <tr>
+                        <td>Service Type</td>
+                        <td>Medical Appointment</td>
+                    </tr>
+                    <tr>
+                        <td>Appointment ID</td>
+                        <td>#{{ payment.appointment.id }}</td>
+                    </tr>
+                    {% if payment.appointment.doctor %}
+                    <tr>
+                        <td>Doctor</td>
+                        <td>{{ payment.appointment.doctor.user.get_full_name }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>Payment Method</td>
+                        <td>
+                            <i class="fa-solid fa-{% if payment.payment_method == 'Cash' %}money-bill{% elif payment.payment_method == 'Card' %}credit-card{% else %}wallet{% endif %}" style="color: #22d3ee; margin-right: 6px;"></i>
+                            {{ payment.payment_method }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Payment Status</td>
+                        <td>
+                            <span class="status-badge {% if payment.payment_status == 'Paid' %}status-paid{% else %}status-pending{% endif %}">
+                                <i class="fa-solid fa-circle"></i>
+                                {{ payment.payment_status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="amount-row">
+                        <td>Total Amount</td>
+                        <td>₹{{ payment.amount }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-print" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i>
+                    Print Receipt
+                </button>
+                <a href="{% url 'admin_payments' %}" class="btn btn-back">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Payments
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="receipt-footer">
+            <p class="company-info">Beta Care Healthcare Management System</p>
+            <p>Thank you for choosing our services</p>
+            <p style="font-size: 0.85rem; margin-top: 12px;">
+                <i class="fa-solid fa-envelope" style="margin-right: 6px;"></i>
+                support@betacare.com
+                <span style="margin: 0 12px;">|</span>
+                <i class="fa-solid fa-phone" style="margin-right: 6px;"></i>
+                +91 1234567890
+            </p>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

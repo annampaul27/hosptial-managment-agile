@@ -1,0 +1,761 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Details | BetaCare</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        :root {
+            --primary: #06b6d4;
+            --secondary: #a855f7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        .booking-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+
+        /* Header Section */
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+            padding-bottom: var(--space-4);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .booking-header h1 {
+            font-size: 2rem;
+            color: var(--gray-800);
+            margin: 0;
+        }
+
+        .booking-status-badge {
+            display: inline-block;
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-booked {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(6, 182, 212, 0.1));
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-cancelled {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* Back Button */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: var(--space-4);
+        }
+
+        .btn-back:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-400);
+        }
+
+        /* Main Content Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        /* Card Styles */
+        .detail-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--space-6);
+            border: 1px solid var(--gray-200);
+        }
+
+        .detail-card h2 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .detail-card h2 i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        /* Detail Row */
+        .detail-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: var(--space-4);
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: var(--gray-800);
+            font-size: 0.95rem;
+        }
+
+        .detail-value strong {
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        /* Patient Info Card */
+        .patient-card {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(6, 182, 212, 0.05));
+            border: 2px solid rgba(34, 211, 238, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .patient-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .patient-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .patient-info h3 {
+            margin: 0;
+            color: var(--gray-800);
+            font-size: 1.1rem;
+        }
+
+        .patient-info p {
+            margin: var(--space-1) 0 0 0;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+        }
+
+        /* Test Details */
+        .test-info {
+            background: var(--gray-50);
+            border-left: 4px solid var(--secondary);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .test-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+
+        .test-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-2) 0;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        .test-detail strong {
+            color: var(--gray-800);
+        }
+
+        /* Lab Info Card */
+        .lab-info {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(139, 92, 246, 0.05));
+            border: 2px solid rgba(168, 85, 247, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+        }
+
+        .lab-info h3 {
+            margin: 0 0 var(--space-3) 0;
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin-top: var(--space-4);
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-dot {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .dot-booked {
+            background: var(--primary);
+        }
+
+        .dot-pending {
+            background: var(--warning);
+        }
+
+        .dot-completed {
+            background: var(--success);
+        }
+
+        .timeline-content h4 {
+            margin: 0 0 var(--space-1) 0;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .timeline-content p {
+            margin: 0;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .timeline-date {
+            color: var(--gray-500);
+            font-size: 0.85rem;
+            margin-top: var(--space-1);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 2px solid var(--gray-200);
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: var(--space-3) var(--space-4);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--gray-600);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(96, 165, 250, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            margin: var(--space-4) 0;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: var(--space-1);
+        }
+
+        .info-box-text {
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            margin-top: var(--space-6);
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary);
+        }
+
+        .notes-section h3 {
+            margin-top: 0;
+            color: var(--gray-800);
+        }
+
+        .notes-content {
+            background: white;
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            color: var(--gray-700);
+            line-height: 1.6;
+            min-height: 100px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .booking-container {
+                padding: var(--space-4);
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+
+            .booking-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .booking-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .detail-row {
+                grid-template-columns: 1fr;
+                gap: var(--space-2);
+            }
+
+            .detail-label {
+                font-size: 0.85rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-action {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="medical-dashboard">
+        {% include 'core/dashboard/patient_sidebar.html' %}
+
+        <main class="medical-main">
+            <div class="booking-container">
+                
+                <!-- Back Button -->
+                <a href="{% url 'patient_booked_tests' %}" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Bookings
+                </a>
+
+                <!-- Header -->
+                <div class="booking-header">
+                    <div>
+                        <h1>Test Booking Details</h1>
+                        <p style="margin: var(--space-2) 0 0 0; color: var(--gray-600);">
+                            Booking ID: <strong>#{{ booking.id }}</strong>
+                        </p>
+                    </div>
+                    <span class="booking-status-badge status-{{ booking.status|lower }}">
+                        {% if booking.status == 'Booked' %}
+                            <i class="fa-solid fa-calendar-check"></i> Booked
+                        {% elif booking.status == 'Pending' %}
+                            <i class="fa-solid fa-hourglass-end"></i> Pending
+                        {% elif booking.status == 'Completed' %}
+                            <i class="fa-solid fa-check-circle"></i> Completed
+                        {% elif booking.status == 'Cancelled' %}
+                            <i class="fa-solid fa-times-circle"></i> Cancelled
+                        {% endif %}
+                    </span>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="details-grid">
+                    
+                    <!-- Left Column: Main Details -->
+                    <div>
+                        <!-- Test Information -->
+                        <div class="detail-card">
+                            <h2>
+                                <i class="fa-solid fa-vials"></i>
+                                Test Information
+                            </h2>
+
+                            <div class="test-info">
+                                <div class="test-name">{{ booking.test.test_name }}</div>
+                                
+                                <div class="test-detail">
+                                    <span>Category:</span>
+                                    <strong>{{ booking.test.category }}</strong>
+                                </div>
+
+                                <div class="test-detail">
+                                    <span>Price:</span>
+                                    <strong style="color: var(--success);">₹{{ booking.test.price }}</strong>
+                                </div>
+
+                                {% if booking.test.result_duration %}
+                                <div class="test-detail">
+                                    <span>Result Duration:</span>
+                                    <strong>{{ booking.test.result_duration }}</strong>
+                                </div>
+                                {% endif %}
+
+                                {% if booking.test.sample_type %}
+                                <div class="test-detail">
+                                    <span>Sample Type:</span>
+                                    <strong>{{ booking.test.sample_type }}</strong>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if booking.test.description %}
+                            <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--gray-200);">
+                                <h4 style="margin: 0 0 var(--space-2) 0; color: var(--gray-700);">Description</h4>
+                                <p style="margin: 0; color: var(--gray-600); line-height: 1.6;">
+                                    {{ booking.test.description }}
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            {% if booking.test.preparation_instructions %}
+                            <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--gray-200);">
+                                <h4 style="margin: 0 0 var(--space-2) 0; color: var(--gray-700);">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    Preparation Instructions
+                                </h4>
+                                <p style="margin: 0; color: var(--gray-600); line-height: 1.6;">
+                                    {{ booking.test.preparation_instructions }}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Booking Timeline -->
+                        <div class="detail-card" style="margin-top: var(--space-6);">
+                            <h2>
+                                <i class="fa-solid fa-clock"></i>
+                                Timeline
+                            </h2>
+
+                            <div class="timeline">
+                                <!-- Booking Created -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot dot-booked">1</div>
+                                    <div class="timeline-content">
+                                        <h4>Booking Created</h4>
+                                        <p>Your test booking was registered in the system</p>
+                                        <div class="timeline-date">
+                                            {{ booking.created_at|date:"d M Y, H:i" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Booking Date -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot dot-booked">2</div>
+                                    <div class="timeline-content">
+                                        <h4>Scheduled Date</h4>
+                                        <p>Your test is scheduled for this date</p>
+                                        <div class="timeline-date">
+                                            {{ booking.booking_date|date:"d M Y" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status Update -->
+                                {% if booking.status == 'Completed' %}
+                                <div class="timeline-item">
+                                    <div class="timeline-dot dot-completed">✓</div>
+                                    <div class="timeline-content">
+                                        <h4>Test Completed</h4>
+                                        <p>Your test has been completed successfully</p>
+                                        <div class="timeline-date">Results are now available</div>
+                                    </div>
+                                </div>
+                                {% elif booking.status == 'Cancelled' %}
+                                <div class="timeline-item">
+                                    <div class="timeline-dot" style="background: var(--danger);">✕</div>
+                                    <div class="timeline-content">
+                                        <h4>Booking Cancelled</h4>
+                                        <p>This booking has been cancelled</p>
+                                        <div class="timeline-date">Contact support for more info</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Quick Info -->
+                    <div>
+                        <!-- Patient Information -->
+                        <div class="detail-card">
+                            <h2>
+                                <i class="fa-solid fa-user"></i>
+                                Patient Information
+                            </h2>
+
+                            <div class="patient-card">
+                                <div class="patient-header">
+                                    <div class="patient-avatar">
+                                        {{ booking.patient.full_name|first|upper }}
+                                    </div>
+                                    <div class="patient-info">
+                                        <h3>{{ booking.patient.full_name }}</h3>
+                                        <p>{{ booking.patient.user.email }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Phone</span>
+                                <span class="detail-value">{{ booking.patient.phone }}</span>
+                            </div>
+
+                            {% if booking.patient.gender %}
+                            <div class="detail-row">
+                                <span class="detail-label">Gender</span>
+                                <span class="detail-value">{{ booking.patient.gender }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if booking.patient.dob %}
+                            <div class="detail-row">
+                                <span class="detail-label">DOB</span>
+                                <span class="detail-value">{{ booking.patient.dob|date:"d M Y" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Lab Information -->
+                        <div class="detail-card" style="margin-top: var(--space-6);">
+                            <h2>
+                                <i class="fa-solid fa-hospital"></i>
+                                Lab Information
+                            </h2>
+
+                            <div class="lab-info">
+                                <h3>{{ booking.lab.name }}</h3>
+                                <p style="margin: 0 0 var(--space-2) 0; color: var(--gray-600); font-size: 0.9rem;">
+                                    <i class="fa-solid fa-map-marker-alt"></i>
+                                    {{ booking.lab.address }}
+                                </p>
+                                <p style="margin: 0; color: var(--gray-600); font-size: 0.9rem;">
+                                    <i class="fa-solid fa-phone"></i>
+                                    {{ booking.lab.phone }}
+                                </p>
+                            </div>
+
+                            {% if booking.test.home_collection %}
+                            <div class="info-box" style="margin-top: var(--space-4);">
+                                <div class="info-box-title">
+                                    <i class="fa-solid fa-home"></i>
+                                    Home Collection Available
+                                </div>
+                                <div class="info-box-text">
+                                    This test can be collected from your home. Please contact the lab for scheduling.
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Quick Stats -->
+                        <div class="detail-card" style="margin-top: var(--space-6);">
+                            <h2>
+                                <i class="fa-solid fa-info-circle"></i>
+                                Quick Info
+                            </h2>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Status</span>
+                                <span class="detail-value">
+                                    <span class="booking-status-badge status-{{ booking.status|lower }}">
+                                        {{ booking.status }}
+                                    </span>
+                                </span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Booked</span>
+                                <span class="detail-value">{{ booking.created_at|date:"d M Y" }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <span class="detail-label">Scheduled</span>
+                                <span class="detail-value">{{ booking.booking_date|date:"d M Y" }}</span>
+                            </div>
+
+                            {% if booking.booking_date >= today %}
+                            <div class="detail-row">
+                                <span class="detail-label">Days Left</span>
+                                <span class="detail-value">
+                                    <strong>{{ booking.booking_date|add:"-0" }}</strong>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                {% if booking.status == 'Booked' or booking.status == 'Pending' %}
+                <div class="action-buttons">
+                    {% if booking.booking_date >= today %}
+                    <a href="{% url 'reschedule_test_booking' booking.id %}" class="btn-action btn-secondary">
+                        <i class="fa-solid fa-calendar"></i>
+                        Reschedule
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'cancel_test_booking' booking.id %}" class="btn-action btn-danger" onclick="return confirm('Are you sure you want to cancel this booking?');">
+                        <i class="fa-solid fa-times"></i>
+                        Cancel Booking
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if booking.status == 'Completed' %}
+                <div class="action-buttons">
+                    <a href="{% url 'patient_test_results' %}" class="btn-action btn-primary">
+                        <i class="fa-solid fa-file-medical"></i>
+                        View Test Results
+                    </a>
+                    <a href="{% url 'download_test_report' booking.id %}" class="btn-action btn-secondary">
+                        <i class="fa-solid fa-download"></i>
+                        Download Report
+                    </a>
+                </div>
+                {% endif %}
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Calculate days until booking
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookingDate = new Date('{{ booking.booking_date|date:"Y-m-d" }}');
+            const today = new Date();
+            const daysLeft = Math.ceil((bookingDate - today) / (1000 * 60 * 60 * 24));
+            
+            const daysElement = document.querySelector('[data-days-left]');
+            if (daysElement && daysLeft > 0) {
+                daysElement.textContent = daysLeft + ' day' + (daysLeft !== 1 ? 's' : '');
+            }
+        });
+    </script>
+</body>
+</html>

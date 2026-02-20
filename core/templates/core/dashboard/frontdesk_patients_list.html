@@ -1,0 +1,550 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients | Front Desk - BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            transform: translateY(24px) scale(0.97);
+            transition: transform 0.25s ease;
+            margin: var(--space-4);
+        }
+        .modal-overlay.show .modal {
+            transform: translateY(0) scale(1);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-5) var(--space-6);
+            border-bottom: 1px solid var(--gray-100);
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        .modal-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .modal-title i { color: var(--medical-cyan); }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--gray-100);
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .modal-close:hover { background: var(--gray-200); color: var(--gray-800); }
+        .modal-body { padding: var(--space-5) var(--space-6); }
+        .modal-footer {
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-3);
+        }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+        .form-group { margin-bottom: var(--space-4); }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .form-label .req { color: #ef4444; }
+        .form-input {
+            width: 100%;
+            padding: 10px var(--space-4);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            color: var(--gray-800);
+            background: var(--white);
+            transition: var(--transition);
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34,211,238,0.1);
+        }
+        .form-input::placeholder { color: var(--gray-400); }
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white; border: none;
+            padding: 10px var(--space-6);
+            border-radius: var(--radius-md);
+            font-weight: 600; font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: var(--space-2);
+            transition: var(--transition);
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-ghost {
+            background: var(--gray-100); color: var(--gray-600);
+            border: none; padding: 10px var(--space-5);
+            border-radius: var(--radius-md);
+            font-weight: 600; font-size: 0.9rem; cursor: pointer;
+        }
+        .btn-ghost:hover { background: var(--gray-200); }
+
+        .patient-table { width: 100%; border-collapse: collapse; }
+        .patient-table thead { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); }
+        .patient-table th {
+            padding: 12px 16px; text-align: left;
+            font-size: 0.78rem; font-weight: 700;
+            color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .patient-table td { padding: 14px 16px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+        .patient-table tbody tr:hover { background: var(--gray-50); }
+        .patient-table tbody tr:last-child td { border-bottom: none; }
+
+        .patient-cell { display: flex; align-items: center; gap: var(--space-3); }
+        .patient-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #22d3ee, #a78bfa);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+        }
+
+        .filter-bar { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
+        .filter-input {
+            padding: 9px var(--space-4);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: var(--gray-800);
+            background: white;
+        }
+        .filter-input:focus { outline: none; border-color: var(--medical-cyan); }
+        .filter-input[type="text"] { flex: 1; min-width: 200px; }
+
+        .alert {
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 4px solid;
+            display: flex; align-items: center; gap: var(--space-2);
+        }
+        .alert-success { background: rgba(16,185,129,0.08); color: #059669; border-color: #10b981; }
+        .alert-error   { background: rgba(239,68,68,0.08);   color: #dc2626; border-color: #ef4444; }
+    
+    :root {
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-16: 64px;
+    --radius-md: 8px;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+    --medical-cyan: #22d3ee;
+    --font-body: 'DM Sans', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
+    --transition: all 0.2s ease;
+}
+
+
+/* Override admin.css modal conflict */
+#addPatientModal {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.45) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 1000 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease !important;
+    padding: 16px !important;
+}
+
+#addPatientModal.show {
+    opacity: 1 !important;
+    pointer-events: all !important;
+}
+
+#addPatientModal .modal {
+    display: block !important;
+    position: relative !important;
+    background: white !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    max-width: 560px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3) !important;
+    z-index: 1001 !important;
+}
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2"/>
+                    <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">Beta Care</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback" style="display:flex;">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+            </div>
+            <span class="role-badge" style="background:linear-gradient(135deg,#f59e0b,#f97316);">Front Desk</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'frontdesk_dashboard' %}" class="nav-item"><i class="fa-solid fa-home"></i><span>Dashboard</span></a>
+            <a href="{% url 'frontdesk_appointments' %}" class="nav-item"><i class="fa-solid fa-calendar"></i><span>Appointments</span></a>
+            <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item"><i class="fa-solid fa-flask"></i><span>Lab Tests</span></a>
+            <a href="{% url 'frontdesk_patients_list' %}" class="nav-item active"><i class="fa-solid fa-users"></i><span>Patients</span></a>
+            <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item"><i class="fa-solid fa-stethoscope"></i><span>Doctors</span></a>
+            <a href="{% url 'frontdesk_payments' %}" class="nav-item"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
+            <a href="{% url 'frontdesk_reports' %}" class="nav-item"><i class="fa-solid fa-chart-bar"></i><span>Reports</span></a>
+            <a href="{% url 'frontdesk_settings' %}" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="medical-main">
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title" style="font-size:1.75rem;">Patients</h1>
+                <p class="page-subtitle">Manage all registered patients</p>
+            </div>
+            <div class="header-actions">
+                <!-- FIX 1: button that opens the modal instead of navigating away -->
+                <button onclick="openModal()" class="add-btn">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Add New Patient</span>
+                </button>
+                <button class="header-icon-btn"><i class="fa-solid fa-bell"></i></button>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            <!-- Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                <i class="fa-solid fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Filters -->
+            <div class="medical-table-card" style="padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5);">
+                <form method="GET">
+                    <div class="filter-bar">
+                        <input type="text" name="search" class="filter-input"
+                            placeholder="Search by name, phone or email..."
+                            value="{{ search_query|default:'' }}">
+
+                        <select name="status" class="filter-input" onchange="this.form.submit()" style="min-width:160px;">
+                            <option value="">All Statuses</option>
+                            <option value="Active"   {% if current_status == 'Active'   %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if current_status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-search"></i> Search
+                        </button>
+
+                        {% if search_query or current_status %}
+                        <a href="{% url 'frontdesk_patients_list' %}"
+                            style="color:var(--medical-cyan); text-decoration:none; font-weight:600; font-size:0.88rem; display:flex; align-items:center; gap:5px;">
+                            <i class="fa-solid fa-times"></i> Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- Table -->
+            <div class="medical-table-card">
+                <div class="info-header" style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--gray-100);">
+                    <h3 style="font-size:1rem; font-weight:700; margin:0;">
+                        <i class="fa-solid fa-list" style="margin-right:8px; color:var(--medical-cyan);"></i>
+                        Patient Records
+                    </h3>
+                    <span style="background:var(--gray-100); padding:4px 14px; border-radius:20px; font-size:0.82rem; font-weight:600; color:var(--gray-600);">
+                        {{ patients.count }} found
+                    </span>
+                </div>
+
+                {% if patients %}
+                <div style="overflow-x:auto;">
+                    <table class="patient-table">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Gender</th>
+                                <th>Date of Birth</th>
+                                <th>Status</th>
+                                <th style="text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in patients %}
+                            <tr>
+                                <td>
+                                    <div class="patient-cell">
+                                        <div class="patient-avatar">{{ patient.full_name|slice:":1"|upper }}</div>
+                                        <div>
+                                            <p style="font-weight:600; color:var(--gray-800); margin-bottom:2px;">{{ patient.full_name }}</p>
+                                            <p style="font-size:0.75rem; color:var(--gray-400);">#{{ patient.id }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-size:0.88rem; color:var(--gray-600);">{{ patient.user.email|default:"—" }}</td>
+                                <td style="font-size:0.88rem;">{{ patient.phone }}</td>
+                                <td style="font-size:0.88rem; color:var(--gray-600);">{{ patient.gender|default:"—" }}</td>
+                                <td style="font-size:0.88rem; color:var(--gray-600);">{{ patient.dob|date:"d M Y"|default:"—" }}</td>
+                                <td>
+                                    <span class="status-badge" style="background:{% if patient.status == 'Active' %}rgba(52,211,153,0.1);color:#10b981;{% else %}rgba(239,68,68,0.1);color:#dc2626;{% endif %} font-size:0.8rem;">
+                                        {{ patient.status }}
+                                    </span>
+                                </td>
+                                <td style="text-align:center;">
+                                    <div style="display:flex; gap:var(--space-2); justify-content:center;">
+                                        <a href="{% url 'frontdesk_patients_detail' patient.id %}"
+                                            class="action-btn view-btn" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'frontdesk_patients_edit' patient.id %}"
+                                            class="action-btn" title="Edit Patient"
+                                            style="background:rgba(167,139,250,0.1); color:#7c3aed;">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align:center; padding:var(--space-16) var(--space-4);">
+                    <i class="fa-solid fa-users" style="font-size:3rem; color:var(--gray-300); margin-bottom:var(--space-4); display:block;"></i>
+                    <p style="color:var(--gray-500); font-size:1rem;">No patients found</p>
+                    {% if search_query or current_status %}
+                    <a href="{% url 'frontdesk_patients_list' %}"
+                        style="color:var(--medical-cyan); text-decoration:none; font-weight:600; margin-top:var(--space-2); display:inline-block;">
+                        Clear filters
+                    </a>
+                    {% else %}
+                    <button onclick="openModal()" style="margin-top:var(--space-4); background:none; border:none; color:var(--medical-cyan); font-weight:600; cursor:pointer; font-size:0.9rem;">
+                        <i class="fa-solid fa-plus"></i> Add the first patient
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ADD PATIENT MODAL -->
+<div class="modal-overlay" id="addPatientModal" onclick="handleOverlayClick(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">
+                <i class="fa-solid fa-user-plus"></i>
+                Register New Patient
+            </span>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'frontdesk_add_patient' %}" id="addPatientForm">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name <span class="req">*</span></label>
+                        <input type="text" name="first_name" class="form-input" placeholder="First name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name <span class="req">*</span></label>
+                        <input type="text" name="last_name" class="form-input" placeholder="Last name" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="req">*</span></label>
+                        <input type="email" name="email" class="form-input" placeholder="patient@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone <span class="req">*</span></label>
+                        <input type="tel" name="phone" class="form-input" placeholder="10-digit number" pattern="[0-9]{10}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <select name="gender" class="form-input">
+                            <option value="">-- Select --</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="date" name="dob" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-input">
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-input" placeholder="Full address (optional)">
+                    </div>
+                </div>
+
+                <div style="background:rgba(34,211,238,0.06); border:1px solid rgba(34,211,238,0.2); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); font-size:0.82rem; color:var(--gray-600); display:flex; align-items:center; gap:var(--space-2);">
+                    <i class="fa-solid fa-info-circle" style="color:var(--medical-cyan); flex-shrink:0;"></i>
+                    A login account will be auto-created. The patient can later set their own password.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-user-plus"></i> Register Patient
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal() {
+    document.getElementById('addPatientModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+    document.getElementById('addPatientModal').classList.remove('show');
+    document.body.style.overflow = '';
+}
+function handleOverlayClick(e) {
+    if (e.target === document.getElementById('addPatientModal')) closeModal();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// FIX 2: use open_modal (matches what the view passes) instead of show_modal
+{% if open_modal %}openModal();{% endif %}
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Details | FrontDesk - BetaCare</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+
+    <style>
+        .detail-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+        .detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        @media (max-width: 768px) {
+            .detail-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .detail-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-value {
+            font-size: 1rem;
+            color: var(--gray-900);
+            font-weight: 500;
+        }
+        .status-badge-large {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .status-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+        .status-inactive {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        .button-group {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            margin-top: var(--space-6);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee, #06b6d4);
+            color: white;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+    </style>
+</head>
+
+<body>
+<div class="medical-dashboard">
+
+    <!-- SIDEBAR (COPY SAME SIDEBAR FROM APPOINTMENT PAGE) -->
+    <aside class="medical-sidebar">
+        <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#22d3ee" />
+                                <stop offset="100%" stop-color="#a78bfa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <img src="{% static 'core/images/avatar-placeholder.jpg' %}" alt="Profile"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-fallback" style="display: flex;">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">Front Desk</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'frontdesk_dashboard' %}" class="nav-item">
+                    <i class="fa-solid fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="{% url 'frontdesk_book_appointment' %}" class="nav-item active">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>Appointments</span>
+                </a>
+
+                <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item">
+                    <i class="fa-solid fa-flask"></i><span>Lab Tests</span>
+                </a>
+
+                <a href="{% url 'frontdesk_patients_list' %}" class="nav-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Patients</span>
+                </a>
+
+                <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item">
+                    <i class="fa-solid fa-stethoscope"></i>
+                    <span>Doctors</span>
+                </a>
+
+                <a href="{% url 'frontdesk_payments' %}" class="nav-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+
+                <a href="{% url 'frontdesk_reports' %}" class="nav-item">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="{% url 'frontdesk_settings' %}" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="medical-main">
+
+        <!-- HEADER -->
+        <header class="medical-header">
+            <div class="header-left">
+                <h1 class="page-title">Patient Details</h1>
+                <p class="page-subtitle">Manage patient profile and medical information</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'frontdesk_patients_list' %}" class="add-btn" style="text-decoration:none;">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Patients</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="medical-content">
+
+            {% if messages %}
+            <div style="margin-bottom: var(--space-4);">
+                {% for message in messages %}
+                <div style="padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;
+                    background: {% if message.tags == 'success' %}rgba(52, 211, 153, 0.1); color: #10b981;
+                    {% else %}rgba(239, 68, 68, 0.1); color: #dc2626;{% endif %}
+                    border-left: 4px solid {% if message.tags == 'success' %}#10b981{% else %}#dc2626{% endif %};">
+                    <strong>{{ message }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- PERSONAL INFO -->
+            <div class="detail-section">
+                <h2><i class="fa-solid fa-user"></i> Personal Information</h2>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Full Name</span>
+                        <span class="detail-value">{{ patient.full_name }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Date of Birth</span>
+                        <span class="detail-value">
+                            {{ patient.dob|date:"d M Y" }} ({{ patient.age }} yrs)
+                        </span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Gender</span>
+                        <span class="detail-value">{{ patient.gender|default:"Not specified" }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Blood Group</span>
+                        <span class="detail-value">{{ patient.blood_group|default:"Not specified" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACT INFO -->
+            <div class="detail-section">
+                <h2><i class="fa-solid fa-phone"></i> Contact Information</h2>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value">{{ patient.phone|default:"Not provided" }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">{{ patient.user.email|default:"Not provided" }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Emergency Contact</span>
+                        <span class="detail-value">{{ patient.emergency_contact|default:"Not specified" }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Emergency Phone</span>
+                        <span class="detail-value">{{ patient.emergency_phone|default:"Not provided" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEDICAL INFO -->
+            <div class="detail-section">
+                <h2><i class="fa-solid fa-heartbeat"></i> Medical Information</h2>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Allergies</span>
+                        <span class="detail-value">{{ patient.allergies|default:"None documented" }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Current Medications</span>
+                        <span class="detail-value">{{ patient.current_medications|default:"None documented" }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-field">
+                        <span class="detail-label">Medical Conditions</span>
+                        <span class="detail-value">{{ patient.medical_conditions|default:"None documented" }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Insurance Provider</span>
+                        <span class="detail-value">{{ patient.insurance_provider|default:"Not provided" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATUS -->
+            <div class="detail-section">
+                <h2><i class="fa-solid fa-flag"></i> Status</h2>
+                <span class="status-badge-large {% if patient.is_active %}status-active{% else %}status-inactive{% endif %}">
+                    {% if patient.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="button-group">
+                <a href="{% url 'frontdesk_patients_edit' patient.id %}" class="btn btn-primary">
+                    <i class="fa-solid fa-edit"></i> Edit Patient
+                </a>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" name="delete_patient" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i> Delete Patient
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </main>
+</div>
+</body>
+</html>

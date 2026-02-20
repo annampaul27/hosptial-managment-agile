@@ -1,0 +1,1053 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reschedule Appointment | BetaCare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+       
+        /* ✅ BOX SIZING AND RESET */
+        * {
+            box-sizing: border-box;
+        }
+
+        .appointment-detail-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 0 var(--space-4);
+        }
+        
+        .detail-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            margin-bottom: var(--space-6); 
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .back-link { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+            color: var(--medical-cyan); 
+            text-decoration: none; 
+            font-weight: 500; 
+            margin-bottom: var(--space-4); 
+        }
+        .back-link:hover { text-decoration: underline; }
+        
+        .detail-card { 
+            background: var(--white); 
+            border-radius: var(--radius-lg); 
+            padding: var(--space-6); 
+            box-shadow: var(--shadow-sm); 
+            border: 1px solid var(--gray-200); 
+            margin-bottom: var(--space-4); 
+        }
+        
+        .detail-section { 
+            margin-bottom: var(--space-6); 
+            padding-bottom: var(--space-6); 
+            border-bottom: 1px solid var(--gray-100); 
+        }
+        .detail-section:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        
+        .section-title { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: var(--gray-900); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-3); 
+        }
+        .section-title i { 
+            color: var(--medical-cyan); 
+            font-size: 1.5rem;
+        }
+        
+        .detail-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: var(--space-6); 
+        }
+        
+        .detail-item { }
+        
+        .detail-label { 
+            font-size: 0.9rem; 
+            color: var(--gray-600); 
+            font-weight: 500; 
+            margin-bottom: var(--space-1); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .detail-value { 
+            font-size: 1.1rem; 
+            color: var(--gray-900); 
+            font-weight: 600; 
+        }
+        
+        .doctor-card { 
+            display: flex; 
+            gap: var(--space-4); 
+            align-items: flex-start; 
+            padding: var(--space-4); 
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(168, 85, 247, 0.05)); 
+            border-radius: var(--radius-md); 
+        }
+        
+        .doctor-avatar { 
+            width: 80px; 
+            height: 80px; 
+            min-width: 80px;
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #60a5fa, #8b5cf6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 2rem; 
+            font-weight: 700; 
+            flex-shrink: 0; 
+        }
+        
+        .doctor-info { 
+            flex: 1; 
+            min-width: 0;
+        }
+        
+        .doctor-name { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: var(--gray-900); 
+            margin-bottom: var(--space-1); 
+        }
+        
+        .doctor-spec { 
+            font-size: 0.95rem; 
+            color: var(--medical-cyan); 
+            font-weight: 500; 
+            margin-bottom: var(--space-2); 
+        }
+        
+        .doctor-detail { 
+            font-size: 0.9rem; 
+            color: var(--gray-600); 
+            margin-bottom: var(--space-1); 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+        }
+        .doctor-detail i { 
+            color: var(--medical-cyan); 
+            width: 16px; 
+            flex-shrink: 0;
+        }
+        
+        .status-badge { 
+            padding: var(--space-2) var(--space-4); 
+            border-radius: var(--radius-full); 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            display: inline-block; 
+        }
+        
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning-yellow); }
+        .status-confirmed { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        .status-completed { background: rgba(16, 185, 129, 0.1); color: var(--success-green); }
+        .status-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--error-red); }
+        .status-pending-payment { background: rgba(168, 85, 247, 0.1); color: var(--medical-purple); }
+        .status-scheduled { background: rgba(34, 211, 238, 0.1); color: var(--medical-cyan); }
+        
+        /* ✅ ACTION BUTTONS - FIXED OVERLAP ISSUE */
+        .action-buttons { 
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+            margin-top: var(--space-4);
+            padding: 0;
+            align-items: stretch;
+        }
+        
+        .action-btn { 
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            min-height: 42px;
+            min-width: 140px;
+            flex: 0 1 auto;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: white;
+        }
+        .btn-primary:hover { 
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+        
+        .btn-secondary { 
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        .btn-secondary:hover { 
+            background: var(--gray-200);
+        }
+        
+        .btn-danger { 
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn-danger:hover { 
+            background: var(--error-red);
+            color: white;
+        }
+        
+        .alert { 
+            padding: var(--space-4); 
+            border-radius: var(--radius-md); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: flex-start; 
+            gap: var(--space-3); 
+        }
+        .alert-info { background: rgba(34, 211, 238, 0.1); border-left: 4px solid var(--medical-cyan); color: var(--medical-cyan); }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warning-yellow); color: var(--warning-yellow); }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success-green); color: var(--success-green); }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .detail-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+            }
+            .detail-grid { 
+                grid-template-columns: 1fr; 
+            }
+            .action-buttons { 
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .action-btn { 
+                width: 100%;
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+            .doctor-card { 
+                flex-direction: column; 
+                align-items: center; 
+                text-align: center; 
+            }
+            .doctor-avatar { 
+                width: 60px; 
+                height: 60px;
+                min-width: 60px;
+                font-size: 1.5rem; 
+            }
+            .detail-card { 
+                padding: var(--space-4); 
+            }
+        }
+
+        @media (max-width: 480px) {
+            .detail-card { 
+                padding: var(--space-3); 
+            }
+            .action-btn { 
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                min-height: 36px;
+            }
+            .section-title { 
+                font-size: 1.1rem; 
+            }
+            .detail-label { 
+                font-size: 0.8rem; 
+            }
+            .detail-value { 
+                font-size: 1rem; 
+            }
+        }
+   
+
+        .reschedule-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 0 var(--space-4);
+        }
+        
+        .page-header { 
+            margin-bottom: var(--space-6); 
+        }
+        
+        .back-link { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+            color: var(--medical-cyan); 
+            text-decoration: none; 
+            font-weight: 500; 
+            margin-bottom: var(--space-4); 
+        }
+        .back-link:hover { text-decoration: underline; }
+        
+        .reschedule-card { 
+            background: var(--white); 
+            border-radius: var(--radius-lg); 
+            padding: var(--space-6); 
+            box-shadow: var(--shadow-sm); 
+            border: 1px solid var(--gray-200); 
+            margin-bottom: var(--space-4); 
+        }
+        
+        .section-title { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: var(--gray-900); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-3); 
+        }
+        .section-title i { 
+            color: var(--medical-cyan); 
+            font-size: 1.5rem;
+        }
+        
+        .current-appointment { 
+            padding: var(--space-4); 
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(168, 85, 247, 0.05)); 
+            border-radius: var(--radius-md); 
+            border-left: 4px solid var(--medical-cyan);
+            margin-bottom: var(--space-6);
+        }
+        
+        .current-appointment-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            font-size: 1rem;
+        }
+        
+        .appointment-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-3);
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-700);
+            font-size: 0.95rem;
+        }
+        
+        .info-item i {
+            color: var(--medical-cyan);
+            width: 20px;
+            flex-shrink: 0;
+        }
+        
+        .form-section {
+            margin-bottom: var(--space-6);
+            padding-bottom: var(--space-6);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .required {
+            color: var(--error-red);
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--medical-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+        
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--space-3);
+            margin-top: var(--space-3);
+        }
+        
+        .time-slot {
+            padding: 12px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .time-slot:hover:not(.disabled) {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.05);
+        }
+        
+        .time-slot.selected {
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            border-color: var(--medical-cyan);
+            color: white;
+        }
+        
+        .time-slot.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--gray-100);
+        }
+        
+        .time-slot-time {
+            font-size: 0.95rem;
+            display: block;
+        }
+        
+        .time-slot-status {
+            font-size: 0.75rem;
+            margin-top: var(--space-1);
+            opacity: 0.8;
+        }
+        
+        .alert { 
+            padding: var(--space-4); 
+            border-radius: var(--radius-md); 
+            margin-bottom: var(--space-4); 
+            display: flex; 
+            align-items: flex-start; 
+            gap: var(--space-3); 
+        }
+        .alert-info { 
+            background: rgba(34, 211, 238, 0.1); 
+            border-left: 4px solid var(--medical-cyan); 
+            color: var(--medical-cyan); 
+        }
+        .alert-warning { 
+            background: rgba(245, 158, 11, 0.1); 
+            border-left: 4px solid var(--warning-yellow); 
+            color: var(--warning-yellow); 
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-100);
+        }
+        
+        .action-btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            min-height: 44px;
+            flex: 0 1 auto;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--medical-cyan), var(--medical-cyan-light));
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        
+        .doctor-select-card {
+            padding: var(--space-4);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .doctor-select-card:hover {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.05);
+        }
+        
+        .doctor-select-card.selected {
+            border-color: var(--medical-cyan);
+            background: rgba(34, 211, 238, 0.1);
+        }
+        
+        .doctor-radio {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--medical-cyan);
+        }
+        
+        .doctor-avatar-small {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .doctor-select-info {
+            flex: 1;
+        }
+        
+        .doctor-select-name {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+        
+        .doctor-select-spec {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: var(--space-6);
+            color: var(--gray-600);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--medical-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: var(--space-3);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-slots-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+            }
+            
+            .reschedule-card {
+                padding: var(--space-4);
+            }
+            
+            .appointment-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .reschedule-card {
+                padding: var(--space-3);
+            }
+            
+            .action-btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+            
+            .time-slots-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="medical-dashboard">
+        <aside class="medical-sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" fill="url(#gradient)" opacity="0.2" />
+                        <path d="M20 8V32M8 20H32" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs><linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#22d3ee" /><stop offset="100%" stop-color="#a78bfa" /></linearGradient></defs>
+                    </svg>
+                </div>
+                <span class="brand-name">Beta Care</span>
+            </div>
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">
+                        <div class="avatar-fallback">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <h4 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="profile-email">{{ request.user.email|truncatechars:25 }}</p>
+                </div>
+                <span class="role-badge">Patient</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'patient_dashboard' %}" class="nav-item"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></a>
+                <a href="{% url 'patient_book_appointment' %}" class="nav-item"><i class="fa-solid fa-calendar-plus"></i><span>Book Appointment</span></a>
+                <a href="{% url 'patient_appointments' %}" class="nav-item active"><i class="fa-solid fa-clock"></i><span>My Appointments</span></a>
+                <a href="{% url 'patient_diagnostic_tests' %}" class="nav-item"><i class="fa-solid fa-flask"></i><span>Diagnostic Tests</span></a>
+                <a href="{% url 'patient_lab_results' %}" class="nav-item active">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <span>Lab Results</span>
+                </a>
+                <a href="{% url 'patient_settings' %}" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="medical-main">
+            <header class="medical-header">
+                <div class="header-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="Search..."></div>
+                <div class="header-actions">
+                    <button class="header-icon-btn"><i class="fa-solid fa-bell"></i><span class="notification-badge">3</span></button>
+                    <button class="header-icon-btn"><i class="fa-solid fa-envelope"></i></button>
+                    <button class="header-icon-btn"><i class="fa-solid fa-user-circle"></i></button>
+                </div>
+            </header>
+
+            <div class="medical-content">
+                <a href="{% url 'patient_appointment_detail' appointment.id %}" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i>Back to Appointment Details
+                </a>
+
+                <div class="reschedule-container">
+                    <div class="page-header">
+                        <h1 class="page-title">Reschedule Appointment</h1>
+                        <p class="page-subtitle">Select a new date and time for your appointment</p>
+                    </div>
+
+                    <!-- Current Appointment Info -->
+                    <div class="reschedule-card">
+                        <div class="current-appointment">
+                            <div class="current-appointment-title">
+                                <i class="fa-solid fa-info-circle"></i> Current Appointment
+                            </div>
+                            <div class="appointment-info-grid">
+                                <div class="info-item">
+                                    <i class="fa-solid fa-user-md"></i>
+                                    <span>Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fa-solid fa-calendar"></i>
+                                    <span>{{ appointment.appointment_date|date:"M j, Y" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fa-solid fa-clock"></i>
+                                    <span>{{ appointment.appointment_time|time:"g:i A" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fa-solid fa-stethoscope"></i>
+                                    <span>{{ appointment.reason|default:"General Checkup" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reschedule Form -->
+                    <form method="POST" id="rescheduleForm">
+                        {% csrf_token %}
+                        
+                        <div class="reschedule-card">
+                            <!-- Doctor Selection -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-user-md"></i>
+                                    Select Doctor
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                    <div>
+                                        You can keep the same doctor or choose a different one for your rescheduled appointment.
+                                    </div>
+                                </div>
+
+                                <div id="doctorsList">
+                                    <!-- Keep current doctor -->
+                                    <label class="doctor-select-card selected">
+                                        <input type="radio" name="doctor" value="{{ appointment.doctor.id }}" class="doctor-radio" checked>
+                                        <div class="doctor-avatar-small">
+                                            {% if appointment.doctor.user.first_name %}
+                                                {{ appointment.doctor.user.first_name|slice:":1"|upper }}
+                                            {% else %}
+                                                {{ appointment.doctor.user.username|slice:":1"|upper }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="doctor-select-info">
+                                            <div class="doctor-select-name">
+                                                Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}
+                                            </div>
+                                            <div class="doctor-select-spec">
+                                                {{ appointment.doctor.specialization|default:"General Physician" }} • Current Doctor
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <!-- Other available doctors would be listed here -->
+                                    {% for doctor in available_doctors %}
+                                        {% if doctor.id != appointment.doctor.id %}
+                                        <label class="doctor-select-card">
+                                            <input type="radio" name="doctor" value="{{ doctor.id }}" class="doctor-radio">
+                                            <div class="doctor-avatar-small">
+                                                {{ doctor.user.first_name|default:doctor.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div class="doctor-select-info">
+                                                <div class="doctor-select-name">
+                                                    Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                                                </div>
+                                                <div class="doctor-select-spec">
+                                                    {{ doctor.specialization|default:"General Physician" }}
+                                                </div>
+                                            </div>
+                                        </label>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Date and Time Selection -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-calendar-alt"></i>
+                                    Select New Date & Time
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Appointment Date <span class="required">*</span>
+                                        </label>
+                                        <input 
+                                            type="date" 
+                                            name="appointment_date" 
+                                            class="form-input" 
+                                            id="appointmentDate"
+                                            min="{{ min_date|date:'Y-m-d' }}"
+                                            required
+                                        >
+                                        <span class="form-help">Select a date at least 24 hours from now</span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Preferred Time Slot <span class="required">*</span>
+                                        </label>
+                                        <div id="timeSlotsContainer">
+                                            <p class="form-help">Please select a date first to see available time slots</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width" id="timeSlotDisplay" style="display: none;">
+                                    <label class="form-label">Available Time Slots</label>
+                                    <div class="time-slots-grid" id="timeSlots">
+                                        <!-- Time slots will be populated by JavaScript -->
+                                    </div>
+                                    <input type="hidden" name="appointment_time" id="selectedTime">
+                                </div>
+                            </div>
+
+                            <!-- Reason for Reschedule -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-comment-medical"></i>
+                                    Additional Information
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Reason for Rescheduling (Optional)
+                                    </label>
+                                    <textarea 
+                                        name="reschedule_reason" 
+                                        class="form-textarea"
+                                        placeholder="Please let us know why you need to reschedule..."
+                                    ></textarea>
+                                    <span class="form-help">This helps us serve you better</span>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Notes for the Doctor (Optional)
+                                    </label>
+                                    <textarea 
+                                        name="notes" 
+                                        class="form-textarea"
+                                        placeholder="Any additional notes or concerns for your appointment..."
+                                    >{{ appointment.reason }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="action-buttons">
+                                <button type="submit" class="action-btn btn-primary" id="submitBtn" disabled>
+                                    <i class="fa-solid fa-check"></i>
+                                    <span>Confirm Reschedule</span>
+                                </button>
+                                <a href="{% url 'patient_appointment_detail' appointment.id %}" class="action-btn btn-secondary">
+                                    <i class="fa-solid fa-times"></i>
+                                    <span>Cancel</span>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sample time slots (would be fetched from backend in real implementation)
+        const sampleTimeSlots = {
+            'morning': ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'],
+            'afternoon': ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30'],
+            'evening': ['17:00', '17:30', '18:00']
+        };
+
+        // Handle doctor selection
+        document.querySelectorAll('.doctor-select-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.doctor-select-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+
+        // Handle date selection
+        document.getElementById('appointmentDate').addEventListener('change', function() {
+            const selectedDate = this.value;
+            if (selectedDate) {
+                loadTimeSlots(selectedDate);
+            }
+        });
+
+        // Load available time slots
+        function loadTimeSlots(date) {
+            const container = document.getElementById('timeSlotDisplay');
+            const slotsGrid = document.getElementById('timeSlots');
+            
+            container.style.display = 'block';
+            slotsGrid.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div><p>Loading available time slots...</p></div>';
+            
+            // Simulate API call
+            setTimeout(() => {
+                slotsGrid.innerHTML = '';
+                
+                // Generate time slots
+                Object.entries(sampleTimeSlots).forEach(([period, times]) => {
+                    times.forEach(time => {
+                        const slot = document.createElement('div');
+                        slot.className = 'time-slot';
+                        slot.innerHTML = `
+                            <span class="time-slot-time">${formatTime(time)}</span>
+                            <span class="time-slot-status">Available</span>
+                        `;
+                        slot.dataset.time = time;
+                        
+                        // Randomly disable some slots for demo
+                        if (Math.random() > 0.7) {
+                            slot.classList.add('disabled');
+                            slot.querySelector('.time-slot-status').textContent = 'Booked';
+                        } else {
+                            slot.addEventListener('click', selectTimeSlot);
+                        }
+                        
+                        slotsGrid.appendChild(slot);
+                    });
+                });
+            }, 1000);
+        }
+
+        // Select time slot
+        function selectTimeSlot() {
+            document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('selectedTime').value = this.dataset.time;
+            checkFormValidity();
+        }
+
+        // Format time to 12-hour format
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+
+        // Check if form is valid
+        function checkFormValidity() {
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('selectedTime').value;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (date && time) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Form submission
+        document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('selectedTime').value;
+            
+            if (!date || !time) {
+                alert('Please select both a date and time slot');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to reschedule this appointment?')) {
+                // Submit the form
+                this.submit();
+            }
+        });
+    </script>
+</body>
+</html>
