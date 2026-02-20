@@ -222,11 +222,6 @@ def patient_dashboard(request):
 
 
 
-@login_required
-def patient_diagnostic_tests(request):
-    """View and book diagnostic tests"""
-    # Your diagnostic tests logic here
-    return render(request, 'core/dashboard/patient_diagnostic_tests.html')
 
 def safe_time_string(time_val):
     """Convert ANY time format to HH:MM string"""
@@ -1079,7 +1074,7 @@ def patient_book_appointment(request):
         patient_profile = PatientProfile.objects.get(user=request.user)
     except PatientProfile.DoesNotExist:
         messages.error(request, "Patient profile not found. Please contact support.")
-        return redirect('core/dashboard/patient_dashboard')
+        return redirect('patient_dashboard')  # ✅ FIXED
     
     if request.method == 'POST':
         doctor_id = request.POST.get('doctor')
@@ -1090,7 +1085,7 @@ def patient_book_appointment(request):
         # Validation
         if not all([doctor_id, appointment_date, appointment_time, reason]):
             messages.error(request, "All fields are required.")
-            return redirect('core/dashboard/patient_book_appointment')
+            return redirect('core/dashboard/patient_book_appointment')  # ✅ FIXED
         
         try:
             doctor = DoctorProfile.objects.get(id=doctor_id, status='Active')
@@ -1102,7 +1097,7 @@ def patient_book_appointment(request):
                 appointment_date=appointment_date,
                 appointment_time=appointment_time,
                 reason=reason,
-                status='Pending Payment'  # Changed from 'Scheduled'
+                status='Pending Payment'
             )
             
             # Create payment for this appointment
@@ -1114,22 +1109,20 @@ def patient_book_appointment(request):
                 f"with Dr. {doctor.user.get_full_name()} on {appointment_date} at {appointment_time}."
             )
             # Redirect directly to payment processing page
-            return redirect('core/dashboard/process_payment', payment_id=payment.id)
+            return redirect('process_payment', payment_id=payment.id)  # ✅ FIXED
             
         except DoctorProfile.DoesNotExist:
             messages.error(request, "Selected doctor is not available.")
-            return redirect('patient_book_appointment')
+            return redirect('core/dashboard/patient_book_appointment')  # ✅ FIXED
         except Exception as e:
             messages.error(request, f"Error booking appointment: {str(e)}")
-            return redirect('core/dashboard/patient_book_appointment')
+            return redirect('core/dashboard/patient_book_appointment')  # ✅ FIXED
     
     # GET request - show form
-    # Get all unique specializations from active doctors
     specializations = DoctorProfile.objects.filter(
         status='Active'
     ).values_list('specialization', flat=True).distinct().order_by('specialization')
     
-    # Get all active doctors for initial load (optional)
     all_doctors = DoctorProfile.objects.filter(
         status='Active'
     ).select_related('user').order_by('user__first_name')
@@ -1142,6 +1135,34 @@ def patient_book_appointment(request):
     
     return render(request, 'core/dashboard/patient_book_appointment.html', context)
 
+# Add this to core/views.py
+# Place it AFTER imports and BEFORE your view functions
+
+from decimal import Decimal
+
+def create_payment_for_appointment(appointment):
+    """
+    Helper function to create a payment record for an appointment
+    
+    Args:
+        appointment: Appointment instance
+    
+    Returns:
+        Payment instance
+    """
+    # Get consultation fee from doctor
+    amount = appointment.doctor.consultation_fee or Decimal('500.00')
+    
+    # Create payment record
+    payment = Payment.objects.create(
+        patient=appointment.patient,
+        appointment=appointment,
+        amount=amount,
+        payment_status='Pending',
+        payment_method=''  # Will be filled when patient pays
+    )
+    
+    return payment
 
 @login_required
 def get_doctors_by_specialization(request):
@@ -1389,52 +1410,87 @@ from core.models import (
 @login_required
 def patient_diagnostic_tests(request):
     """Display available diagnostic tests with filtering and search"""
+    from core.models import PatientProfile, DiagnosticTest, Lab, TestBooking
+
     try:
-        # Get patient profile
         patient = PatientProfile.objects.get(user=request.user)
     except PatientProfile.DoesNotExist:
         messages.error(request, "Patient profile not found")
         return redirect('patient_dashboard')
-    
-    # Get all diagnostic tests
+
+    # Base queryset
     tests = DiagnosticTest.objects.select_related('lab').all()
-    
-    # Search functionality
+
+    # Search
     search_query = request.GET.get('search', '').strip()
     if search_query:
         tests = tests.filter(
             Q(test_name__icontains=search_query) |
             Q(lab__name__icontains=search_query)
         )
-    
-    # Lab filter functionality
+
+    # Lab filter
     lab_filter = request.GET.get('lab', '').strip()
     if lab_filter:
         tests = tests.filter(lab__id=lab_filter)
-    
-    # Get all active labs for dropdown
+
+    # Active labs for dropdown
     labs = Lab.objects.filter(status='Active')
-    
-    # Get user's existing test bookings (as a list for template)
-    # Include both Pending Payment and Booked status
-    user_bookings = list(TestBooking.objects.filter(
-        patient=patient
-    ).values_list('test_id', flat=True))
-    
+
+    # IDs of tests this patient has already booked (non-cancelled)
+    user_bookings = list(
+        TestBooking.objects.filter(
+            patient=patient
+        ).exclude(status='Cancelled').values_list('test_id', flat=True)
+    )
+
     context = {
-        'tests': tests,
-        'labs': labs,
+        'tests':        tests,
+        'labs':         labs,
         'search_query': search_query,
-        'lab_filter': lab_filter,
+        'lab_filter':   lab_filter,
         'user_bookings': user_bookings,
-        'patient': patient,
+        'patient':      patient,
+        'today':        __import__('datetime').date.today().isoformat(),
     }
-    
+
     return render(request, 'core/dashboard/patient_diagnostic_tests.html', context)
 
 
 @login_required
-def book_diagnostic_test(request, test_id):
+def patient_booked_tests(request):
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+    except PatientProfile.DoesNotExist:
+        messages.error(request, "Patient profile not found")
+        return redirect('patient_dashboard')
+
+    # Base queryset — no 'payment' in select_related
+    all_bookings = TestBooking.objects.filter(
+        patient=patient
+    ).select_related('test', 'lab').order_by('-booking_date', '-created_at')
+
+    # Apply status filter for display
+    status_filter = request.GET.get('status', '')
+    bookings = all_bookings
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+
+    # Stats use unfiltered all_bookings
+    context = {
+        'bookings':              bookings,
+        'total_bookings':        all_bookings.count(),
+        'pending_payment_count': all_bookings.filter(status='Pending Payment').count(),
+        'booked_count':          all_bookings.filter(status='Booked').count(),
+        'completed_count':       all_bookings.filter(status='Completed').count(),
+        'cancelled_count':       all_bookings.filter(status='Cancelled').count(),
+        'status_filter':         status_filter,
+    }
+
+    return render(request, 'core/dashboard/patient_booked_tests.html', context)
+
+@login_required
+def book_diagnostic_tests(request, test_id):
     """
     Book a diagnostic test - Creates booking with 'Pending Payment' status
     Redirects to payment processing
@@ -1504,20 +1560,91 @@ def book_diagnostic_test(request, test_id):
     # If GET request, redirect back
     return redirect('core/dashboard/patient_diagnostic_tests')
 
+# ── book_diagnostic_tests ───────────────────────────────────────
+def book_diagnostic_tests(request, test_id):
+    from .models import PatientProfile, DiagnosticTest, TestBooking, Payment
+    from datetime import datetime, date
+    from decimal import Decimal
+    import uuid
 
-@login_required
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+        test = DiagnosticTest.objects.get(id=test_id)
+    except (PatientProfile.DoesNotExist, DiagnosticTest.DoesNotExist):
+        from django.contrib import messages
+        messages.error(request, "Invalid request")
+        return redirect('patient_diagnostic_tests')           # ← FIXED
+
+    existing_booking = TestBooking.objects.filter(
+        patient=patient,
+        test=test
+    ).exclude(status='Cancelled').exists()
+
+    if existing_booking:
+        from django.contrib import messages
+        messages.warning(request, f"You have already booked {test.test_name}")
+        return redirect('patient_diagnostic_tests')           # ← FIXED
+
+    if request.method == 'POST':
+        booking_date_str = request.POST.get('booking_date')
+
+        try:
+            booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d').date()
+
+            if booking_date < date.today():
+                from django.contrib import messages
+                messages.error(request, "Cannot book tests for past dates")
+                return redirect('patient_diagnostic_tests')   # ← FIXED
+
+            booking = TestBooking.objects.create(
+                patient=patient,
+                test=test,
+                lab=test.lab,
+                booking_date=booking_date,
+                status='Pending Payment'
+            )
+
+            payment = Payment.objects.create(
+                patient=patient,
+                test_booking=booking,
+                amount=test.price,
+                payment_status='Pending'
+            )
+
+            from django.contrib import messages
+            messages.info(
+                request,
+                f"Please complete payment of ₹{payment.amount} to confirm your test booking "
+                f"for {test.test_name} on {booking_date.strftime('%d %B %Y')}."
+            )
+
+            return redirect('process_test_payment', payment_id=payment.id)   # ← FIXED
+
+        except ValueError:
+            from django.contrib import messages
+            messages.error(request, "Invalid date format")
+            return redirect('patient_diagnostic_tests')       # ← FIXED
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f"Error booking test: {str(e)}")
+            return redirect('patient_diagnostic_tests')       # ← FIXED
+
+    return redirect('patient_diagnostic_tests')               # ← FIXED
+
+
+# ── process_test_payment ────────────────────────────────────────
 def process_test_payment(request, payment_id):
-    """
-    Process payment for a test booking
-    After successful payment, update booking status to 'Booked'
-    """
+    from .models import PatientProfile, TestBooking, Payment
+    import uuid
 
     try:
         patient_profile = PatientProfile.objects.get(user=request.user)
     except PatientProfile.DoesNotExist:
+        from django.contrib import messages
         messages.error(request, "Patient profile not found.")
-        return redirect('patient_dashboard')
+        return redirect('patient_dashboard')                  # ← FIXED
 
+    from django.shortcuts import get_object_or_404
     payment = get_object_or_404(
         Payment,
         id=payment_id,
@@ -1525,33 +1652,32 @@ def process_test_payment(request, payment_id):
         payment_status='Pending'
     )
 
-    # ✅ Correct way — directly from payment
     test_booking = payment.test_booking
 
     if not test_booking:
+        from django.contrib import messages
         messages.error(request, "Test booking not linked to this payment.")
-        return redirect('patient_diagnostic_tests')
+        return redirect('patient_diagnostic_tests')           # ← FIXED
 
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
 
         if not payment_method:
+            from django.contrib import messages
             messages.error(request, "Please select a payment method.")
-            return redirect('process_test_payment', payment_id=payment_id)
+            return redirect('process_test_payment', payment_id=payment_id)  # ← FIXED
 
-        # Generate transaction ID
         transaction_id = f"TXN{uuid.uuid4().hex[:12].upper()}"
 
-        # Update payment
         payment.payment_method = payment_method
         payment.transaction_id = transaction_id
         payment.payment_status = 'Paid'
         payment.save()
 
-        # ✅ Update booking status
         test_booking.status = 'Booked'
         test_booking.save()
 
+        from django.contrib import messages
         messages.success(
             request,
             f"Payment successful! Your test booking for {test_booking.test.test_name} "
@@ -1562,13 +1688,74 @@ def process_test_payment(request, payment_id):
 
         return redirect('patient_booked_tests')
 
+    from django.shortcuts import render
     context = {
         'payment': payment,
         'test_booking': test_booking,
     }
-
     return render(request, 'core/dashboard/process_test_payment.html', context)
 
+
+# ── cancel_test_booking ─────────────────────────────────────────
+def cancel_test_booking(request, booking_id):
+    from .models import PatientProfile, TestBooking
+    from datetime import date
+
+    try:
+        patient = PatientProfile.objects.get(user=request.user)
+        booking = TestBooking.objects.get(id=booking_id, patient=patient)
+
+        if booking.status in ['Pending Payment', 'Booked']:
+            if booking.booking_date >= date.today():
+                booking.status = 'Cancelled'
+                booking.save()
+
+                from django.contrib import messages
+                if hasattr(booking, 'payment') and booking.payment and \
+                        booking.payment.payment_status == 'Paid':
+                    messages.info(
+                        request,
+                        "Test booking cancelled. Refund will be processed within 5-7 business days."
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Test booking for {booking.test.test_name} has been cancelled"
+                    )
+            else:
+                from django.contrib import messages
+                messages.error(request, "Cannot cancel past test bookings")
+        else:
+            from django.contrib import messages
+            messages.error(request, "This test booking cannot be cancelled")
+
+    except (PatientProfile.DoesNotExist, TestBooking.DoesNotExist):
+        from django.contrib import messages
+        messages.error(request, "Test booking not found")
+
+    return redirect('patient_booked_tests')                   # ← FIXED
+
+
+# ── patient_settings_notifications ─────────────────────────────
+def patient_settings_notifications(request):
+    if request.method == 'POST':
+        from core.models import PatientProfile
+
+        email_appointments = request.POST.get('email_appointments') == 'on'
+        email_reminders    = request.POST.get('email_reminders')    == 'on'
+        email_lab_results  = request.POST.get('email_lab_results')  == 'on'
+
+        profile, _ = PatientProfile.objects.get_or_create(user=request.user)
+        profile.email_appointments = email_appointments
+        profile.email_reminders    = email_reminders
+        profile.email_lab_results  = email_lab_results
+        profile.save()
+
+        from django.contrib import messages
+        messages.success(request, 'Notification preferences updated!')
+        return redirect('patient_settings')                   # ← FIXED
+
+    return redirect('patient_settings')   
 
 @login_required
 def patient_booked_tests(request):
@@ -1581,7 +1768,7 @@ def patient_booked_tests(request):
     # Base queryset (ALL bookings)
     all_bookings = TestBooking.objects.filter(
         patient=patient
-    ).select_related('test', 'lab', 'payment').order_by('-booking_date', '-created_at')
+    ).select_related('test', 'lab').order_by('-booking_date', '-created_at')
 
     # Apply filter for display only
     status_filter = request.GET.get('status', '')
@@ -1674,7 +1861,7 @@ def create_payment_for_test(booking):
 
 
 @login_required
-def patient_test_results(request):
+def patient_tests_results(request):
     """View all lab test results for the patient"""
     try:
         patient = PatientProfile.objects.get(user=request.user)
@@ -1710,35 +1897,9 @@ def patient_test_results(request):
         'status_filter': status_filter,
     }
     
-    return render(request, 'core/dashboard/patient_test_results.html', context)
+    return render(request, 'core/dashboard/patient_tests_results.html', context)
 
 
-@login_required
-def cancel_test_booking(request, booking_id):
-    """Cancel a test booking"""
-    try:
-        patient = PatientProfile.objects.get(user=request.user)
-        booking = TestBooking.objects.get(id=booking_id, patient=patient)
-        
-        # Only allow cancellation of Booked tests
-        if booking.status == 'Booked':
-            # Check if booking is in the future
-            if booking.booking_date >= date.today():
-                booking.status = 'Cancelled'
-                booking.save()
-                messages.success(
-                    request, 
-                    f"Test booking for {booking.test.test_name} has been cancelled"
-                )
-            else:
-                messages.error(request, "Cannot cancel past test bookings")
-        else:
-            messages.error(request, "This test booking cannot be cancelled")
-            
-    except (PatientProfile.DoesNotExist, TestBooking.DoesNotExist):
-        messages.error(request, "Test booking not found")
-    
-    return redirect('core/dashboard/patient_booked_tests')
 
 
 @login_required
@@ -2505,7 +2666,7 @@ def patient_cancel_appointment(request, appointment_id):
         appointment = Appointment.objects.get(id=appointment_id, patient=patient_profile)
         
         # Check if appointment can be cancelled
-        if appointment.status in ['pending', 'confirmed']:
+        if appointment.status in ['Pending Payment', 'Scheduled', 'Confirmed']:
             # Check if appointment is in the future
             if appointment.appointment_date >= date.today():
                 appointment.status = 'cancelled'
@@ -2517,7 +2678,8 @@ def patient_cancel_appointment(request, appointment_id):
             else:
                 messages.error(request, 'Cannot cancel past appointments!')
         else:
-            messages.error(request, 'This appointment cannot be cancelled!')
+            
+            messages.error(request, 'This appointment cannot be cancelled!',)
             
     except Appointment.DoesNotExist:
         messages.error(request, 'Appointment not found!')
