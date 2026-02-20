@@ -233,7 +233,7 @@
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>My Test Bookings</span>
                 </a>
-                <a href="{% url 'patient_test_results' %}" class="nav-item active">
+                <a href="{% url 'patient_tests_results' %}" class="nav-item active">
                     <i class="fa-solid fa-file-medical"></i>
                     <span>Test Results</span>
                 </a>
@@ -307,13 +307,13 @@
 
                 <!-- Filter Tabs -->
                 <div class="filter-tabs">
-                    <a href="{% url 'patient_test_results' %}" class="filter-tab {% if not status_filter %}active{% endif %}">
+                    <a href="{% url 'patient_tests_results' %}" class="filter-tab {% if not status_filter %}active{% endif %}">
                         All Results
                     </a>
-                    <a href="{% url 'patient_test_results' %}?status=Normal" class="filter-tab {% if status_filter == 'Normal' %}active{% endif %}">
+                    <a href="{% url 'patient_tests_results' %}?status=Normal" class="filter-tab {% if status_filter == 'Normal' %}active{% endif %}">
                         Normal
                     </a>
-                    <a href="{% url 'patient_test_results' %}?status=Abnormal" class="filter-tab {% if status_filter == 'Abnormal' %}active{% endif %}">
+                    <a href="{% url 'patient_tests_results' %}?status=Abnormal" class="filter-tab {% if status_filter == 'Abnormal' %}active{% endif %}">
                         Abnormal
                     </a>
                 </div>

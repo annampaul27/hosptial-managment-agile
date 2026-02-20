@@ -226,7 +226,7 @@
                 </div>
                 {% endif %}
 
-                <form method="POST" id="appointmentForm">
+                <form method="POST"  action="{% url 'patient_book_appointment' %}" id="appointmentForm">
                     {% csrf_token %}
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">

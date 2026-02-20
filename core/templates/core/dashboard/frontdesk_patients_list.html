@@ -1,5 +1,3 @@
-
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +12,6 @@
     <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
 
     <style>
-        /* Modal overlay */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -89,7 +86,6 @@
             gap: var(--space-3);
         }
 
-        /* Form styles */
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
         .form-group { margin-bottom: var(--space-4); }
         .form-group:last-child { margin-bottom: 0; }
@@ -128,7 +124,6 @@
             cursor: pointer;
         }
 
-        /* Buttons */
         .btn-primary {
             background: linear-gradient(135deg, #22d3ee, #06b6d4);
             color: white; border: none;
@@ -148,7 +143,6 @@
         }
         .btn-ghost:hover { background: var(--gray-200); }
 
-        /* Table styles */
         .patient-table { width: 100%; border-collapse: collapse; }
         .patient-table thead { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); }
         .patient-table th {
@@ -168,7 +162,6 @@
             color: white; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
         }
 
-        /* Filter bar */
         .filter-bar { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
         .filter-input {
             padding: 9px var(--space-4);
@@ -182,7 +175,6 @@
         .filter-input:focus { outline: none; border-color: var(--medical-cyan); }
         .filter-input[type="text"] { flex: 1; min-width: 200px; }
 
-        /* Alert */
         .alert {
             padding: var(--space-3) var(--space-4);
             border-radius: var(--radius-md);
@@ -194,6 +186,63 @@
         }
         .alert-success { background: rgba(16,185,129,0.08); color: #059669; border-color: #10b981; }
         .alert-error   { background: rgba(239,68,68,0.08);   color: #dc2626; border-color: #ef4444; }
+    
+    :root {
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-16: 64px;
+    --radius-md: 8px;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+    --medical-cyan: #22d3ee;
+    --font-body: 'DM Sans', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
+    --transition: all 0.2s ease;
+}
+
+
+/* Override admin.css modal conflict */
+#addPatientModal {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.45) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 1000 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease !important;
+    padding: 16px !important;
+}
+
+#addPatientModal.show {
+    opacity: 1 !important;
+    pointer-events: all !important;
+}
+
+#addPatientModal .modal {
+    display: block !important;
+    position: relative !important;
+    background: white !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    max-width: 560px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3) !important;
+    z-index: 1001 !important;
+}
     </style>
 </head>
 
@@ -238,9 +287,7 @@
         <nav class="sidebar-nav">
             <a href="{% url 'frontdesk_dashboard' %}" class="nav-item"><i class="fa-solid fa-home"></i><span>Dashboard</span></a>
             <a href="{% url 'frontdesk_appointments' %}" class="nav-item"><i class="fa-solid fa-calendar"></i><span>Appointments</span></a>
-           <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item">
-                <i class="fa-solid fa-flask"></i><span>Lab Tests</span>
-            </a>
+            <a href="{% url 'frontdesk_book_lab_test' %}" class="nav-item"><i class="fa-solid fa-flask"></i><span>Lab Tests</span></a>
             <a href="{% url 'frontdesk_patients_list' %}" class="nav-item active"><i class="fa-solid fa-users"></i><span>Patients</span></a>
             <a href="{% url 'frontdesk_doctors_list' %}" class="nav-item"><i class="fa-solid fa-stethoscope"></i><span>Doctors</span></a>
             <a href="{% url 'frontdesk_payments' %}" class="nav-item"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
@@ -261,10 +308,11 @@
                 <p class="page-subtitle">Manage all registered patients</p>
             </div>
             <div class="header-actions">
-                <a href="{% url 'frontdesk_add_patient' %}" class="add-btn" style="text-decoration:none;">
+                <!-- FIX 1: button that opens the modal instead of navigating away -->
+                <button onclick="openModal()" class="add-btn">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>Add New Patient</span>
-                </a>
+                </button>
                 <button class="header-icon-btn"><i class="fa-solid fa-bell"></i></button>
             </div>
         </header>
@@ -281,7 +329,6 @@
             {% endfor %}
             {% endif %}
 
-            
             <!-- Filters -->
             <div class="medical-table-card" style="padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5);">
                 <form method="GET">
@@ -397,7 +444,7 @@
     </main>
 </div>
 
-<!-- ======================== ADD PATIENT MODAL ======================== -->
+<!-- ADD PATIENT MODAL -->
 <div class="modal-overlay" id="addPatientModal" onclick="handleOverlayClick(event)">
     <div class="modal">
         <div class="modal-header">
@@ -416,8 +463,19 @@
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Full Name <span class="req">*</span></label>
-                        <input type="text" name="full_name" class="form-input" placeholder="Patient's full name" required>
+                        <label class="form-label">First Name <span class="req">*</span></label>
+                        <input type="text" name="first_name" class="form-input" placeholder="First name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name <span class="req">*</span></label>
+                        <input type="text" name="last_name" class="form-input" placeholder="Last name" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="req">*</span></label>
+                        <input type="email" name="email" class="form-input" placeholder="patient@email.com" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone <span class="req">*</span></label>
@@ -427,10 +485,6 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Email <span style="color:var(--gray-400); text-transform:none; font-weight:400;">(optional)</span></label>
-                        <input type="email" name="email" class="form-input" placeholder="patient@email.com">
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Gender</label>
                         <select name="gender" class="form-input">
                             <option value="">-- Select --</option>
@@ -439,13 +493,13 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Date of Birth</label>
                         <input type="date" name="dob" class="form-input">
                     </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-input">
@@ -453,11 +507,10 @@
                             <option value="Inactive">Inactive</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Address</label>
-                    <input type="text" name="address" class="form-input" placeholder="Full address (optional)">
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-input" placeholder="Full address (optional)">
+                    </div>
                 </div>
 
                 <div style="background:rgba(34,211,238,0.06); border:1px solid rgba(34,211,238,0.2); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); font-size:0.82rem; color:var(--gray-600); display:flex; align-items:center; gap:var(--space-2);">
@@ -490,8 +543,8 @@ function handleOverlayClick(e) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// Re-open modal if there was a form error
-{% if show_modal %}openModal();{% endif %}
+// FIX 2: use open_modal (matches what the view passes) instead of show_modal
+{% if open_modal %}openModal();{% endif %}
 </script>
 </body>
 </html>

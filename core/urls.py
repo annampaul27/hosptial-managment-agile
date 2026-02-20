@@ -77,13 +77,14 @@ urlpatterns = [
     # Patient Dashboard
     path('dashboard/patient/dashboard/', views.patient_dashboard, name='patient_dashboard'),
     path('dashboard/patient/', views.patient_dashboard, name='patient_dashboard'),
-    path('patient/patient_book-appointment/', views.patient_book_appointment, name='patient_book_appointment'),
+    path('patient/patient-book-appointment/', views.patient_book_appointment, name='patient_book_appointment'),
     path('dashboard/patient/booked-tests/', views.patient_booked_tests, name='patient_booked_tests'),
-    path('dashboard/patient/book-test/<int:test_id>/', views.book_diagnostic_test, name='book_diagnostic_test'),
+    path('dashboard/patient/book-test/<int:test_id>/', views.book_diagnostic_tests, name='book_diagnostic_tests'),
     # AJAX endpoint - Get doctors by specialization
     path('api/get-doctors/', views.get_doctors_by_specialization, name='get_doctors_by_specialization'),
     # Search/Browse Doctors (optional - directory page)
     path('patient/search-doctors/', views.search_doctors, name='patient_search_doctors'),
+
 
     path('patient/appointments/', views.patient_appointments, name='patient_appointments'),
     path('patient/appointments/cancel/<int:appointment_id>/', views.patient_cancel_appointment, name='patient_cancel_appointment'),
@@ -104,10 +105,10 @@ urlpatterns = [
     # Patient Actions
     
     path('patient/diagnostic-tests/', views.patient_diagnostic_tests, name='patient_diagnostic_tests'),
-    path('book-diagnostic-test/<int:test_id>/', views.book_diagnostic_test, name='book_diagnostic_test'),
+    path('patient/book-diagnostic-test/<int:test_id>/', views.book_diagnostic_tests, name='book_diagnostic_tests'),
     path('patient/booked-tests/', views.patient_booked_tests, name='patient_booked_tests'),
-    path('patient/test-results/', views.patient_test_results, name='patient_test_results'),
-    path('cancel-test-booking/<int:booking_id>/', views.cancel_test_booking, name='cancel_test_booking'),
+    path('patient/test-results/', views.patient_tests_results, name='patient_tests_results'),
+    path('patient/cancel-test-booking/<int:booking_id>/', views.cancel_test_booking, name='cancel_test_booking'),
     path('test-details/<int:test_id>/', views.view_test_details, name='test_details'),
     path('api/labs/', views.get_labs_api, name='get_labs_api'),
     path('lab/reports/', views.lab_reports, name='lab_reports'),
@@ -147,7 +148,7 @@ urlpatterns = [
     path('patient/payments/', views.payments, name='payments'),
     path('patient/payments/<int:payment_id>/', views.payment_detail, name='payment_detail'),
     path('patient/payments/<int:payment_id>/pay/', views.process_payment, name='process_payment'),
-    path('patients/payment/test/<int:payment_id>/', views.process_test_payment, name='process_test_payment'),
+    path('patient/payment/test/<int:payment_id>/', views.process_test_payment, name='process_test_payment'),
     
     path('patient/settings/', views.patient_settings, name='patient_settings'),
     path('patient/settings/profile/', views.patient_settings_profile, name='patient_settings_profile'),
@@ -255,10 +256,10 @@ urlpatterns = [
     path('download-medical-history/', views.download_medical_history, name='download_medical_history'),
     path('delete-allergy/<int:allergy_id>/', views.delete_allergy, name='delete_allergy'),
     path('delete-medication/<int:medication_id>/', views.delete_medication, name='delete_medication'),
-    path('patient/test-results/', views.patient_test_results, name='patient_test_results'),
+    path('patient/test-results/', views.patient_tests_results, name='patient_tests_results'),
     path('labs-api/', views.get_labs_api, name='get_labs_api'),
     path('patient/diagnostic-tests/', views.patient_diagnostic_tests, name='patient_diagnostic_tests'),
-    path('book-test/<int:test_id>/', views.book_diagnostic_test, name='book_diagnostic_test'),
+    path('patient/book-test/<int:test_id>/', views.book_diagnostic_tests, name='book_diagnostic_tests'),
     path('patient/booked-tests/', views.patient_booked_tests, name='patient_booked_tests'),
     path('cancel-test-booking/<int:booking_id>/', views.cancel_test_booking, name='cancel_test_booking'),
     path('test-details/<int:test_id>/', views.view_test_details, name='view_test_details'),
